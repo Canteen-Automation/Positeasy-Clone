@@ -4,6 +4,7 @@ import com.rit.canteen.sales.model.SystemUser;
 import com.rit.canteen.sales.repository.SystemUserRepository;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,12 @@ public class SystemUserService {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Value("${app.master.username:admin}")
+    private String masterUsername;
+
+    @Value("${app.master.password:admin}")
+    private String masterPassword;
+
     @PostConstruct
     public void init() {
         // Handle migration from old credentials if they exist
@@ -28,31 +35,31 @@ public class SystemUserService {
                 repository.delete(oldUser);
                 System.out.println(">>> REMOVED OBSOLETE MASTER USER: admin@ritcanteen.com");
             } else {
-                oldUser.setEmail("admin");
-                oldUser.setPassword(passwordEncoder.encode("admin"));
+                oldUser.setEmail(masterUsername);
+                oldUser.setPassword(passwordEncoder.encode(masterPassword));
                 repository.save(oldUser);
                 System.out.println(">>> MIGRATED MASTER USER: admin / admin");
             }
         });
 
         // Ensure 'admin' user exists and has the correct password
-        Optional<SystemUser> adminUser = repository.findByEmail("admin");
+        Optional<SystemUser> adminUser = repository.findByEmail(masterUsername);
         if (adminUser.isPresent()) {
             SystemUser admin = adminUser.get();
-            admin.setPassword(passwordEncoder.encode("admin"));
+            admin.setPassword(passwordEncoder.encode(masterPassword));
             admin.setRole("MASTER");
             repository.save(admin);
-            System.out.println(">>> UPDATED MASTER USER PASSWORD: admin / admin");
+            System.out.println(">>> UPDATED MASTER USER PASSWORD: " + masterUsername + " / " + masterPassword);
         } else {
             SystemUser master = new SystemUser();
             master.setName("Admin Master");
-            master.setEmail("admin");
-            master.setPassword(passwordEncoder.encode("admin"));
+            master.setEmail(masterUsername);
+            master.setPassword(passwordEncoder.encode(masterPassword));
             master.setRole("MASTER");
             master.setPermissions(List.of("dashboard", "sale", "customers", "purchases", "inventory", "expense", "reports", "stores", "table", "wallet", "promotions", "feedback"));
             master.setViewOnly(false);
             repository.save(master);
-            System.out.println(">>> SEEDED MASTER USER: admin / admin");
+            System.out.println(">>> SEEDED MASTER USER: " + masterUsername + " / " + masterPassword);
         }
     }
 

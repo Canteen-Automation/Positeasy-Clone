@@ -169,7 +169,7 @@ const PurchaseAnalytics = () => {
   if (isLoading) {
     return (
       <div className="h-full flex flex-col items-center justify-center gap-4">
-        <Loader2 className="animate-spin text-[#521c4b]" size={40} />
+        <Loader2 className="animate-spin text-[#0f4475]" size={40} />
         <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">Calculating Market Analytics...</p>
       </div>
     );
@@ -180,12 +180,12 @@ const PurchaseAnalytics = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-[#521c4b] tracking-tight uppercase">Purchase Analytics</h1>
+          <h1 className="text-2xl font-black text-[#0f4475] tracking-tight uppercase">Purchase Analytics</h1>
           <div className="flex items-center gap-2 mt-1">
-            <span className="bg-[#521c4b]/10 text-[#521c4b] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+            <span className="bg-[#0f4475]/10 text-[#0f4475] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
               Start: {format(dateRange.start, 'yyyy-MM-dd')}
             </span>
-            <span className="bg-[#521c4b]/10 text-[#521c4b] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
+            <span className="bg-[#0f4475]/10 text-[#0f4475] text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">
               End: {format(dateRange.end, 'yyyy-MM-dd')}
             </span>
           </div>
@@ -193,7 +193,7 @@ const PurchaseAnalytics = () => {
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setFilterType('all')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${filterType === 'all' ? 'bg-[#521c4b] text-white shadow-lg' : 'bg-white border text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase transition-all ${filterType === 'all' ? 'bg-[#0f4475] text-white shadow-lg' : 'bg-white border text-slate-500 border-slate-200 hover:bg-slate-50'}`}
           >
             Show All
           </button>
@@ -230,7 +230,7 @@ const PurchaseAnalytics = () => {
               <input 
                 type="text" 
                 placeholder="Search products..." 
-                className="pl-9 pr-4 py-2 border border-[#e2e8f0] rounded-xl text-xs outline-none focus:border-[#521c4b]/30 transition-all font-medium"
+                className="pl-9 pr-4 py-2 border border-[#e2e8f0] rounded-xl text-xs outline-none focus:border-[#0f4475]/30 transition-all font-medium"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -253,7 +253,7 @@ const PurchaseAnalytics = () => {
                 ) : (
                   filteredAnalytics.map((item, idx) => (
                     <tr key={idx} className="hover:bg-gray-50/50 transition-colors group">
-                      <td className="px-6 py-4"><p className="text-xs font-bold text-[#1e293b] group-hover:text-[#521c4b]">{item.product}</p></td>
+                      <td className="px-6 py-4"><p className="text-xs font-bold text-[#1e293b] group-hover:text-[#0f4475]">{item.product}</p></td>
                       <td className="px-6 py-4 text-xs font-bold text-[#475569]">{item.qty}</td>
                       <td className="px-6 py-4 text-xs font-bold text-[#475569] text-right">₹{item.basePrice.toFixed(2)}</td>
                       <td className="px-6 py-4 text-right">
@@ -285,7 +285,7 @@ const PurchaseAnalytics = () => {
             <div className="grid grid-cols-2 gap-4">
               <button 
                 onClick={() => setFilterType('up')}
-                className={`p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer hover:border-[#521c4b]/50 border-2 ${filterType === 'up' ? 'bg-[#521c4b] text-white border-[#521c4b]' : 'bg-gray-50 text-slate-400 border-transparent hover:bg-slate-100'}`}
+                className={`p-4 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all cursor-pointer hover:border-[#0f4475]/50 border-2 ${filterType === 'up' ? 'bg-[#0f4475] text-white border-[#0f4475]' : 'bg-gray-50 text-slate-400 border-transparent hover:bg-slate-100'}`}
               >
                 <TrendingUp size={20} />
                 <span className="text-[10px] font-bold uppercase tracking-wider">Inflation</span>

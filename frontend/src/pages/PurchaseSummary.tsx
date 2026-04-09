@@ -53,7 +53,7 @@ const PurchaseSummary = () => {
         <motion.div 
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ repeat: Infinity, duration: 2 }}
-          className="text-[#521c4b] font-black uppercase tracking-widest text-xs"
+          className="text-[#0f4475] font-black uppercase tracking-widest text-xs"
         >
           Compiling Fiscal Intelligence...
         </motion.div>
@@ -78,7 +78,7 @@ const PurchaseSummary = () => {
              <button title="Back" className="p-1.5 hover:bg-slate-100 rounded-lg transition-all">
                 <ArrowRight className="rotate-180 text-slate-400" size={18} />
              </button>
-             <h2 className="text-xs font-black text-[#521c4b] uppercase tracking-widest">Purchases</h2>
+             <h2 className="text-xs font-black text-[#0f4475] uppercase tracking-widest">Purchases</h2>
           </div>
           <h1 className="text-2xl font-black text-slate-800">Summary</h1>
         </div>
@@ -88,7 +88,7 @@ const PurchaseSummary = () => {
               <button 
                key={range}
                onClick={() => setActiveRange(range)}
-               className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl ${activeRange === range ? 'text-white bg-[#521c4b] shadow-md shadow-[#521c4b]/20' : 'text-slate-400 hover:text-slate-600'}`}
+               className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl ${activeRange === range ? 'text-white bg-[#0f4475] shadow-md shadow-[#0f4475]/20' : 'text-slate-400 hover:text-slate-600'}`}
               >
                  {range}
               </button>
@@ -118,7 +118,7 @@ const PurchaseSummary = () => {
                  </motion.div>
               ))}
               
-              <div className="col-span-2 bg-[#521c4b] p-6 rounded-[32px] shadow-lg shadow-[#521c4b]/20 text-white relative overflow-hidden group">
+              <div className="col-span-2 bg-[#0f4475] p-6 rounded-[32px] shadow-lg shadow-[#0f4475]/20 text-white relative overflow-hidden group">
                  <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
                  <div className="relative z-10 flex items-end justify-between">
                     <div>
@@ -173,7 +173,7 @@ const PurchaseSummary = () => {
             <div className="flex items-center gap-4">
                <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                  <input type="text" title="Search" placeholder="Filter bills..." className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none focus:border-[#521c4b] transition-all" />
+                  <input type="text" title="Search" placeholder="Filter bills..." className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-xs font-bold outline-none focus:border-[#0f4475] transition-all" />
                </div>
                <button title="Filter" className="p-2.5 bg-slate-50 rounded-xl text-slate-500 border border-slate-100"><Filter size={16} /></button>
             </div>
@@ -205,7 +205,7 @@ const PurchaseSummary = () => {
                            </span>
                         </td>
                         <td className="px-6 py-5 text-right text-xs font-black text-rose-500">₹{bill.balance.toLocaleString()}</td>
-                        <td className="px-6 py-5 text-right text-xs font-black text-[#521c4b]">₹{bill.amount.toLocaleString()}</td>
+                        <td className="px-6 py-5 text-right text-xs font-black text-[#0f4475]">₹{bill.amount.toLocaleString()}</td>
                      </tr>
                   ))}
                </tbody>

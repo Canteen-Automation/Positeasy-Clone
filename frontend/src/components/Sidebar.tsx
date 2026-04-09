@@ -198,7 +198,7 @@ const Sidebar = () => {
                     className={cn(
                       "w-full flex items-center justify-between p-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group",
                       openMenus.includes(item.title) 
-                        ? "text-[#521c4b] bg-[#521c4b]/5" 
+                        ? "text-[#0f4475] bg-[#0f4475]/5" 
                         : "text-[#475569] hover:bg-gray-50 hover:text-[#1e293b]"
                     )}
                   >
@@ -234,7 +234,7 @@ const Sidebar = () => {
                               className={({ isActive }) => cn(
                                 "flex items-center gap-3 py-2 px-4 rounded-lg text-[13px] font-medium transition-all group relative",
                                 isActive 
-                                  ? "text-white bg-[#521c4b] shadow-md shadow-[#521c4b]/10" 
+                                  ? "text-white bg-[#0f4475] shadow-md shadow-[#0f4475]/10" 
                                   : "text-[#64748b] hover:text-[#1e293b] hover:translate-x-1"
                               )}
                             >
@@ -267,7 +267,7 @@ const Sidebar = () => {
                   className={({ isActive }) => cn(
                     "flex items-center gap-3 p-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group",
                     isActive 
-                      ? "bg-[#521c4b] text-white shadow-lg shadow-[#521c4b]/15" 
+                      ? "bg-[#0f4475] text-white shadow-lg shadow-[#0f4475]/15" 
                       : "text-[#475569] hover:bg-gray-50 hover:text-[#1e293b]"
                   )}
                 >

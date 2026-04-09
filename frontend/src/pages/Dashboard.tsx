@@ -50,7 +50,7 @@ const Dashboard = () => {
         <motion.div 
           animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
           transition={{ repeat: Infinity, duration: 1.5 }}
-          className="text-[#521c4b] font-black uppercase tracking-widest text-sm"
+          className="text-[#0f4475] font-black uppercase tracking-widest text-sm"
         >
           Loading Business Intelligence...
         </motion.div>
@@ -74,7 +74,7 @@ const Dashboard = () => {
              <button title="Navigate back to previous section" className="p-1.5 hover:bg-slate-100 rounded-lg transition-all">
                 <ArrowRight className="rotate-180 text-slate-400" size={18} />
              </button>
-             <h2 className="text-xs font-black text-[#521c4b] uppercase tracking-widest">Dashboard</h2>
+             <h2 className="text-xs font-black text-[#0f4475] uppercase tracking-widest">Dashboard</h2>
           </div>
           <h1 className="text-2xl font-black text-slate-800">Good morning</h1>
           <p className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5">
@@ -85,7 +85,7 @@ const Dashboard = () => {
         
         <div className="flex items-center gap-3">
            <div className="relative group">
-              <select title="Filter by store type or category" className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-600 outline-none focus:border-[#521c4b] transition-all cursor-pointer shadow-sm">
+              <select title="Filter by store type or category" className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-600 outline-none focus:border-[#0f4475] transition-all cursor-pointer shadow-sm">
                  <option>Store Type: All</option>
               </select>
               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -105,11 +105,11 @@ const Dashboard = () => {
                   key={tab}
                   title={`View ${tab} analysis and trends`}
                   onClick={() => setActiveTab(tab)}
-                  className={`pb-4 text-[11px] font-black uppercase tracking-widest transition-all relative ${activeTab === tab ? 'text-[#521c4b]' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`pb-4 text-[11px] font-black uppercase tracking-widest transition-all relative ${activeTab === tab ? 'text-[#0f4475]' : 'text-slate-400 hover:text-slate-600'}`}
                  >
                     {tab}
                     {activeTab === tab && (
-                       <motion.div layoutId="tabLineMain" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#521c4b]" />
+                       <motion.div layoutId="tabLineMain" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0f4475]" />
                     )}
                  </button>
               ))}
@@ -117,7 +117,7 @@ const Dashboard = () => {
 
            <div className="flex items-center justify-end mb-4 gap-4">
               <div className="flex items-center gap-2">
-                 <div className="w-2.5 h-2.5 rounded-full border-2 border-[#521c4b]/30 bg-[#521c4b]/10" />
+                 <div className="w-2.5 h-2.5 rounded-full border-2 border-[#0f4475]/30 bg-[#0f4475]/10" />
                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Today's Revenue</span>
               </div>
            </div>
@@ -194,7 +194,7 @@ const Dashboard = () => {
                   key={range}
                   title={`Analyze data from ${range.toLowerCase()}`}
                   onClick={() => setTimeRange(range)}
-                  className={`whitespace-nowrap px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl ${timeRange === range ? 'text-white bg-[#521c4b] shadow-md shadow-[#521c4b]/20' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`whitespace-nowrap px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl ${timeRange === range ? 'text-white bg-[#0f4475] shadow-md shadow-[#0f4475]/20' : 'text-slate-400 hover:text-slate-600'}`}
                  >
                     {range}
                  </button>
@@ -202,7 +202,7 @@ const Dashboard = () => {
            </div>
 
            {/* Total Orders Card */}
-           <div title="View detailed order volume and throughput" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm relative h-[180px] flex flex-col justify-between group hover:border-[#521c4b]/30 transition-all cursor-pointer">
+           <div title="View detailed order volume and throughput" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm relative h-[180px] flex flex-col justify-between group hover:border-[#0f4475]/30 transition-all cursor-pointer">
               <div className="flex items-center gap-3">
                  <div className="p-2 bg-amber-50 text-amber-500 rounded-xl group-hover:scale-110 transition-transform">
                     <ShoppingBag size={20} />
@@ -216,9 +216,9 @@ const Dashboard = () => {
            </div>
 
            {/* Expenses Card */}
-           <div title="Track operational expenditures and overhead" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[130px] flex flex-col justify-between group hover:border-[#521c4b]/30 transition-all cursor-pointer">
+           <div title="Track operational expenditures and overhead" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[130px] flex flex-col justify-between group hover:border-[#0f4475]/30 transition-all cursor-pointer">
               <div className="flex items-center gap-3">
-                 <div className="p-2 bg-slate-50 text-[#521c4b] rounded-xl shadow-sm group-hover:bg-[#521c4b]/10 transition-colors">
+                 <div className="p-2 bg-slate-50 text-[#0f4475] rounded-xl shadow-sm group-hover:bg-[#0f4475]/10 transition-colors">
                     <Wallet size={20} />
                  </div>
                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Expenses</h4>
@@ -249,7 +249,7 @@ const Dashboard = () => {
                ))}
             </div>
             <div className="mt-8">
-               <button title="Refresh and sync comprehensive business insights" className="w-full py-3 border border-dashed border-slate-200 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:border-[#521c4b]/30 hover:text-[#521c4b] transition-all">
+               <button title="Refresh and sync comprehensive business insights" className="w-full py-3 border border-dashed border-slate-200 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-widest hover:border-[#0f4475]/30 hover:text-[#0f4475] transition-all">
                   Generate More Insights
                </button>
             </div>
@@ -259,15 +259,15 @@ const Dashboard = () => {
          <div className="col-span-12 lg:col-span-7 bg-white rounded-[32px] border border-slate-100 shadow-sm p-8">
             <div className="flex items-center justify-between mb-8">
                <h3 className="text-sm font-black text-slate-800 tracking-tight uppercase tracking-widest">Store Performance</h3>
-               <button title="View detailed metrics for all geographic locations" className="text-[10px] font-black text-[#521c4b] uppercase tracking-widest hover:underline">View All Locations</button>
+               <button title="View detailed metrics for all geographic locations" className="text-[10px] font-black text-[#0f4475] uppercase tracking-widest hover:underline">View All Locations</button>
             </div>
             
             <div className="space-y-6">
                {(storeOverview.length > 0 ? storeOverview : [{name: 'No active sales currently', sale: 0, orders: 0, taxes: 0, purchase: 0}]).map((store: any, idx: number) => (
-                  <div key={idx} className="p-6 rounded-[28px] border border-slate-50 bg-slate-50/30 group hover:bg-white hover:shadow-lg hover:border-transparent transition-all border-l-4 border-l-[#521c4b]/30">
+                  <div key={idx} className="p-6 rounded-[28px] border border-slate-50 bg-slate-50/30 group hover:bg-white hover:shadow-lg hover:border-transparent transition-all border-l-4 border-l-[#0f4475]/30">
                      <p className="text-xs font-black text-slate-800 mb-6 uppercase tracking-widest flex items-center justify-between">
                         {store.name}
-                        <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity text-[#521c4b]" />
+                        <ArrowRight size={14} className="opacity-0 group-hover:opacity-100 transition-opacity text-[#0f4475]" />
                      </p>
                      <div className="grid grid-cols-4 gap-4">
                         <div className="space-y-1.5">
@@ -292,7 +292,7 @@ const Dashboard = () => {
             </div>
 
             <div className="mt-10 flex justify-center">
-               <button title="Execute a granular comparison across different store cohorts" className="flex items-center gap-3 px-8 py-3 bg-[#521c4b] text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-[#521c4b]/20 hover:scale-105 transition-all group">
+               <button title="Execute a granular comparison across different store cohorts" className="flex items-center gap-3 px-8 py-3 bg-[#0f4475] text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-[#0f4475]/20 hover:scale-105 transition-all group">
                   Detailed Comparison
                   <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                </button>

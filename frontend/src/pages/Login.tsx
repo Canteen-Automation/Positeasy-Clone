@@ -18,8 +18,8 @@ import buildingPhoto from '../assets/ritchennai.webp';
 const Login = () => {
   const [role, setRole] = useState<'manager' | 'master'>('manager');
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
   // Ensure any previous session is completely wiped out when arriving at the login screen

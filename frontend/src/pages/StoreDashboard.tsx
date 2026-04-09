@@ -100,7 +100,7 @@ const StoreDashboard = () => {
              <button title="Return to previous screen" className="p-1.5 hover:bg-slate-100 rounded-lg transition-all">
                 <ArrowRight className="rotate-180 text-slate-400" size={18} />
              </button>
-             <h2 className="text-xs font-black text-[#521c4b] uppercase tracking-widest">Store Dashboard</h2>
+             <h2 className="text-xs font-black text-[#0f4475] uppercase tracking-widest">Store Dashboard</h2>
           </div>
           <h1 className="text-2xl font-black text-slate-800">Good morning, RIT Canteen</h1>
         </div>
@@ -108,7 +108,7 @@ const StoreDashboard = () => {
         <div className="flex items-center gap-3">
            <div className="flex items-center gap-2">
               <div className="relative group">
-                 <select title="Switch established store location" className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-600 outline-none focus:border-[#521c4b] transition-all cursor-pointer shadow-sm">
+                 <select title="Switch established store location" className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-600 outline-none focus:border-[#0f4475] transition-all cursor-pointer shadow-sm">
                     <option>RIT Canteen</option>
                  </select>
                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -116,7 +116,7 @@ const StoreDashboard = () => {
                  </div>
               </div>
               <div className="relative group">
-                 <select title="Toggle between available display views" className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-600 outline-none focus:border-[#521c4b] transition-all cursor-pointer shadow-sm">
+                 <select title="Toggle between available display views" className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-600 outline-none focus:border-[#0f4475] transition-all cursor-pointer shadow-sm">
                     <option>All</option>
                  </select>
                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -132,7 +132,7 @@ const StoreDashboard = () => {
                  <Star size={18} fill="#f59e0b" />
               </button>
            </div>
-           <div title="Authenticated User: Abiram" className="w-8 h-8 rounded-full bg-[#521c4b] text-white flex items-center justify-center font-bold text-sm shadow-md cursor-pointer hover:ring-2 ring-[#521c4b]/20 transition-all">
+           <div title="Authenticated User: Abiram" className="w-8 h-8 rounded-full bg-[#0f4475] text-white flex items-center justify-center font-bold text-sm shadow-md cursor-pointer hover:ring-2 ring-[#0f4475]/20 transition-all">
               A
            </div>
         </div>
@@ -148,11 +148,11 @@ const StoreDashboard = () => {
                   key={tab}
                   title={`Visualize ${tab.toLowerCase()} throughput data`}
                   onClick={() => setActiveTab(tab)}
-                  className={`pb-4 text-[11px] font-black uppercase tracking-widest transition-all relative ${activeTab === tab ? 'text-[#521c4b]' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`pb-4 text-[11px] font-black uppercase tracking-widest transition-all relative ${activeTab === tab ? 'text-[#0f4475]' : 'text-slate-400 hover:text-slate-600'}`}
                  >
                     {tab}
                     {activeTab === tab && (
-                       <motion.div layoutId="tabLineStore" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#521c4b]" />
+                       <motion.div layoutId="tabLineStore" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0f4475]" />
                     )}
                  </button>
               ))}
@@ -224,18 +224,18 @@ const StoreDashboard = () => {
                   key={range}
                   title={`Filter metrics by ${range.toLowerCase()}`}
                   onClick={() => setTimeRange(range)}
-                  className={`whitespace-nowrap px-2 py-2 text-[10px] font-black uppercase tracking-tighter transition-all relative ${timeRange === range ? 'text-[#521c4b]' : 'text-slate-400 hover:text-slate-600'}`}
+                  className={`whitespace-nowrap px-2 py-2 text-[10px] font-black uppercase tracking-tighter transition-all relative ${timeRange === range ? 'text-[#0f4475]' : 'text-slate-400 hover:text-slate-600'}`}
                  >
                     {range}
                     {timeRange === range && (
-                       <motion.div layoutId="rangeLineStore" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#521c4b]" />
+                       <motion.div layoutId="rangeLineStore" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0f4475]" />
                     )}
                  </button>
               ))}
            </div>
 
            {/* Total Orders Card */}
-           <div title="View detailed store volume and throughput" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm relative h-[180px] flex flex-col justify-between group cursor-pointer hover:border-[#521c4b]/30 transition-all">
+           <div title="View detailed store volume and throughput" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm relative h-[180px] flex flex-col justify-between group cursor-pointer hover:border-[#0f4475]/30 transition-all">
               <div className="flex items-center gap-3">
                  <div className="p-2 bg-amber-50 text-amber-500 rounded-xl group-hover:scale-110 transition-transform">
                     <ShoppingBag size={20} />
@@ -249,9 +249,9 @@ const StoreDashboard = () => {
            </div>
 
            {/* Expenses Card */}
-           <div title="Monitor store operational expenditures" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[150px] flex flex-col justify-between group cursor-pointer hover:border-[#521c4b]/30 transition-all">
+           <div title="Monitor store operational expenditures" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[150px] flex flex-col justify-between group cursor-pointer hover:border-[#0f4475]/30 transition-all">
               <div className="flex items-center gap-3">
-                 <div className="p-2 bg-amber-100 text-[#521c4b] rounded-xl shadow-sm">
+                 <div className="p-2 bg-amber-100 text-[#0f4475] rounded-xl shadow-sm">
                     <Wallet size={20} />
                  </div>
                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">Expenses</h4>
@@ -297,7 +297,7 @@ const StoreDashboard = () => {
                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="space-y-0.5">
-                                   <p className="text-[9px] font-black text-[#521c4b] uppercase tracking-widest brightness-110">{item.category}</p>
+                                   <p className="text-[9px] font-black text-[#0f4475] uppercase tracking-widest brightness-110">{item.category}</p>
                                    <p className="text-xs font-black text-slate-800 uppercase tracking-tight">{item.name}</p>
                                 </div>
                              </div>
@@ -328,7 +328,7 @@ const StoreDashboard = () => {
             </div>
 
             <div className="mt-8 flex justify-end">
-               <button title="Analyze subsequent business cycles" className="flex items-center gap-2 px-6 py-2.5 bg-[#521c4b]/5 hover:bg-[#521c4b]/10 text-[#521c4b] text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all group">
+               <button title="Analyze subsequent business cycles" className="flex items-center gap-2 px-6 py-2.5 bg-[#0f4475]/5 hover:bg-[#0f4475]/10 text-[#0f4475] text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all group">
                   Next
                   <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                </button>
