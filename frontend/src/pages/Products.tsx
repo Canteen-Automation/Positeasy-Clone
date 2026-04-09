@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, X, Search, Filter, MoreVertical, RefreshCw, Edit2, Power, PowerOff, Tag, Package, Image as ImageIcon, Barcode, DollarSign, ChevronDown, Clock, Check, Trash2, Database } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 interface ProductSession {
   id?: number;
@@ -87,6 +88,13 @@ const Products = () => {
   const [formData, setFormData] = useState<Product>(emptyProduct);
   const [allStalls, setAllStalls] = useState<Stall[]>([]);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
+
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,14 +109,21 @@ const Products = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [currentPage, pageSize]);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/products');
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/products?page=${currentPage}&size=${pageSize}`);
       const data = await response.json();
-      setProducts(data);
+      if (data && data.content) {
+        setProducts(data.content);
+        setTotalElements(data.totalElements);
+      } else {
+        setProducts([]);
+        setTotalElements(0);
+      }
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -260,6 +275,8 @@ const Products = () => {
             <input 
               type="text" 
               placeholder="Search products..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:border-[#231651]/30 transition-all"
             />
           </div>
@@ -270,7 +287,7 @@ const Products = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm">
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm mb-6">
         <div className="overflow-x-visible">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -285,8 +302,10 @@ const Products = () => {
             </thead>
             <tbody className="divide-y divide-[#e2e8f0]">
               {loading ? (
-                <tr><td colSpan={5} className="px-6 py-12 text-center text-[#64748b]"><RefreshCw className="animate-spin inline mr-2" />Loading...</td></tr>
-              ) : products.map((product) => (
+                <tr><td colSpan={6} className="px-6 py-12 text-center text-[#64748b]"><RefreshCw className="animate-spin inline mr-2" />Loading...</td></tr>
+              ) : products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+                <tr><td colSpan={6} className="px-6 py-12 text-center text-[#64748b]">No products found</td></tr>
+              ) : products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50/50 transition-all">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -370,6 +389,16 @@ const Products = () => {
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalElements={totalElements}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(0);
+          }}
+        />
       </div>
 
       {/* Product Modal */}

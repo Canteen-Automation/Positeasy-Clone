@@ -17,8 +17,10 @@ public class BaseItemController {
     private BaseItemRepository baseItemRepository;
 
     @GetMapping
-    public List<BaseItem> getAllBaseItems() {
-        return baseItemRepository.findAll();
+    public org.springframework.data.domain.Page<BaseItem> getAllBaseItems(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return baseItemRepository.findAll(org.springframework.data.domain.PageRequest.of(page, size));
     }
 
     @PostMapping

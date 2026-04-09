@@ -17,8 +17,10 @@ public class ProductController {
     private ProductRepository productRepository;
 
     @GetMapping
-    public List<Product> getAllProducts() {
-        return productRepository.findAllWithStalls();
+    public org.springframework.data.domain.Page<Product> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return productRepository.findAllWithStalls(org.springframework.data.domain.PageRequest.of(page, size));
     }
 
     @GetMapping("/category/{categoryName}")

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, X, Search, Filter, MoreVertical, RefreshCw, Edit2, Power, PowerOff, ShoppingCart, Package, ExternalLink } from 'lucide-react';
+import Pagination from '../components/Pagination';
 
 interface BaseItem {
   id: number;
@@ -23,6 +24,12 @@ const BaseMenu = () => {
   const [editingItem, setEditingItem] = useState<BaseItem | null>(null);
   const [newItem, setNewItem] = useState({ name: '', description: '', active: true });
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalElements, setTotalElements] = useState(0);
   
   // Associated Products State
   const [selectedBaseItem, setSelectedBaseItem] = useState<BaseItem | null>(null);
@@ -42,14 +49,21 @@ const BaseMenu = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [currentPage, pageSize]);
 
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8080/api/base-items');
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/base-items?page=${currentPage}&size=${pageSize}`);
       const data = await response.json();
-      setItems(data);
+      if (data && data.content) {
+        setItems(data.content);
+        setTotalElements(data.totalElements);
+      } else {
+        setItems([]);
+        setTotalElements(0);
+      }
     } catch (error) {
       console.error('Error fetching items:', error);
     } finally {
@@ -147,6 +161,8 @@ const BaseMenu = () => {
             <input 
               type="text" 
               placeholder="Search items..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-[#e2e8f0] rounded-lg text-sm focus:outline-none focus:border-[#231651]/30 transition-all"
             />
           </div>
@@ -161,7 +177,7 @@ const BaseMenu = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-sm overflow-hidden mb-6">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -184,7 +200,7 @@ const BaseMenu = () => {
                     </div>
                   </td>
                 </tr>
-              ) : items.length === 0 ? (
+              ) : items.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-[#64748b]">
                     <p className="text-lg font-medium mb-1">No items found</p>
@@ -192,8 +208,10 @@ const BaseMenu = () => {
                   </td>
                 </tr>
               ) : (
-                items.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50/50 transition-all group">
+                items
+                  .filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50/50 transition-all group">
                     <td className="px-6 py-4 text-sm font-medium text-[#64748b]">#{item.id}</td>
                     <td className="px-6 py-4">
                       <span className="text-sm font-bold text-[#1e293b]">{item.name}</span>
@@ -263,6 +281,16 @@ const BaseMenu = () => {
             </tbody>
           </table>
         </div>
+        <Pagination 
+          currentPage={currentPage}
+          pageSize={pageSize}
+          totalElements={totalElements}
+          onPageChange={setCurrentPage}
+          onPageSizeChange={(newSize) => {
+            setPageSize(newSize);
+            setCurrentPage(0);
+          }}
+        />
       </div>
 
       {/* Associated Products Modal */}

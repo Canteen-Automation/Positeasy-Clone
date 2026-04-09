@@ -28,12 +28,8 @@ public class DatabaseSeeder implements CommandLineRunner {
     public void run(String... args) throws Exception {
         repairStallsSchema();
         repairLobColumns();
-        if (baseItemRepository.count() == 0) {
-            seedCategories();
-        }
-        if (productRepository.count() == 0) {
-            seedProducts();
-        }
+        seedCategories();
+        seedProducts();
     }
 
     private void repairStallsSchema() {
@@ -81,27 +77,115 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private void seedCategories() {
-        BaseItem breakfast = new BaseItem("Breakfast", "Morning favorites", true);
-        BaseItem lunch = new BaseItem("Lunch", "Hearty meals", true);
-        BaseItem snacks = new BaseItem("Snacks", "Quick bites", true);
-        BaseItem beverages = new BaseItem("Beverages", "Refreshing drinks", true);
-        BaseItem desserts = new BaseItem("Desserts", "Sweet treats", true);
+        String[][] categories = {
+            {"Fast Food", "Burgers, Pizzas and more"},
+            {"Indian Main Course", "Traditional Indian meals"},
+            {"Chinese", "Oriental flavors"},
+            {"Beverages & Drinks", "Refreshing drinks and coffee"},
+            {"Healthy & Salads", "Nutritious and light options"},
+            {"Snacks & Quick Bites", "Classic street food and snacks"},
+            {"Bakery & Sweets", "Cakes, pastries and desserts"}
+        };
 
-        baseItemRepository.saveAll(List.of(breakfast, lunch, snacks, beverages, desserts));
-        System.out.println("Categories seeded!");
+        for (String[] cat : categories) {
+            if (!baseItemRepository.existsByName(cat[0])) {
+                baseItemRepository.save(new BaseItem(cat[0], cat[1], true));
+                System.out.println("Seeded category: " + cat[0]);
+            }
+        }
     }
 
     private void seedProducts() {
-        Product dosa = createProduct("Masala Dosa", "Breakfast", "Crispy dosa with potato filling", 60.0, 50, true);
-        Product poha = createProduct("Poha", "Breakfast", "Flattened rice with onions and spices", 30.0, 40, true);
-        Product thali = createProduct("Veg Thali", "Lunch", "Full meal with roti, sabzi, dal and rice", 120.0, 30, true);
-        Product biryani = createProduct("Chicken Biryani", "Lunch", "Aromatic rice with spiced chicken", 150.0, 20, false);
-        Product samosa = createProduct("Samosa", "Snacks", "Deep fried pastry with potato filling", 15.0, 100, true);
-        Product tea = createProduct("Masala Tea", "Beverages", "Traditional Indian spiced tea", 10.0, 200, true);
-        Product iceCream = createProduct("Vanilla Ice Cream", "Desserts", "Classic vanilla flavor", 30.0, 0, true); // Out of stock
+        // Fast Food
+        addProductsToCategory("Fast Food", new String[]{
+            "Veg Burger", "Chicken Burger", "Cheese Burger", "Double Patty Burger", "Spicy Zinger Burger", 
+            "Paneer Burger", "Aloha Burger", "Mushroom Burger", "Fish Burger", "BBQ Burger",
+            "Margherita Pizza", "Farmhouse Pizza", "Peppy Paneer", "Mexican Wave", "Pepper BBQ Chicken", 
+            "Chicken Tikka Pizza", "Meat Lover's Pizza", "Veggie Paradise", "Corn & Cheese Pizza", "Double Cheese Margherita",
+            "Classic Fries", "Peri Peri Fries", "Cheese Loaded Fries", "Onion Rings", "Garlic Bread Sticks"
+        }, 50.0, 350.0);
 
-        productRepository.saveAll(List.of(dosa, poha, thali, biryani, samosa, tea, iceCream));
-        System.out.println("Products seeded!");
+        // Indian Main Course
+        addProductsToCategory("Indian Main Course", new String[]{
+            "Paneer Butter Masala", "Kadai Paneer", "Palak Paneer", "Matar Paneer", "Paneer Tikka Masala",
+            "Dal Makhani", "Dal Tadka", "Yellow Dal Fry", "Chole Masala", "Rajma Masala",
+            "Veg Kolhapuri", "Mix Veg", "Malai Kofta", "Bhindi Do Pyaza", "Aloo Gobi",
+            "Butter Chicken", "Chicken Tikka Masala", "Mutton Rogan Josh", "Egg Curry", "Fish Curry",
+            "Jeera Rice", "Steamed Rice", "Veg Pulao", "Peas Pulao", "Kashmiri Pulao"
+        }, 100.0, 450.0);
+
+        // Chinese
+        addProductsToCategory("Chinese", new String[]{
+            "Veg Hakka Noodles", "Schezwan Noodles", "Chilli Garlic Noodles", "Singapore Noodles", "Manchow Noodles",
+            "Veg Fried Rice", "Egg Fried Rice", "Chicken Fried Rice", "Mixed Fried Rice", "Schezwan Fried Rice",
+            "Veg Manchurian", "Chicken Manchurian", "Gobi Manchurian", "Baby Corn Manchurian", "Mushroom Manchurian",
+            "Chilli Paneer", "Chilli Chicken", "Chilli Potato", "Crispy Corn", "Spring Rolls",
+            "Hot and Sour Soup", "Sweet Corn Soup", "Lemon Coriander Soup", "Clear Soup", "Wonton Soup"
+        }, 80.0, 280.0);
+
+        // Beverages & Drinks
+        addProductsToCategory("Beverages & Drinks", new String[]{
+            "Fresh Lime Soda", "Virgin Mojito", "Blue Lagoon", "Iced Tea", "Cold Coffee",
+            "Mango Shake", "Oreo Shake", "Chocolate Shake", "Strawberry Shake", "Vanilla Shake",
+            "Masala Tea", "Ginger Tea", "Green Tea", "Black Coffee", "Cappuccino", "Latte",
+            "Orange Juice", "Watermelon Juice", "Pineapple Juice", "Mixed Fruit Juice", "Mosambi Juice",
+            "Coca Cola", "Pepsi", "Sprite", "Fanta", "Mineral Water"
+        }, 20.0, 180.0);
+
+        // Healthy & Salads
+        addProductsToCategory("Healthy & Salads", new String[]{
+            "Caesar Salad", "Greek Salad", "Garden Salad", "Fruit Salad", "Russian Salad",
+            "Sprouted Moong Salad", "Chickpea Salad", "Cucumber Salad", "Tomato Onion Salad", "Beetroot Salad",
+            "Grilled Chicken Salad", "Tuna Salad", "Boiled Egg Salad", "Paneer Salad", "Tofu Salad",
+            "Vegetable Clear Soup", "Quinoa Bowl", "Brown Rice Bowl", "Steamed Vegetables", "Sautéed Spinach"
+        }, 120.0, 320.0);
+
+        // Snacks & Quick Bites
+        addProductsToCategory("Snacks & Quick Bites", new String[]{
+            "Samosa", "Vada Pav", "Batata Vada", "Bread Pakoda", "Paneer Pakoda",
+            "Veg Sandwich", "Cheese Sandwich", "Grilled Sandwich", "Corn Sandwich", "Bombay Sandwich",
+            "Pani Puri", "Bhel Puri", "Sev Puri", "Dahi Puri", "Aloo Tikki",
+            "Pav Bhaji", "Misal Pav", "Poha", "Upma", "Idli Sambhar",
+            "Medu Vada", "Masala Dosa", "Onion Uttapam", "Plain Dosa", "Cheese Dosa"
+        }, 15.0, 150.0);
+
+        // Bakery & Sweets
+        addProductsToCategory("Bakery & Sweets", new String[]{
+            "Chocolate Cake", "Pineapple Cake", "Black Forest Cake", "Red Velvet Cake", "Butterscotch Cake",
+            "Chocolate Brownie", "Walnut Brownie", "Apple Pie", "Cheesecake", "Fruit Tart",
+            "Gulab Jamun", "Rasgulla", "Kaju Katli", "Motichoor Ladoo", "Jalebi",
+            "Vanilla Muffin", "Choco Chip Cookie", "Oatmeal Cookie", "Crossiant", "Danish Pastry"
+        }, 40.0, 250.0);
+
+        System.out.println("Products seeding check complete!");
+    }
+
+    private void addProductsToCategory(String category, String[] productNames, double minPrice, double maxPrice) {
+        java.util.Random random = new java.util.Random();
+        List<Product> productsToSave = new java.util.ArrayList<>();
+        
+        for (String name : productNames) {
+            if (!productRepository.existsByNameAndCategory(name, category)) {
+                double price = minPrice + (maxPrice - minPrice) * random.nextDouble();
+                price = Math.round(price / 5.0) * 5.0; // Round to nearest 5
+                
+                int stock = random.nextInt(100);
+                boolean isVeg = !name.toLowerCase().contains("chicken") && 
+                               !name.toLowerCase().contains("meat") && 
+                               !name.toLowerCase().contains("fish") && 
+                               !name.toLowerCase().contains("egg") &&
+                               !name.toLowerCase().contains("mutton") &&
+                               !name.toLowerCase().contains("tuna");
+                
+                Product p = createProduct(name, category, name + " prepared fresh with quality ingredients.", price, stock, isVeg);
+                p.setProductId("PRD-" + String.format("%04d", random.nextInt(10000)));
+                productsToSave.add(p);
+            }
+        }
+        if (!productsToSave.isEmpty()) {
+            productRepository.saveAll(productsToSave);
+            System.out.println("Seeded " + productsToSave.size() + " new products in " + category);
+        }
     }
 
     private Product createProduct(String name, String category, String desc, Double price, Integer stock, boolean isVeg) {
