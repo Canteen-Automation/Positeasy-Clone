@@ -22,6 +22,8 @@ import {
   MessageSquare,
   Store
 } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, getDocs, setDoc, doc, deleteDoc, query, where } from 'firebase/firestore';
 
 interface Manager {
   id: string;
@@ -62,20 +64,21 @@ const Managers = () => {
     selectedSections: [] as string[]
   });
 
-  // Fetch from Backend
+  // Fetch from Firestore
   const fetchManagers = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/system/managers');
-      if (res.ok) {
-        const data = await res.json();
-        // Backend uses 'permissions' field, map it to 'sections' for the component if needed
-        const mappedData = data.map((m: any) => ({
-          ...m,
-          sections: m.permissions || []
-        }));
-        setManagers(mappedData);
-      }
+      const querySnapshot = await getDocs(collection(db, 'managers'));
+      const items: Manager[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        items.push({ 
+          id: doc.id, 
+          ...data,
+          sections: data.permissions || [] 
+        } as Manager);
+      });
+      setManagers(items);
     } catch (err) {
       console.error('Error fetching managers:', err);
     } finally {
@@ -99,40 +102,33 @@ const Managers = () => {
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/system/managers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          viewOnly: formData.viewOnly,
-          permissions: formData.selectedSections
-        })
+      // For this migration, we create the manager in Firestore.
+      // Note: In a real app, you'd use a Cloud Function to create the Auth account too.
+      const id = Date.now().toString();
+      await setDoc(doc(db, 'managers', id), {
+        name: formData.name,
+        email: formData.email,
+        // Password is not stored in Firestore usually, but we keep the form logic
+        viewOnly: formData.viewOnly,
+        permissions: formData.selectedSections,
+        role: 'MANAGER',
+        status: 'active'
       });
 
-      if (response.ok) {
-        fetchManagers();
-        setIsModalOpen(false);
-        setFormData({ name: '', email: '', password: '', viewOnly: false, selectedSections: [] });
-      } else {
-        alert('Failed to create manager');
-      }
+      fetchManagers();
+      setIsModalOpen(false);
+      setFormData({ name: '', email: '', password: '', viewOnly: false, selectedSections: [] });
     } catch (err) {
       console.error('Create manager error:', err);
-      alert('Network error - make sure backend is running');
+      alert('Error saving manager data.');
     }
   };
 
   const dismissManager = async (id: string) => {
     if (window.confirm('Are you sure you want to dismiss this manager?')) {
       try {
-        const response = await fetch(`/api/system/managers/${id}`, {
-          method: 'DELETE'
-        });
-        if (response.ok) {
-          fetchManagers();
-        }
+        await deleteDoc(doc(db, 'managers', id));
+        fetchManagers();
       } catch (err) {
         console.error('Delete error:', err);
       }

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronRight, Filter, Loader2, Download, Printer, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { db } from '../firebase';
+import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
 
 interface PurchaseOrder {
-  id: number;
+  id: string;
   purchaseId: string;
   date: string;
-  vendor: { id: number; name: string };
+  vendor: { id: string; name: string };
   amount: number;
   paidTotal: number;
   status: string;
@@ -31,11 +33,12 @@ const Bills: React.FC = () => {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/purchases/orders');
-      if (response.ok) {
-        const data = await response.json();
-        setOrders(data);
-      }
+      const querySnapshot = await getDocs(collection(db, 'purchases'));
+      const items: PurchaseOrder[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() } as PurchaseOrder);
+      });
+      setOrders(items);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
@@ -49,23 +52,17 @@ const Bills: React.FC = () => {
     try {
       setIsSaving(true);
       const updatedPaidTotal = Number(selectedOrder.paidTotal) + Number(paymentAmount);
+      const newStatus = updatedPaidTotal >= selectedOrder.amount ? 'CLOSE' : 'PARTIALLY PAID';
       
-      const response = await fetch('/api/purchases/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...selectedOrder,
-          paidTotal: updatedPaidTotal,
-          status: updatedPaidTotal >= selectedOrder.amount ? 'CLOSE' : 'PARTIALLY PAID'
-        }),
+      await updateDoc(doc(db, 'purchases', selectedOrder.id), {
+        paidTotal: updatedPaidTotal,
+        status: newStatus
       });
 
-      if (response.ok) {
-        await fetchOrders();
-        setShowPayModal(false);
-        setSelectedOrder(null);
-        setPaymentAmount(0);
-      }
+      await fetchOrders();
+      setShowPayModal(false);
+      setSelectedOrder(null);
+      setPaymentAmount(0);
     } catch (error) {
       console.error('Error recording payment:', error);
     } finally {

@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
 import Numpad from './Numpad.tsx';
+import { db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface PinVerificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  terminalId: number | null;
+  terminalId: string | null;
   terminalName: string;
 }
 
@@ -30,21 +32,21 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/terminals/${terminalId}/verify-pin`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: pinToVerify }),
-      });
+      const terminalDoc = await getDoc(doc(db, 'terminals', terminalId));
       
-      const data = await response.json();
-      
-      if (response.ok) {
-        setApiKey(data.apiKey);
+      if (terminalDoc.exists()) {
+        const data = terminalDoc.data();
+        if (data.pin === pinToVerify) {
+          setApiKey(data.apiKey);
+        } else {
+          setError('Invalid Security PIN');
+          setPin('');
+        }
       } else {
-        setError(data.message || 'Verification failed');
-        setPin('');
+        setError('Terminal not found');
       }
     } catch (err) {
+      console.error('Verification error:', err);
       setError('Connection error');
     } finally {
       setLoading(false);

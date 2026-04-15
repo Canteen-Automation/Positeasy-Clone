@@ -1,0 +1,24 @@
+{
+  "name": "positeasy-clone",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Canteen-Automation/Positeasy-Clone.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Canteen-Automation/Positeasy-Clone/issues"
+  },
+  "homepage": "https://github.com/Canteen-Automation/Positeasy-Clone#readme",
+  "dependencies": {
+    "firebase-admin": "^13.8.0"
+  }
+}

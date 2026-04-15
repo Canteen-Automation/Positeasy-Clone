@@ -15,6 +15,9 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { format, subDays, startOfDay } from 'date-fns';
 
 const PurchaseSummary = () => {
   const [activeRange, setActiveRange] = useState('Today');
@@ -23,28 +26,43 @@ const PurchaseSummary = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchPurchaseStats = async () => {
       try {
         setIsLoading(true);
-        // Fetch summary and bills in parallel
-        const [summaryRes, billsRes] = await Promise.all([
-          fetch('/api/purchases/summary'),
-          fetch('/api/purchases/orders')
-        ]);
-        
-        if (summaryRes.ok && billsRes.ok) {
-          const summaryData = await summaryRes.json();
-          const billsData = await billsRes.json();
-          setData(summaryData);
-          setBills(billsData);
-        }
+        const querySnapshot = await getDocs(collection(db, 'purchases'));
+        const items: any[] = [];
+        querySnapshot.forEach(doc => {
+          const d = doc.data();
+          items.push({ 
+            ...d, 
+            id: doc.id,
+            balance: (d.amount || 0) - (d.paidTotal || 0)
+          });
+        });
+
+        // Calculate Stats
+        const totalAmount = items.reduce((sum, i) => sum + (i.amount || 0), 0);
+        const paidAmount = items.reduce((sum, i) => sum + (i.paidTotal || 0), 0);
+        const balanceAmount = totalAmount - paidAmount;
+        const unpaidCount = items.filter(i => i.balance > 0).length;
+
+        // Trend (Simple aggregation by date)
+        const trendMap: { [key: string]: number } = {};
+        items.forEach(i => {
+          const date = i.date ? format(new Date(i.date), 'dd MMM') : 'N/A';
+          trendMap[date] = (trendMap[date] || 0) + i.amount;
+        });
+        const trend = Object.keys(trendMap).map(date => ({ date, amount: trendMap[date] }));
+
+        setData({ totalAmount, paidAmount, balanceAmount, unpaidCount, trend });
+        setBills(items);
       } catch (error) {
         console.error('Error fetching purchase summary:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchData();
+    fetchPurchaseStats();
   }, []);
 
   if (isLoading || !data) {

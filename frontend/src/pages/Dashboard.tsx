@@ -19,6 +19,9 @@ import {
   Cell
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { db } from '../firebase';
+import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { startOfDay, endOfDay, format } from 'date-fns';
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('Sales');
@@ -27,33 +30,76 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDashboardStats = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/dashboard/stats');
-        if (response.ok) {
-          const result = await response.json();
-          setData(result);
+        const ordersSnapshot = await getDocs(collection(db, 'orders'));
+        const purchasesSnapshot = await getDocs(collection(db, 'purchases'));
+
+        const orders: any[] = [];
+        ordersSnapshot.forEach(doc => orders.push({ ...doc.data(), createdAt: doc.data().createdAt?.toDate() || new Date(doc.data().createdAt) }));
+
+        const purchases: any[] = [];
+        purchasesSnapshot.forEach(doc => purchases.push({ ...doc.data() }));
+
+        // Calculate Stats
+        const totalSales = orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+        const activeOrders = orders.filter(o => o.status !== 'CANCELLED').length;
+
+        // Hourly Sales (Today)
+        const today = startOfDay(new Date());
+        const todayOrders = orders.filter(o => o.createdAt >= today);
+        const hourlySalesMap: { [key: string]: number } = {};
+        for (let i = 0; i < 24; i++) {
+          hourlySalesMap[format(new Date().setHours(i, 0, 0, 0), 'HH:00')] = 0;
         }
+        todayOrders.forEach(o => {
+          const hour = format(o.createdAt, 'HH:00');
+          hourlySalesMap[hour] = (hourlySalesMap[hour] || 0) + o.totalAmount;
+        });
+        const hourlySales = Object.keys(hourlySalesMap).map(time => ({ time, value: hourlySalesMap[time] }));
+
+        // Store Overview (Performance by Stall)
+        const stallMap: { [key: string]: any } = {};
+        orders.forEach(o => {
+          const stallName = o.stallName || 'General';
+          if (!stallMap[stallName]) {
+            stallMap[stallName] = { name: stallName, sale: 0, orders: 0, taxes: 0, purchase: 0 };
+          }
+          stallMap[stallName].sale += o.totalAmount;
+          stallMap[stallName].orders += 1;
+        });
+        const storeOverview = Object.values(stallMap);
+
+        // Basic Insights
+        const insights = [
+          `Total revenue reached ₹${totalSales.toLocaleString()}`,
+          `${activeOrders} successful transactions recorded`,
+          `Top performing stall: ${storeOverview.sort((a, b) => b.sale - a.sale)[0]?.name || 'N/A'}`
+        ];
+
+        setData({
+          stats: { totalSales, activeOrders },
+          storeOverview,
+          hourlySales,
+          insights
+        });
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchData();
+    fetchDashboardStats();
   }, []);
 
   if (isLoading || !data) {
     return (
-      <div className="h-screen flex items-center justify-center bg-slate-50/50">
-        <motion.div 
-          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-          transition={{ repeat: Infinity, duration: 1.5 }}
-          className="text-[#0f4475] font-black uppercase tracking-widest text-sm"
-        >
-          Loading Business Intelligence...
-        </motion.div>
+      <div className="h-screen flex items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0f4475]"></div>
+          <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Loading Analytics...</p>
+        </div>
       </div>
     );
   }
@@ -62,7 +108,7 @@ const Dashboard = () => {
 
   const pieData = [
     { name: 'Full Payment', value: stats.totalSales, color: '#8b5cf6' },
-    { name: 'Credit', value: 0, color: '#fbbf24' } // Credits logic can be added later
+    { name: 'Credit', value: 0, color: '#fbbf24' }
   ];
 
   return (

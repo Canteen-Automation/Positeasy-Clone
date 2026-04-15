@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ShoppingCart, Eye, Plus, X, Loader2, CheckCircle, Trash2, Edit2 } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, where, serverTimestamp } from 'firebase/firestore';
 
 interface PurchaseOrderItem {
   productName: string;
@@ -9,10 +11,10 @@ interface PurchaseOrderItem {
 }
 
 interface PurchaseOrder {
-  id: number;
+  id: string;
   purchaseId: string;
   date: string;
-  vendor: { id: number; name: string };
+  vendor: { id: string; name: string };
   amount: number;
   paidTotal: number;
   status: 'OPEN' | 'TRANSIT' | 'CANCELLED' | 'BILLED' | 'RECEIVED' | 'PARTIALLY PAID' | 'CLOSE';
@@ -22,7 +24,7 @@ interface PurchaseOrder {
 
 const Purchases: React.FC = () => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
-  const [vendors, setVendors] = useState<{id: number, name: string}[]>([]);
+  const [vendors, setVendors] = useState<{id: string, name: string}[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -54,11 +56,12 @@ const Purchases: React.FC = () => {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/purchases/orders');
-      if (response.ok) {
-        const data = await response.json();
-        setOrders(data);
-      }
+      const querySnapshot = await getDocs(collection(db, 'purchases'));
+      const items: PurchaseOrder[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() } as PurchaseOrder);
+      });
+      setOrders(items);
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
@@ -68,11 +71,12 @@ const Purchases: React.FC = () => {
 
   const fetchVendors = async () => {
     try {
-      const response = await fetch('/api/purchases/vendors');
-      if (response.ok) {
-        const data = await response.json();
-        setVendors(data);
-      }
+      const querySnapshot = await getDocs(collection(db, 'vendors'));
+      const items: {id: string, name: string}[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, name: doc.data().name });
+      });
+      setVendors(items);
     } catch (error) {
       console.error('Error fetching vendors:', error);
     }
@@ -103,37 +107,39 @@ const Purchases: React.FC = () => {
     e.preventDefault();
     setIsSaving(true);
     try {
+      const selectedVendor = vendors.find(v => v.id === newOrder.vendorId);
       const payload = {
         ...newOrder,
-        id: editingOrder?.id,
-        vendor: { id: parseInt(newOrder.vendorId) },
+        vendor: { id: newOrder.vendorId, name: selectedVendor?.name || '' },
         amount: calculateTotal(),
         date: new Date(newOrder.date).toISOString()
       };
 
-      const response = await fetch('/api/purchases/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        setShowAddModal(false);
-        setEditingOrder(null);
-        setNewOrder(initialOrderState);
-        fetchOrders();
+      if (editingOrder) {
+        await updateDoc(doc(db, 'purchases', editingOrder.id), payload);
+      } else {
+        await addDoc(collection(db, 'purchases'), {
+          ...payload,
+          createdAt: serverTimestamp()
+        });
       }
+
+      setShowAddModal(false);
+      setEditingOrder(null);
+      setNewOrder(initialOrderState);
+      fetchOrders();
     } catch (error) {
       console.error('Error saving order:', error);
+      alert('Error saving purchase order.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const deleteOrder = async (id: number) => {
+  const deleteOrder = async (id: string) => {
     if (!window.confirm('Delete this purchase order?')) return;
     try {
-        await fetch(`/api/purchases/orders/${id}`, { method: 'DELETE' });
+        await deleteDoc(doc(db, 'purchases', id));
         fetchOrders();
     } catch (error) {
         console.error('Error deleting order:', error);
@@ -153,20 +159,10 @@ const Purchases: React.FC = () => {
     }
   };
 
-  const updateOrderStatus = async (orderId: number, newStatus: string) => {
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
-      const order = orders.find(o => o.id === orderId);
-      if (!order) return;
-
-      const response = await fetch(`/api/purchases/orders`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...order, status: newStatus })
-      });
-
-      if (response.ok) {
-        fetchOrders();
-      }
+      await updateDoc(doc(db, 'purchases', orderId), { status: newStatus });
+      fetchOrders();
     } catch (error) {
       console.error('Error updating status:', error);
     }
@@ -177,11 +173,11 @@ const Purchases: React.FC = () => {
     setNewOrder({
       purchaseId: order.purchaseId,
       date: order.date.split('T')[0],
-      vendorId: order.vendor.id.toString(),
+      vendorId: order.vendor.id,
       status: order.status,
-      discount: 0, // We should ideally store discount in DB too, but for now 0
+      discount: 0, 
       referenceId: order.referenceId || '',
-      instruction: '', // Same for instruction
+      instruction: '', 
       items: order.items.map(item => ({...item}))
     });
     setShowAddModal(true);
@@ -190,12 +186,14 @@ const Purchases: React.FC = () => {
   const fetchOrderHistory = async (order: PurchaseOrder) => {
     try {
       setActiveHistoryOrder(order);
-      const response = await fetch(`/api/purchases/orders/${order.id}/history`);
-      if (response.ok) {
-        const data = await response.json();
-        setOrderHistory(data);
-        setShowHistoryModal(true);
-      }
+      const q = query(collection(db, 'purchaseHistory'), where('purchaseId', '==', order.purchaseId), orderBy('changeDate', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const items: any[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data(), changeDate: doc.data().changeDate?.toDate() });
+      });
+      setOrderHistory(items);
+      setShowHistoryModal(true);
     } catch (error) {
       console.error('Error fetching history:', error);
     }

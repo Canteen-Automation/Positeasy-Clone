@@ -23,6 +23,8 @@ import {
   Store,
   Contact
 } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, getDocs, setDoc, doc, deleteDoc } from 'firebase/firestore';
 
 interface StaffMember {
   id: string;
@@ -50,11 +52,12 @@ const Staff = () => {
   const fetchStaff = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/system/staff');
-      if (res.ok) {
-        const data = await res.json();
-        setStaffList(data);
-      }
+      const querySnapshot = await getDocs(collection(db, 'staff'));
+      const items: StaffMember[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() } as StaffMember);
+      });
+      setStaffList(items);
     } catch (err) {
       console.error('Error fetching staff:', err);
     } finally {
@@ -69,40 +72,29 @@ const Staff = () => {
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/system/staff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          viewOnly: formData.viewOnly,
-          permissions: [] // Staff will use a different portal, no internal permissions needed
-        })
+      const id = Date.now().toString();
+      await setDoc(doc(db, 'staff', id), {
+        name: formData.name,
+        email: formData.email,
+        viewOnly: formData.viewOnly,
+        permissions: [], // Staff will use a different portal, no internal permissions needed
+        role: 'STAFF'
       });
 
-      if (response.ok) {
-        fetchStaff();
-        setIsModalOpen(false);
-        setFormData({ name: '', email: '', password: '', viewOnly: false });
-      } else {
-        alert('Failed to create staff member');
-      }
+      fetchStaff();
+      setIsModalOpen(false);
+      setFormData({ name: '', email: '', password: '', viewOnly: false });
     } catch (err) {
       console.error('Create staff error:', err);
-      alert('Network error - make sure server is running');
+      alert('Error saving staff data.');
     }
   };
 
   const deleteStaff = async (id: string) => {
     if (window.confirm('Are you sure you want to remove this staff member?')) {
       try {
-        const response = await fetch(`/api/system/staff/${id}`, {
-          method: 'DELETE'
-        });
-        if (response.ok) {
-          fetchStaff();
-        }
+        await deleteDoc(doc(db, 'staff', id));
+        fetchStaff();
       } catch (err) {
         console.error('Delete error:', err);
       }

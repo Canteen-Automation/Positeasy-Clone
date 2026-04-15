@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, X, Search, Filter, MoreVertical, RefreshCw, Edit2, Power, PowerOff, ShoppingCart, Package, ExternalLink } from 'lucide-react';
 import Pagination from '../components/Pagination';
+import { db } from '../firebase';
+import { collection, getDocs, setDoc, doc, query, where, orderBy, addDoc } from 'firebase/firestore';
 
 interface BaseItem {
-  id: number;
+  id: string;
   name: string;
   description: string;
   active: boolean;
 }
 
 interface Product {
-  id: number;
+  id: string;
   name: string;
   price: number;
   category: string;
@@ -23,7 +25,7 @@ const BaseMenu = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState<BaseItem | null>(null);
   const [newItem, setNewItem] = useState({ name: '', description: '', active: true });
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   // Pagination States
@@ -54,16 +56,13 @@ const BaseMenu = () => {
   const fetchItems = async () => {
     setLoading(true);
     try {
-      const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/base-items?page=${currentPage}&size=${pageSize}`);
-      const data = await response.json();
-      if (data && data.content) {
-        setItems(data.content);
-        setTotalElements(data.totalElements);
-      } else {
-        setItems([]);
-        setTotalElements(0);
-      }
+      const querySnapshot = await getDocs(collection(db, 'baseItems'));
+      const itemsList: BaseItem[] = [];
+      querySnapshot.forEach((doc) => {
+        itemsList.push({ id: doc.id, ...doc.data() } as BaseItem);
+      });
+      setItems(itemsList);
+      setTotalElements(itemsList.length);
     } catch (error) {
       console.error('Error fetching items:', error);
     } finally {
@@ -76,9 +75,13 @@ const BaseMenu = () => {
     setShowProductsModal(true);
     setProductsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/products/category/${encodeURIComponent(baseItem.name)}`);
-      const data = await response.json();
-      setAssociatedProducts(data);
+      const q = query(collection(db, 'products'), where('category', '==', baseItem.name));
+      const querySnapshot = await getDocs(q);
+      const itemsList: Product[] = [];
+      querySnapshot.forEach((doc) => {
+        itemsList.push({ id: doc.id, ...doc.data() } as Product);
+      });
+      setAssociatedProducts(itemsList);
     } catch (error) {
       console.error('Error fetching associated products:', error);
     } finally {
@@ -88,25 +91,23 @@ const BaseMenu = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const url = editingItem 
-      ? `http://localhost:8080/api/base-items/${editingItem.id}`
-      : 'http://localhost:8080/api/base-items';
-    const method = editingItem ? 'PUT' : 'POST';
-
     try {
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newItem),
-      });
-      if (response.ok) {
-        setShowModal(false);
-        setEditingItem(null);
-        setNewItem({ name: '', description: '', active: true });
-        fetchItems();
+      if (editingItem) {
+        await setDoc(doc(db, 'baseItems', editingItem.id), {
+          ...newItem,
+          id: editingItem.id
+        });
+      } else {
+        await addDoc(collection(db, 'baseItems'), newItem);
       }
+      
+      setShowModal(false);
+      setEditingItem(null);
+      setNewItem({ name: '', description: '', active: true });
+      fetchItems();
     } catch (error) {
       console.error('Error saving item:', error);
+      alert('Error saving base item');
     }
   };
 
@@ -119,15 +120,9 @@ const BaseMenu = () => {
 
   const handleToggleActive = async (item: BaseItem) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/base-items/${item.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...item, active: !item.active }),
-      });
-      if (response.ok) {
-        fetchItems();
-        setOpenMenuId(null);
-      }
+      await setDoc(doc(db, 'baseItems', item.id), { ...item, active: !item.active });
+      fetchItems();
+      setOpenMenuId(null);
     } catch (error) {
       console.error('Error toggling active status:', error);
     }

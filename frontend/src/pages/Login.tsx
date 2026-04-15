@@ -15,6 +15,10 @@ import { useNavigate } from 'react-router-dom';
 import collegeLogo from '../assets/college-logo.png';
 import buildingPhoto from '../assets/ritchennai.webp';
 
+import { auth, db } from '../firebase';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+
 const Login = () => {
   const [role, setRole] = useState<'manager' | 'master'>('manager');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,33 +36,76 @@ const Login = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      const response = await fetch('/api/system/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: username, password })
-      });
+    // Map 'admin'/'admin' to valid Firebase credentials for convenience
+    let effectiveUsername = username;
+    let effectivePassword = password;
+    let isMasterInitial = false;
 
-      if (response.ok) {
-        const user = await response.json();
+    if (username === 'admin' && password === 'admin') {
+      effectiveUsername = 'admin@admin.com';
+      effectivePassword = 'adminadmin'; // Min 6 chars
+      isMasterInitial = true;
+    }
+
+    try {
+      // 1. Sign in with Firebase Auth
+      let userCredential;
+      try {
+        userCredential = await signInWithEmailAndPassword(auth, effectiveUsername, effectivePassword);
+      } catch (authErr: any) {
+        // If master admin doesn't exist, auto-create it (one-time setup)
+        if (isMasterInitial && (authErr.code === 'auth/invalid-credential' || authErr.code === 'auth/user-not-found')) {
+          userCredential = await createUserWithEmailAndPassword(auth, effectiveUsername, effectivePassword);
+          // Initialize Firestore metadata for this master admin
+          await setDoc(doc(db, 'users', userCredential.user.uid), {
+            name: 'Master Admin',
+            username: 'admin',
+            email: 'admin@admin.com',
+            role: 'master',
+            permissions: ['ALL'],
+            createdAt: serverTimestamp()
+          });
+          console.log('Master Admin initialized.');
+        } else {
+          throw authErr;
+        }
+      }
+
+      const fbUser = userCredential.user;
+
+      // 2. Fetch User Metadata from Firestore
+      const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const userRole = userData.role?.toLowerCase();
 
         // Strict Role Validation
-        if (user.role.toLowerCase() !== role) {
-          alert(`Access Denied: You are trying to login as ${role.toUpperCase()}, but your credentials belong to a ${user.role.toUpperCase()} account.`);
+        if (userRole !== role) {
+          alert(`Access Denied: You are trying to login as ${role.toUpperCase()}, but your credentials belong to a ${userRole.toUpperCase()} account.`);
+          await auth.signOut();
           return;
         }
 
         sessionStorage.setItem('isLoggedIn', 'true');
-        sessionStorage.setItem('userRole', user.role.toLowerCase());
-        sessionStorage.setItem('userPermissions', JSON.stringify(user.permissions || []));
+        sessionStorage.setItem('userRole', userRole);
+        sessionStorage.setItem('userPermissions', JSON.stringify(userData.permissions || []));
         navigate('/store-dashboard');
       } else {
-        const error = await response.text();
-        alert(error || 'Invalid credentials');
+        alert('User profile not found in system.');
+        await auth.signOut();
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Login error:', err);
-      alert('Network error - make sure backend is running');
+      let message = 'Invalid credentials';
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        message = 'Invalid email or password';
+      } else if (err.code === 'auth/invalid-credential') {
+        message = 'Invalid credentials';
+      } else if (err.code === 'auth/configuration-not-found') {
+        message = 'Firebase Auth not enabled. Please enable Email/Password provider in Console.';
+      }
+      alert(message);
     }
   };
 

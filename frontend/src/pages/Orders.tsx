@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Pagination from '../components/Pagination';
+import { db } from '../firebase';
+import { collection, query, where, orderBy, onSnapshot, getDocs, doc, updateDoc, Timestamp } from 'firebase/firestore';
 
 interface OrderItem {
   id?: number;
@@ -82,70 +84,72 @@ const Orders: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/products`);
-      if (response.ok) {
-        const data = await response.json();
-        setAllProducts(data);
-      }
+      const querySnapshot = await getDocs(collection(db, 'products'));
+      const items: Product[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id as any, ...doc.data() } as Product);
+      });
+      setAllProducts(items);
     } catch (error) {
       console.error('Error fetching products:', error);
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = () => {
     setLoading(true);
     try {
-      // Build query params
-      const params = new URLSearchParams();
-      params.append('archived', 'false'); // Only show live orders
-      if (startDate) params.append('startDate', `${startDate}T00:00:00`);
-      if (endDate) params.append('endDate', `${endDate}T23:59:59`);
-      if (statusFilter) params.append('status', statusFilter);
-      if (paymentFilter) params.append('paymentType', paymentFilter);
-      if (searchQuery) params.append('search', searchQuery);
-      params.append('page', currentPage.toString());
-      params.append('size', pageSize.toString());
+      const ordersRef = collection(db, 'orders');
+      let q = query(ordersRef, orderBy('createdAt', 'desc'));
 
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/all?${params.toString()}`);
-      const data = await response.json();
-      
-      if (data && data.content && Array.isArray(data.content)) {
-        setOrders(data.content);
-        setTotalElements(data.totalElements);
+      // Real-time listener
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const items: Order[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          // Manual filtering for simplicity in this migration (could use Firestore filters)
+          const orderDate = data.createdAt?.toDate() || new Date();
+          const sDate = new Date(startDate);
+          const eDate = new Date(endDate);
+          eDate.setHours(23, 59, 59);
+
+          const matchesStatus = !statusFilter || data.status === statusFilter;
+          const matchesPayment = !paymentFilter || data.paymentMethod === paymentFilter;
+          const matchesDate = orderDate >= sDate && orderDate <= eDate;
+          
+          if (matchesStatus && matchesPayment && matchesDate) {
+            items.push({ id: doc.id as any, ...data, createdAt: orderDate.toISOString() } as Order);
+          }
+        });
+        setOrders(items);
+        setTotalElements(items.length);
         
-        // If we have a selected order, try to refresh it from the data list
         if (selectedOrder) {
-          const updated = data.content.find((o: Order) => o.id === selectedOrder.id);
+          const updated = items.find(o => o.id === selectedOrder.id);
           if (updated) setSelectedOrder(updated);
-        } else if (data.content.length > 0) {
-          setSelectedOrder(data.content[0]);
+        } else if (items.length > 0) {
+          setSelectedOrder(items[0]);
         }
-      } else {
-        console.error('API did not return a valid Page object:', data);
-        setOrders([]);
-        setTotalElements(0);
-      }
+        setLoading(false);
+      }, (error) => {
+        console.error('Firestore snapshot error:', error);
+        setLoading(false);
+      });
+
+      return unsubscribe;
     } catch (error) {
-      console.error('Error fetching orders:', error);
-      setOrders([]);
-    } finally {
+      console.error('Error setting up orders listener:', error);
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    const unsub = fetchOrders();
+    return () => unsub && unsub();
+  }, [startDate, endDate, statusFilter, paymentFilter]);
+
   const handleApproveOrder = async (orderId: number) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'COMPLETED' })
-      });
-      
-      if (response.ok) {
-        fetchOrders();
-      } else {
-        alert('Failed to update order status');
-      }
+      await updateDoc(doc(db, 'orders', orderId.toString()), { status: 'COMPLETED' });
     } catch (error) {
       console.error('Error updating order:', error);
     }
@@ -153,16 +157,8 @@ const Orders: React.FC = () => {
 
   const handleMarkUndelivered = async (orderId: number) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'PAID' })
-      });
-      
-      if (response.ok) {
-        setShowActionMenu(false);
-        fetchOrders();
-      }
+      await updateDoc(doc(db, 'orders', orderId.toString()), { status: 'PAID' });
+      setShowActionMenu(false);
     } catch (error) {
       console.error('Error marking undelivered:', error);
     }
@@ -209,22 +205,11 @@ const Orders: React.FC = () => {
     if (!selectedOrder) return;
     setIsUpdatingOrder(true);
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/${selectedOrder.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...selectedOrder,
-          items: editingItems,
-          totalAmount: editTotal
-        })
+      await updateDoc(doc(db, 'orders', selectedOrder.id.toString()), {
+        items: editingItems,
+        totalAmount: editTotal
       });
-
-      if (response.ok) {
-        setIsEditModalOpen(false);
-        fetchOrders();
-      } else {
-        alert('Failed to update order details');
-      }
+      setIsEditModalOpen(false);
     } catch (error) {
       console.error('Error saving edits:', error);
     } finally {

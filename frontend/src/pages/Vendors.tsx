@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Building2, Phone, Mail, MoreVertical, List, LayoutGrid, Edit2, Trash2, X, Loader2, AlertCircle, CheckCircle, Plus } from 'lucide-react';
 import Pagination from '../components/Pagination';
+import { db } from '../firebase';
+import { collection, getDocs, setDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 
 interface VendorDto {
-  id: number;
+  id: string;
   name: string;
   companyName: string;
   contactNumber: string;
@@ -34,7 +36,7 @@ const Vendors: React.FC = () => {
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
   
   // Action Menu State
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVendors();
@@ -43,12 +45,13 @@ const Vendors: React.FC = () => {
   const fetchVendors = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/purchases/vendors');
-      if (response.ok) {
-        const data = await response.json();
-        setVendors(data);
-        setTotalElements(data.length);
-      }
+      const querySnapshot = await getDocs(collection(db, 'vendors'));
+      const items: VendorDto[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() } as VendorDto);
+      });
+      setVendors(items);
+      setTotalElements(items.length);
     } catch (error) {
       console.error('Error fetching vendors:', error);
     } finally {
@@ -85,13 +88,9 @@ const Vendors: React.FC = () => {
     if (!window.confirm(`Are you sure you want to delete ${vendor.name}?`)) return;
     
     try {
-      const response = await fetch(`/api/purchases/vendors/${vendor.id}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        showNotification(`${vendor.name} deleted successfully`, 'success');
-        fetchVendors();
-      }
+      await deleteDoc(doc(db, 'vendors', vendor.id));
+      showNotification(`${vendor.name} deleted successfully`, 'success');
+      fetchVendors();
     } catch (error) {
       showNotification('Failed to delete vendor', 'error');
     }
@@ -111,24 +110,27 @@ const Vendors: React.FC = () => {
     
     setIsSaving(true);
     try {
-      const response = await fetch('/api/purchases/vendors', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingVendor ? { ...form, id: editingVendor.id } : form),
-      });
-      
-      if (response.ok) {
-        showNotification(`Vendor ${editingVendor ? 'updated' : 'created'} successfully`, 'success');
-        setShowModal(false);
-        fetchVendors();
+      if (editingVendor) {
+        await setDoc(doc(db, 'vendors', editingVendor.id), {
+          ...form,
+          id: editingVendor.id
+        });
       } else {
-        const errorText = await response.text();
-        console.error('Backend error:', errorText);
-        showNotification(`Failed to save: ${errorText || response.statusText}`, 'error');
+        const id = Date.now().toString();
+        await setDoc(doc(db, 'vendors', id), {
+          ...form,
+          id: id,
+          totalOrders: 0,
+          totalAmount: 0
+        });
       }
+      
+      showNotification(`Vendor ${editingVendor ? 'updated' : 'created'} successfully`, 'success');
+      setShowModal(false);
+      fetchVendors();
     } catch (error) {
-      console.error('Fetch error:', error);
-      showNotification('Could not connect to server', 'error');
+      console.error('Save error:', error);
+      showNotification('Could not save vendor data', 'error');
     } finally {
       setIsSaving(false);
     }

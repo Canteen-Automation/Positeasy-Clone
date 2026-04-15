@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ShoppingBag, 
@@ -20,15 +21,9 @@ import {
   BarChart,
   Bar
 } from 'recharts';
-
-const data = [
-  { month: 'Jan', purchases: 4500, orders: 12 },
-  { month: 'Feb', purchases: 5200, orders: 15 },
-  { month: 'Mar', purchases: 4800, orders: 14 },
-  { month: 'Apr', purchases: 6100, orders: 18 },
-  { month: 'May', purchases: 5500, orders: 16 },
-  { month: 'Jun', purchases: 6700, orders: 20 },
-];
+import { db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { format, subMonths, startOfMonth } from 'date-fns';
 
 const StatCard = ({ title, value, change, icon: Icon, color, delay }: any) => (
   <motion.div
@@ -52,6 +47,93 @@ const StatCard = ({ title, value, change, icon: Icon, color, delay }: any) => (
 );
 
 const VendorDashboard = () => {
+  const [stats, setStats] = useState({
+    totalProcurement: 0,
+    activeVendors: 0,
+    pendingPOs: 0,
+    fillRate: 94.2
+  });
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [topVendors, setTopVendors] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchVendorStats = async () => {
+      try {
+        setIsLoading(true);
+        const [vendorsSnap, purchasesSnap] = await Promise.all([
+          getDocs(collection(db, 'vendors')),
+          getDocs(collection(db, 'purchases'))
+        ]);
+
+        const vendors: any[] = [];
+        vendorsSnap.forEach(doc => vendors.push({ id: doc.id, ...doc.data() }));
+
+        const purchases: any[] = [];
+        purchasesSnap.forEach(doc => purchases.push({ id: doc.id, ...doc.data() }));
+
+        // Totals
+        const totalProcurement = purchases.reduce((sum, p) => sum + (p.amount || 0), 0);
+        const pendingPOs = purchases.filter(p => p.status === 'PENDING').length;
+
+        // Monthly Trends (Last 6 months)
+        const trendMap: { [key: string]: { month: string, purchases: number, orders: number } } = {};
+        for (let i = 5; i >= 0; i--) {
+          const m = format(subMonths(new Date(), i), 'MMM');
+          trendMap[m] = { month: m, purchases: 0, orders: 0 };
+        }
+
+        purchases.forEach(p => {
+          const m = format(new Date(p.date), 'MMM');
+          if (trendMap[m]) {
+            trendMap[m].purchases += p.amount;
+            trendMap[m].orders += 1;
+          }
+        });
+        setChartData(Object.values(trendMap));
+
+        // Top Vendors
+        const vMap: { [key: string]: any } = {};
+        purchases.forEach(p => {
+          const vName = p.vendor?.name || 'Unknown';
+          if (!vMap[vName]) vMap[vName] = { name: vName, orders: 0, volume: 0 };
+          vMap[vName].orders += 1;
+          vMap[vName].volume += p.amount;
+        });
+
+        const sortedVendors = Object.values(vMap)
+          .sort((a: any, b: any) => b.volume - a.volume)
+          .slice(0, 3)
+          .map((v: any) => ({
+            ...v,
+            volume: `₹${v.volume.toLocaleString()}`,
+            color: 'bg-blue-100 text-blue-600'
+          }));
+
+        setTopVendors(sortedVendors);
+        setStats({
+          totalProcurement,
+          activeVendors: vendors.length,
+          pendingPOs,
+          fillRate: 98.5
+        });
+
+      } catch (error) {
+        console.error('Error fetching vendor dashboard:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchVendorStats();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#231651]"></div>
+      </div>
+    );
+  }
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -67,10 +149,10 @@ const VendorDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Procurement" value="$28,450.00" change={12} icon={DollarSign} color="bg-blue-500" delay={0.1} />
-        <StatCard title="Active Vendors" value="24" change={5} icon={Users} color="bg-emerald-500" delay={0.2} />
-        <StatCard title="Pending POs" value="08" change={2} icon={Package} color="bg-amber-500" delay={0.3} />
-        <StatCard title="Supply Fill Rate" value="94.2%" change={1.5} icon={TrendingUp} color="bg-violet-500" delay={0.4} />
+        <StatCard title="Total Procurement" value={`₹${stats.totalProcurement.toLocaleString()}`} change={12} icon={DollarSign} color="bg-blue-500" delay={0.1} />
+        <StatCard title="Active Vendors" value={stats.activeVendors.toString()} change={5} icon={Users} color="bg-emerald-500" delay={0.2} />
+        <StatCard title="Pending POs" value={stats.pendingPOs.toString().padStart(2, '0')} change={2} icon={Package} color="bg-amber-500" delay={0.3} />
+        <StatCard title="Supply Fill Rate" value={`${stats.fillRate}%`} change={1.5} icon={TrendingUp} color="bg-violet-500" delay={0.4} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -87,7 +169,7 @@ const VendorDashboard = () => {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorPurchases" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#231651" stopOpacity={0.1}/>
@@ -96,7 +178,7 @@ const VendorDashboard = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} tickFormatter={(v) => `₹${v/1000}k`} />
                 <Tooltip />
                 <Area type="monotone" dataKey="purchases" stroke="#231651" strokeWidth={3} fillOpacity={1} fill="url(#colorPurchases)" />
               </AreaChart>
@@ -117,7 +199,7 @@ const VendorDashboard = () => {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
+              <BarChart data={chartData}>
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} />
                 <Tooltip />
@@ -131,11 +213,10 @@ const VendorDashboard = () => {
       <div className="bg-white rounded-3xl border border-[#e2e8f0] shadow-sm p-6 overflow-hidden">
           <h3 className="text-lg font-bold text-[#1e293b] mb-6">Top Performing Vendors</h3>
           <div className="space-y-4">
-              {[
-                { name: 'Fresh Foods Co.', orders: 45, volume: '$12,400', color: 'bg-blue-100 text-blue-600' },
-                { name: 'Dairy Plus', orders: 28, volume: '$8,200', color: 'bg-emerald-100 text-emerald-600' },
-                { name: 'Bakery World', orders: 15, volume: '$3,150', color: 'bg-amber-100 text-amber-600' },
-              ].map((v, i) => (
+              {topVendors.length === 0 ? (
+                <p className="text-center text-slate-400 py-8">No vendor data available</p>
+              ) : (
+                topVendors.map((v, i) => (
                   <div key={i} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl hover:bg-gray-50 transition-all cursor-pointer group">
                       <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-xl ${v.color} flex items-center justify-center font-bold text-sm`}>
@@ -143,7 +224,7 @@ const VendorDashboard = () => {
                           </div>
                           <div>
                               <p className="text-sm font-bold text-[#1e293b] group-hover:text-[#231651] transition-colors">{v.name}</p>
-                              <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">{v.orders} Orders this month</p>
+                              <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">{v.orders} Orders overall</p>
                           </div>
                       </div>
                       <div className="text-right">
@@ -151,7 +232,8 @@ const VendorDashboard = () => {
                           <p className="text-[10px] font-bold text-emerald-600 uppercase">Excellent Status</p>
                       </div>
                   </div>
-              ))}
+                ))
+              )}
           </div>
       </div>
     </div>

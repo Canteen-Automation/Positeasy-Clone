@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Search, User, Phone, Tag, ChevronRight, UserCheck, UserMinus, MoreVertical, LayoutGrid, List, Edit2, Trash2, Shield, X, Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import Pagination from '../components/Pagination';
+import { db } from '../firebase';
+import { collection, getDocs, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 
 interface UserDto {
-  id: number;
+  id: string;
   mobileNumber: string;
   name: string;
   loggedIn: boolean;
@@ -32,7 +34,7 @@ const Customers: React.FC = () => {
   const [toast, setToast] = useState<{message: string, type: 'success' | 'error'} | null>(null);
   
   // Action Menu State
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -41,18 +43,17 @@ const Customers: React.FC = () => {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/auth/users?page=${currentPage}&size=${pageSize}`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.content) {
-          setUsers(data.content);
-          setTotalElements(data.totalElements);
-        } else {
-          setUsers([]);
-          setTotalElements(0);
-        }
-      }
+      const querySnapshot = await getDocs(collection(db, 'customers'));
+      const items: UserDto[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        items.push({ 
+          id: doc.id, 
+          ...data 
+        } as UserDto);
+      });
+      setUsers(items);
+      setTotalElements(items.length);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -78,20 +79,13 @@ const Customers: React.FC = () => {
     if (!window.confirm(`Are you sure you want to permanently delete ${user.name}? This action cannot be undone.`)) return;
     
     try {
-      const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/auth/users/${user.id}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        showNotification(`${user.name} deleted successfully`, 'success');
-        fetchUsers();
-        setOpenMenuId(null);
-      } else {
-        showNotification('Failed to delete user', 'error');
-      }
+      await deleteDoc(doc(db, 'customers', user.id.toString()));
+      showNotification(`${user.name} deleted successfully`, 'success');
+      fetchUsers();
+      setOpenMenuId(null);
     } catch (error) {
       console.error('Error deleting user:', error);
-      showNotification('Error connecting to server', 'error');
+      showNotification('Error deleting user', 'error');
     }
   };
 
@@ -118,24 +112,17 @@ const Customers: React.FC = () => {
     
     setIsSaving(true);
     try {
-      const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/auth/users/${editingUser.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
+      await updateDoc(doc(db, 'customers', editingUser.id.toString()), {
+        name: editForm.name,
+        mobileNumber: editForm.mobileNumber
       });
       
-      if (response.ok) {
-        showNotification('Customer profile updated successfully', 'success');
-        setShowEditModal(false);
-        fetchUsers();
-      } else {
-        const error = await response.json();
-        showNotification(error.message || 'Failed to update user', 'error');
-      }
+      showNotification('Customer profile updated successfully', 'success');
+      setShowEditModal(false);
+      fetchUsers();
     } catch (error) {
       console.error('Error updating user:', error);
-      showNotification('Connection error, try again later', 'error');
+      showNotification('Error updating customer', 'error');
     } finally {
       setIsSaving(false);
     }

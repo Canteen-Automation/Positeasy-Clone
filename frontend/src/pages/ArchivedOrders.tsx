@@ -14,15 +14,17 @@ import {
   Clock,
   ArrowLeft
 } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import Pagination from '../components/Pagination';
+import { db } from '../firebase';
+import { collection, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
 
 interface OrderItem {
-  id?: number;
+  id?: string;
   productName: string;
   quantity: number;
   price: number;
-  productId: number;
+  productId: string;
 }
 
 interface UserData {
@@ -31,13 +33,13 @@ interface UserData {
 }
 
 interface Order {
-  id: number;
+  id: string;
   orderNumber: string;
   displayOrderId: string;
   totalAmount: number;
   status: string;
   paymentMethod: string;
-  createdAt: string;
+  createdAt: any;
   user: UserData;
   items: OrderItem[];
 }
@@ -50,9 +52,9 @@ const ArchivedOrders: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
   
-  // Default to showing yesterday's orders in the archive view
+  // Default to showing last 30 days
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
-  const [endDate, setEndDate] = useState(format(subDays(new Date(), 1), 'yyyy-MM-dd'));
+  const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   // Pagination States
   const [currentPage, setCurrentPage] = useState(0);
@@ -66,30 +68,48 @@ const ArchivedOrders: React.FC = () => {
   const fetchArchivedOrders = async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      params.append('archived', 'true'); // Explicitly request archived orders
-      if (startDate) params.append('startDate', `${startDate}T00:00:00`);
-      if (endDate) params.append('endDate', `${endDate}T23:59:59`);
-      if (statusFilter) params.append('status', statusFilter);
-      if (paymentFilter) params.append('paymentType', paymentFilter);
-      if (searchQuery) params.append('search', searchQuery);
-      params.append('page', currentPage.toString());
-      params.append('size', pageSize.toString());
+      const startT = Timestamp.fromDate(startOfDay(new Date(startDate)));
+      const endT = Timestamp.fromDate(endOfDay(new Date(endDate)));
 
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/all?${params.toString()}`);
-      const data = await response.json();
-      
-      if (data && data.content && Array.isArray(data.content)) {
-        setOrders(data.content);
-        setTotalElements(data.totalElements);
-        if (data.content.length > 0) {
-          setSelectedOrder(data.content[0]);
-        } else {
-          setSelectedOrder(null);
+      let q = query(
+        collection(db, 'orders'),
+        where('createdAt', '>=', startT),
+        where('createdAt', '<=', endT),
+        orderBy('createdAt', 'desc')
+      );
+
+      const querySnapshot = await getDocs(q);
+      let items: Order[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        let matchesStatus = !statusFilter || data.status === statusFilter;
+        let matchesPayment = !paymentFilter || data.paymentMethod === paymentFilter;
+        
+        if (matchesStatus && matchesPayment) {
+          items.push({ 
+            id: doc.id, 
+            ...data, 
+            createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt) 
+          } as Order);
         }
+      });
+
+      // Simple client-side search for now
+      if (searchQuery) {
+        const lowerSearch = searchQuery.toLowerCase();
+        items = items.filter(o => 
+          o.displayOrderId?.toLowerCase().includes(lowerSearch) ||
+          o.user?.name?.toLowerCase().includes(lowerSearch) ||
+          o.user?.mobileNumber?.includes(lowerSearch)
+        );
+      }
+
+      setOrders(items);
+      setTotalElements(items.length);
+      if (items.length > 0) {
+        setSelectedOrder(items[0]);
       } else {
-        setOrders([]);
-        setTotalElements(0);
+        setSelectedOrder(null);
       }
     } catch (error) {
       console.error('Error fetching archived orders:', error);

@@ -13,9 +13,11 @@ import {
 } from 'lucide-react';
 import AddTerminalModal from '../components/AddTerminalModal.tsx';
 import PinVerificationModal from '../components/PinVerificationModal.tsx';
+import { db } from '../firebase';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 interface Terminal {
-  id: number;
+  id: string;
   name: string;
   location: string;
   apiKey: string;
@@ -32,11 +34,12 @@ const Terminals = () => {
   const fetchTerminals = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/terminals');
-      if (response.ok) {
-        const data = await response.json();
-        setTerminals(data);
-      }
+      const querySnapshot = await getDocs(collection(db, 'terminals'));
+      const items: Terminal[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id, ...doc.data() } as Terminal);
+      });
+      setTerminals(items);
     } catch (error) {
       console.error('Failed to fetch terminals:', error);
     } finally {
@@ -48,12 +51,12 @@ const Terminals = () => {
     fetchTerminals();
   }, []);
 
-  const handleDelete = async (id: number, e: React.MouseEvent) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to remove this terminal?')) {
       try {
-        const response = await fetch(`/api/terminals/${id}`, { method: 'DELETE' });
-        if (response.ok) fetchTerminals();
+        await deleteDoc(doc(db, 'terminals', id));
+        fetchTerminals();
       } catch (error) {
         console.error('Failed to delete terminal:', error);
       }

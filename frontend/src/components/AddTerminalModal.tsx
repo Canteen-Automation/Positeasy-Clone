@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Monitor, MapPin, Lock } from 'lucide-react';
 import Numpad from './Numpad.tsx';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 interface AddTerminalModalProps {
   isOpen: boolean;
@@ -19,18 +21,21 @@ const AddTerminalModal: React.FC<AddTerminalModalProps> = ({ isOpen, onClose, on
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/terminals', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, location, pin }),
+      const apiKey = `tk_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+      await addDoc(collection(db, 'terminals'), {
+        name,
+        location,
+        pin, // Note: In a real app, this should be hashed
+        apiKey,
+        createdAt: serverTimestamp()
       });
-      if (response.ok) {
-        onSuccess();
-        reset();
-        onClose();
-      }
+      
+      onSuccess();
+      reset();
+      onClose();
     } catch (error) {
       console.error('Failed to create terminal:', error);
+      alert('Error registering terminal.');
     } finally {
       setLoading(false);
     }

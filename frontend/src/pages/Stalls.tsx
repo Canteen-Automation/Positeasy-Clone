@@ -17,6 +17,8 @@ import {
   Calendar,
   AlertCircle
 } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, setDoc, query, orderBy } from 'firebase/firestore';
 
 interface BaseItem {
   id: number;
@@ -93,12 +95,12 @@ const Stalls: React.FC = () => {
   const fetchStalls = async () => {
     try {
       setLoading(true);
-      const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/stalls`);
-      if (response.ok) {
-        const data = await response.json();
-        setStalls(data);
-      }
+      const querySnapshot = await getDocs(collection(db, 'stalls'));
+      const items: Stall[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id as any, ...doc.data() } as Stall);
+      });
+      setStalls(items);
     } catch (error) {
       console.error('Error fetching stalls:', error);
     } finally {
@@ -121,33 +123,30 @@ const Stalls: React.FC = () => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const host = window.location.hostname;
-      const url = editingStall 
-        ? `http://${host}:8080/api/stalls/${editingStall.id}`
-        : `http://${host}:8080/api/stalls`;
-      
-      const response = await fetch(url, {
-        method: editingStall ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-           ...formData,
-           active: true
-        })
-      });
-
-      if (response.ok) {
-        setIsModalOpen(false);
-        setEditingStall(null);
-        setFormData({ 
-          name: '', 
-          description: '', 
-          imageData: '',
-          temporarilyClosed: false,
-          sessionOptional: false,
-          sessions: getDefaultSessions()
+      if (editingStall) {
+        await setDoc(doc(db, 'stalls', editingStall.id.toString()), {
+          ...formData,
+          active: true
         });
-        fetchStalls();
+      } else {
+        const id = Date.now().toString();
+        await setDoc(doc(db, 'stalls', id), {
+          ...formData,
+          id: id as any,
+          active: true
+        });
       }
+      setIsModalOpen(false);
+      setEditingStall(null);
+      setFormData({ 
+        name: '', 
+        description: '', 
+        imageData: '',
+        temporarilyClosed: false,
+        sessionOptional: false,
+        sessions: getDefaultSessions()
+      });
+      fetchStalls();
     } catch (error) {
       console.error('Error saving stall:', error);
     } finally {
@@ -172,13 +171,8 @@ const Stalls: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this stall?')) return;
     try {
-      const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/stalls/${id}`, {
-        method: 'DELETE'
-      });
-      if (response.ok) {
-        fetchStalls();
-      }
+      await deleteDoc(doc(db, 'stalls', id.toString()));
+      fetchStalls();
     } catch (error) {
       console.error('Error deleting stall:', error);
     }
@@ -192,14 +186,18 @@ const Stalls: React.FC = () => {
     setIsItemModalOpen(true);
     
     try {
-      const host = window.location.hostname;
-      const [prodRes, baseRes] = await Promise.all([
-        fetch(`http://${host}:8080/api/products`),
-        fetch(`http://${host}:8080/api/base-items`)
+      const [prodSnap, baseSnap] = await Promise.all([
+        getDocs(collection(db, 'products')),
+        getDocs(collection(db, 'base-items'))
       ]);
       
-      if (prodRes.ok) setAllProducts(await prodRes.json());
-      if (baseRes.ok) setAllBaseItems(await baseRes.json());
+      const prods: Product[] = [];
+      prodSnap.forEach(d => prods.push({ id: d.id as any, ...d.data() } as Product));
+      setAllProducts(prods);
+
+      const bases: BaseItem[] = [];
+      baseSnap.forEach(d => bases.push({ id: d.id as any, ...d.data() } as BaseItem));
+      setAllBaseItems(bases);
     } catch (error) {
       console.error('Error fetching available items:', error);
     }
@@ -209,23 +207,17 @@ const Stalls: React.FC = () => {
     if (!selectedStall) return;
     setIsSaving(true);
     try {
-      const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/stalls/${selectedStall.id}/items`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productIds: tempProductIds,
-          baseItemIds: tempBaseItemIds
-        })
+      // Map IDs to objects for storage if needed, or just store IDs
+      const selectedProducts = allProducts.filter(p => tempProductIds.includes(p.id));
+      const selectedBaseItems = allBaseItems.filter(b => tempBaseItemIds.includes(b.id));
+
+      await updateDoc(doc(db, 'stalls', selectedStall.id.toString()), {
+        products: selectedProducts,
+        baseItems: selectedBaseItems
       });
       
-      if (response.ok) {
-        setIsItemModalOpen(false);
-        fetchStalls();
-      } else {
-        const errorData = await response.json();
-        window.alert(`Failed to save inventory: ${errorData.message || 'Unknown error'}`);
-      }
+      setIsItemModalOpen(false);
+      fetchStalls();
     } catch (error) {
       console.error('Error updating stall items:', error);
       window.alert('A network error occurred while updating stall inventory.');

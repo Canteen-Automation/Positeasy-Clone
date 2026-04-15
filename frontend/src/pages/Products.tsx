@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, X, Search, Filter, MoreVertical, RefreshCw, Edit2, Power, PowerOff, Tag, Package, Image as ImageIcon, Barcode, DollarSign, ChevronDown, Clock, Check, Trash2, Database } from 'lucide-react';
 import Pagination from '../components/Pagination';
+import { db } from '../firebase';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit, startAfter, where, getCountFromServer, setDoc } from 'firebase/firestore';
 
 interface ProductSession {
   id?: number;
@@ -114,16 +116,16 @@ const Products = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/products?page=${currentPage}&size=${pageSize}`);
-      const data = await response.json();
-      if (data && data.content) {
-        setProducts(data.content);
-        setTotalElements(data.totalElements);
-      } else {
-        setProducts([]);
-        setTotalElements(0);
-      }
+      // Simplified pagination for Firestore migration
+      const productsRef = collection(db, 'products');
+      const q = query(productsRef, orderBy('name'));
+      const querySnapshot = await getDocs(q);
+      const items: Product[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id as any, ...doc.data() } as Product);
+      });
+      setProducts(items);
+      setTotalElements(items.length);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -133,9 +135,12 @@ const Products = () => {
 
   const fetchBaseItems = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/base-items');
-      const data = await response.json();
-      setBaseItems(data);
+      const querySnapshot = await getDocs(collection(db, 'base-items'));
+      const items: BaseItem[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id as any, ...doc.data() } as BaseItem);
+      });
+      setBaseItems(items);
     } catch (error) {
       console.error('Error fetching base items:', error);
     }
@@ -143,9 +148,12 @@ const Products = () => {
 
   const fetchAllStalls = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/stalls');
-      const data = await response.json();
-      setAllStalls(data);
+      const querySnapshot = await getDocs(collection(db, 'stalls'));
+      const items: Stall[] = [];
+      querySnapshot.forEach((doc) => {
+        items.push({ id: doc.id as any, ...doc.data() } as Stall);
+      });
+      setAllStalls(items);
     } catch (error) {
       console.error('Error fetching stalls:', error);
     }
@@ -153,23 +161,17 @@ const Products = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const url = editingProduct 
-      ? `http://localhost:8080/api/products/${editingProduct.id}`
-      : 'http://localhost:8080/api/products';
-    const method = editingProduct ? 'PUT' : 'POST';
-
     try {
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      });
-      if (response.ok) {
-        setShowModal(false);
-        setEditingProduct(null);
-        setFormData(emptyProduct);
-        fetchProducts();
+      if (editingProduct) {
+        await setDoc(doc(db, 'products', editingProduct.id!.toString()), formData);
+      } else {
+        const id = Date.now().toString(); // Simple ID generation
+        await setDoc(doc(db, 'products', id), { ...formData, id });
       }
+      setShowModal(false);
+      setEditingProduct(null);
+      setFormData(emptyProduct);
+      fetchProducts();
     } catch (error) {
       console.error('Error saving product:', error);
     }
@@ -187,15 +189,9 @@ const Products = () => {
 
   const handleToggleActive = async (product: Product) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${product.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...product, active: !product.active }),
-      });
-      if (response.ok) {
-        fetchProducts();
-        setOpenMenuId(null);
-      }
+      await updateDoc(doc(db, 'products', product.id!.toString()), { active: !product.active });
+      fetchProducts();
+      setOpenMenuId(null);
     } catch (error) {
       console.error('Error toggling active status:', error);
     }
@@ -203,13 +199,10 @@ const Products = () => {
 
   const handleToggleStock = async (product: Product) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${product.id}/toggle-stock`, {
-        method: 'PATCH',
-      });
-      if (response.ok) {
-        fetchProducts();
-        setOpenMenuId(null);
-      }
+      const newStock = product.stock > 0 ? 0 : 100; // Simplified toggle logic
+      await updateDoc(doc(db, 'products', product.id!.toString()), { stock: newStock });
+      fetchProducts();
+      setOpenMenuId(null);
     } catch (error) {
       console.error('Error toggling stock status:', error);
     }
@@ -218,13 +211,9 @@ const Products = () => {
   const handleDelete = async (product: Product) => {
     if (!window.confirm(`Are you sure you want to delete ${product.name}?`)) return;
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${product.id}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        fetchProducts();
-        setOpenMenuId(null);
-      }
+      await deleteDoc(doc(db, 'products', product.id!.toString()));
+      fetchProducts();
+      setOpenMenuId(null);
     } catch (error) {
       console.error('Error deleting product:', error);
     }

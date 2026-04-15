@@ -20,6 +20,8 @@ import {
   Cell
 } from 'recharts';
 import { motion } from 'framer-motion';
+import { db } from '../firebase';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 
 const salesData = [
   { time: '12am', value: 0 },
@@ -49,33 +51,39 @@ const StoreDashboard = () => {
   });
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch('/api/dashboard/stats');
-        if (response.ok) {
-          const data = await response.json();
-          // Find RIT Canteen in storeOverview if available, otherwise use general stats
-          if (data.storeOverview && data.storeOverview.length > 0) {
-             const ritStore = data.storeOverview.find((s: any) => s.name === 'RIT Canteen');
-             if (ritStore) {
-                setStats({
-                   totalSales: ritStore.sale,
-                   activeOrders: ritStore.orders,
-                   dailyCustomers: ritStore.orders * 0.9, // Approximation
-                   revenueGrowth: 12.5
-                });
-             } else {
-                setStats(data.stats);
-             }
-          } else {
-             setStats(data.stats);
-          }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const q = query(
+      collection(db, 'orders'),
+      where('createdAt', '>=', today)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      let total = 0;
+      let count = 0;
+      const customerSet = new Set();
+
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.status === 'COMPLETED' || data.status === 'PAID') {
+          total += data.totalAmount || 0;
         }
-      } catch (error) {
-        console.error('Error fetching dashboard stats:', error);
-      }
-    };
-    fetchStats();
+        count++;
+        if (data.user?.name) customerSet.add(data.user.name);
+      });
+
+      setStats({
+        totalSales: total,
+        activeOrders: count,
+        dailyCustomers: customerSet.size || count * 0.8,
+        revenueGrowth: 12.5
+      });
+    }, (error) => {
+      console.error('Dashboard onSnapshot error:', error);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const pieData = [

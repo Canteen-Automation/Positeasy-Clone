@@ -10,6 +10,8 @@ import {
   Loader2
 } from 'lucide-react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { db } from '../firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 interface StatBoxProps {
   title: string;
@@ -65,17 +67,16 @@ const PurchaseAnalytics = () => {
   });
 
   useEffect(() => {
-    fetchData();
+    fetchAnalyticsData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchAnalyticsData = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/purchases/orders');
-      if (response.ok) {
-        const data = await response.json();
-        processAnalytics(data);
-      }
+      const querySnapshot = await getDocs(collection(db, 'purchases'));
+      const items: any[] = [];
+      querySnapshot.forEach(doc => items.push({ ...doc.data(), id: doc.id }));
+      processAnalytics(items);
     } catch (error) {
       console.error('Error fetching analytics:', error);
     } finally {
