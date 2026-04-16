@@ -22,4 +22,11 @@ public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Lo
 
     @org.springframework.data.jpa.repository.Query("SELECT p.date, SUM(p.amount) FROM PurchaseOrder p GROUP BY p.date ORDER BY p.date ASC")
     List<Object[]> getPurchaseTrend();
+
+    long countByStatus(String status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT SUM(i.quantity) FROM PurchaseOrder p JOIN p.items i WHERE p.status = 'OPEN'")
+    Long countOpenItems();
+
+    List<PurchaseOrder> findTop5ByOrderByDateDesc();
 }

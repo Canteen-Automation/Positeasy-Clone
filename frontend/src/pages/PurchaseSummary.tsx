@@ -204,8 +204,12 @@ const PurchaseSummary = () => {
                               {bill.status}
                            </span>
                         </td>
-                        <td className="px-6 py-5 text-right text-xs font-black text-rose-500">₹{bill.balance.toLocaleString()}</td>
-                        <td className="px-6 py-5 text-right text-xs font-black text-[#521c4b]">₹{bill.amount.toLocaleString()}</td>
+                        <td className="px-6 py-5 text-right text-xs font-black text-rose-500">
+                           ₹{((bill.amount || 0) - (bill.paidTotal || 0)).toLocaleString()}
+                        </td>
+                        <td className="px-6 py-5 text-right text-xs font-black text-[#521c4b]">
+                           ₹{(bill.amount || 0).toLocaleString()}
+                        </td>
                      </tr>
                   ))}
                </tbody>

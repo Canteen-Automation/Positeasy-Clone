@@ -120,4 +120,20 @@ public class PurchaseService {
         
         return summary;
     }
+
+    public Map<String, Object> getIntentSummary() {
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("openCount", purchaseOrderRepository.countByStatus("OPEN"));
+        summary.put("openItems", purchaseOrderRepository.countOpenItems());
+        summary.put("payableAmount", purchaseOrderRepository.getTotalBalanceAmount());
+        summary.put("unbilledCount", purchaseOrderRepository.countByStatus("RECEIVED")); // Assuming RECEIVED but not yet BILLED
+        
+        List<PurchaseOrder> recent = purchaseOrderRepository.findTop5ByOrderByDateDesc();
+        summary.put("recentOrders", recent);
+        
+        List<Object[]> trendData = purchaseOrderRepository.getPurchaseTrend();
+        summary.put("trend", trendData);
+        
+        return summary;
+    }
 }

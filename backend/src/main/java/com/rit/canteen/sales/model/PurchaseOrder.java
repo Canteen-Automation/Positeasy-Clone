@@ -31,7 +31,7 @@ public class PurchaseOrder {
     private BigDecimal paidTotal = BigDecimal.ZERO;
 
     private String status; // OPEN, RECEIVED, BILLED, CLOSED
-
+    private String storeName;
     private String referenceId;
 
     private String instruction;
@@ -64,6 +64,9 @@ public class PurchaseOrder {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getStoreName() { return storeName; }
+    public void setStoreName(String storeName) { this.storeName = storeName; }
 
     public String getReferenceId() { return referenceId; }
     public void setReferenceId(String referenceId) { this.referenceId = referenceId; }

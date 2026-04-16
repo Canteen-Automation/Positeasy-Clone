@@ -27,11 +27,17 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+interface SubMenuItem {
+  title: string;
+  path?: string;
+  nestedMenu?: { title: string; path: string }[];
+}
+
 interface MenuItem {
   title: string;
   icon: React.ElementType;
   path?: string;
-  subMenu?: { title: string; path: string }[];
+  subMenu?: SubMenuItem[];
 }
 
 const menuItems: MenuItem[] = [
@@ -53,15 +59,32 @@ const menuItems: MenuItem[] = [
     ] 
   },
   { 
-    title: 'Vendors', 
+    title: 'Purchases', 
     icon: ShoppingBag, 
     subMenu: [
-      { title: 'Dashboard', path: '/purchases/dashboard' },
-      { title: 'Orders', path: '/purchases/orders' },
-      { title: 'Summary', path: '/purchases/summary' },
-      { title: 'Bills', path: '/purchases/bills' },
-      { title: 'Vendors', path: '/purchases/vendor' },
-      { title: 'Purchase Analytics', path: '/purchases/analytics' }
+      { 
+        title: 'Vendor', 
+        nestedMenu: [
+          { title: 'Dashboard', path: '/purchases/dashboard' },
+          { title: 'Orders', path: '/purchases/orders' },
+          { title: 'Summary', path: '/purchases/summary' },
+          { title: 'Bills', path: '/purchases/bills' },
+          { title: 'Vendors', path: '/purchases/vendor' },
+          { title: 'Purchase Analytics', path: '/purchases/analytics' }
+        ] 
+      },
+      { 
+        title: 'Intent', 
+        nestedMenu: [
+          { title: 'Orders Dashboard', path: '/purchases/intent/orders-dashboard' },
+          { title: 'Receives Dashboard', path: '/purchases/intent/receives-dashboard' },
+          { title: 'Orders', path: '/purchases/intent/orders' },
+          { title: 'Receives', path: '/purchases/intent/receives' },
+          { title: 'Receives Summary', path: '/purchases/intent/receives-summary' },
+          { title: 'Request', path: '/purchases/intent/request' },
+          { title: 'Stores', path: '/purchases/intent/stores' }
+        ] 
+      }
     ] 
   },
   { 
@@ -107,6 +130,7 @@ const menuItems: MenuItem[] = [
 
 const Sidebar = () => {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+  const [openNestedMenus, setOpenNestedMenus] = useState<string[]>([]);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -123,7 +147,7 @@ const Sidebar = () => {
       'Store Dashboard': 'dashboard',
       'Sale': 'sale',
       'Customers': 'customers',
-      'Vendors': 'purchases',
+      'Purchases': 'purchases',
       'Inventory': 'inventory',
       'Expense': 'expense',
       'Reports': 'reports',
@@ -146,6 +170,14 @@ const Sidebar = () => {
 
   const toggleMenu = (title: string) => {
     setOpenMenus((prev) => 
+      prev.includes(title) 
+        ? prev.filter((item) => item !== title) 
+        : [...prev, title]
+    );
+  };
+
+  const toggleNestedMenu = (title: string) => {
+    setOpenNestedMenus((prev) => 
       prev.includes(title) 
         ? prev.filter((item) => item !== title) 
         : [...prev, title]
@@ -228,32 +260,82 @@ const Sidebar = () => {
                       >
                         {item.subMenu.map((sub) => (
                           <li key={sub.title}>
-                            <NavLink
-                              to={sub.path}
-                              title={`Go to ${sub.title}`}
-                              className={({ isActive }) => cn(
-                                "flex items-center gap-3 py-2 px-4 rounded-lg text-[13px] font-medium transition-all group relative",
-                                isActive 
-                                  ? "text-white bg-[#521c4b] shadow-md shadow-[#521c4b]/10" 
-                                  : "text-[#64748b] hover:text-[#1e293b] hover:translate-x-1"
-                              )}
-                            >
-                              {({ isActive }) => (
-                                <>
-                                  <div className={cn(
-                                    "w-1.5 h-1.5 rounded-full transition-all duration-300",
-                                    isActive ? "bg-[#231651] scale-125" : "bg-gray-300 group-hover:bg-gray-400"
-                                  )} />
-                                  <span>{sub.title}</span>
-                                  {isActive && (
-                                    <motion.div 
-                                      layoutId="activeSubMenu"
-                                      className="absolute left-[-1.5px] top-1/4 bottom-1/4 w-[3px] bg-[#231651] rounded-full"
-                                    />
+                            {sub.nestedMenu ? (
+                              <div>
+                                <button
+                                  onClick={() => toggleNestedMenu(sub.title)}
+                                  className={cn(
+                                    "w-full flex items-center justify-between py-2 px-4 rounded-lg text-[13px] font-medium transition-all group",
+                                    openNestedMenus.includes(sub.title) ? "text-[#231651] bg-[#231651]/5" : "text-[#64748b] hover:text-[#1e293b]"
                                   )}
-                                </>
-                              )}
-                            </NavLink>
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div className={cn(
+                                      "w-1.5 h-1.5 rounded-full",
+                                      openNestedMenus.includes(sub.title) ? "bg-[#231651]" : "bg-gray-300"
+                                    )} />
+                                    <span>{sub.title}</span>
+                                  </div>
+                                  <ChevronRight size={12} className={cn(
+                                    "transition-transform duration-200",
+                                    openNestedMenus.includes(sub.title) ? "rotate-90" : ""
+                                  )} />
+                                </button>
+                                
+                                <AnimatePresence>
+                                  {openNestedMenus.includes(sub.title) && (
+                                    <motion.ul
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      className="ml-4 mt-1 space-y-0.5 border-l border-[#e2e8f0]/60 overflow-hidden"
+                                    >
+                                      {sub.nestedMenu.map((nested) => (
+                                        <li key={nested.title}>
+                                          <NavLink
+                                            to={nested.path}
+                                            className={({ isActive }) => cn(
+                                              "flex items-center gap-3 py-1.5 px-4 rounded-lg text-[12px] font-medium transition-all",
+                                              isActive ? "text-[#231651] bg-white shadow-sm" : "text-[#64748b] hover:text-[#1e293b]"
+                                            )}
+                                          >
+                                            <div className="w-1 h-1 rounded-full bg-gray-300" />
+                                            <span>{nested.title}</span>
+                                          </NavLink>
+                                        </li>
+                                      ))}
+                                    </motion.ul>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            ) : (
+                              <NavLink
+                                to={sub.path!}
+                                title={`Go to ${sub.title}`}
+                                className={({ isActive }) => cn(
+                                  "flex items-center gap-3 py-2 px-4 rounded-lg text-[13px] font-medium transition-all group relative",
+                                  isActive 
+                                    ? "text-white bg-[#521c4b] shadow-md shadow-[#521c4b]/10" 
+                                    : "text-[#64748b] hover:text-[#1e293b] hover:translate-x-1"
+                                )}
+                              >
+                                {({ isActive }) => (
+                                  <>
+                                    <div className={cn(
+                                      "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                                      isActive ? "bg-[#231651] scale-125" : "bg-gray-300 group-hover:bg-gray-400"
+                                    )} />
+                                    <span>{sub.title}</span>
+                                    {isActive && (
+                                      <motion.div 
+                                        layoutId="activeSubMenu"
+                                        className="absolute left-[-1.5px] top-1/4 bottom-1/4 w-[3px] bg-[#231651] rounded-full"
+                                      />
+                                    )}
+                                  </>
+                                )}
+                              </NavLink>
+                            )}
                           </li>
                         ))}
                       </motion.ul>
