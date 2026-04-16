@@ -198,8 +198,15 @@ const Stalls: React.FC = () => {
         fetch(`http://${host}:8080/api/base-items`)
       ]);
       
-      if (prodRes.ok) setAllProducts(await prodRes.json());
-      if (baseRes.ok) setAllBaseItems(await baseRes.json());
+      if (prodRes.ok) {
+        const data = await prodRes.json();
+        // Handle both Array and Page object responses for robustness
+        setAllProducts(Array.isArray(data) ? data : (data.content || []));
+      }
+      if (baseRes.ok) {
+        const data = await baseRes.json();
+        setAllBaseItems(Array.isArray(data) ? data : (data.content || []));
+      }
     } catch (error) {
       console.error('Error fetching available items:', error);
     }
@@ -234,10 +241,11 @@ const Stalls: React.FC = () => {
     }
   };
 
-  const filteredStalls = stalls.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStalls = stalls.filter(s => {
+    const query = (searchQuery || '').toLowerCase();
+    return (s.name || '').toLowerCase().includes(query) ||
+           (s.description || '').toLowerCase().includes(query);
+  });
 
   const isStallOpen = (stall: Stall) => {
     if (stall.temporarilyClosed) return false;
@@ -618,7 +626,7 @@ const Stalls: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
                        {activeTab === 'products' ? (
                          allProducts
-                           .filter(p => p.name.toLowerCase().includes(itemSearchQuery.toLowerCase()))
+                           .filter(p => (p.name || '').toLowerCase().includes((itemSearchQuery || '').toLowerCase()))
                            .map(product => {
                              const isSelected = tempProductIds.includes(product.id);
                              return (
@@ -644,7 +652,7 @@ const Stalls: React.FC = () => {
                            })
                        ) : (
                          allBaseItems
-                           .filter(b => b.name.toLowerCase().includes(itemSearchQuery.toLowerCase()))
+                           .filter(b => (b.name || '').toLowerCase().includes((itemSearchQuery || '').toLowerCase()))
                            .map(baseItem => {
                              const isSelected = tempBaseItemIds.includes(baseItem.id);
                              return (

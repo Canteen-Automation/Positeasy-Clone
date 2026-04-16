@@ -82,10 +82,12 @@ const Orders: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/products`);
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/products`);
       if (response.ok) {
         const data = await response.json();
-        setAllProducts(data);
+        // Handle both Array and Page object responses for robustness
+        setAllProducts(Array.isArray(data) ? data : (data.content || []));
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -233,10 +235,11 @@ const Orders: React.FC = () => {
   };
 
   const filteredProducts = useMemo(() => {
-    if (!editSearchQuery.trim()) return [];
+    const query = (editSearchQuery || '').trim().toLowerCase();
+    if (!query) return [];
     return allProducts.filter(p => 
-      p.name.toLowerCase().includes(editSearchQuery.toLowerCase()) ||
-      p.category.toLowerCase().includes(editSearchQuery.toLowerCase())
+      (p.name || '').toLowerCase().includes(query) ||
+      (p.category || '').toLowerCase().includes(query)
     ).slice(0, 5); // Limit results
   }, [allProducts, editSearchQuery]);
 
@@ -246,7 +249,7 @@ const Orders: React.FC = () => {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status.toUpperCase()) {
+    switch ((status || '').toUpperCase()) {
       case 'COMPLETED': return 'bg-emerald-50 text-emerald-600 border-emerald-100';
       case 'PAID': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
       case 'PENDING': return 'bg-amber-50 text-amber-600 border-amber-100';

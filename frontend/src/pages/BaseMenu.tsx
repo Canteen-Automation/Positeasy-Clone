@@ -76,7 +76,8 @@ const BaseMenu = () => {
     setShowProductsModal(true);
     setProductsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/products/category/${encodeURIComponent(baseItem.name)}`);
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/products/category/${encodeURIComponent(baseItem.name)}`);
       const data = await response.json();
       setAssociatedProducts(data);
     } catch (error) {
@@ -88,9 +89,10 @@ const BaseMenu = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const host = window.location.hostname;
     const url = editingItem 
-      ? `http://localhost:8080/api/base-items/${editingItem.id}`
-      : 'http://localhost:8080/api/base-items';
+      ? `http://${host}:8080/api/base-items/${editingItem.id}`
+      : `http://${host}:8080/api/base-items`;
     const method = editingItem ? 'PUT' : 'POST';
 
     try {
@@ -119,7 +121,8 @@ const BaseMenu = () => {
 
   const handleToggleActive = async (item: BaseItem) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/base-items/${item.id}`, {
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/base-items/${item.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...item, active: !item.active }),
@@ -200,7 +203,7 @@ const BaseMenu = () => {
                     </div>
                   </td>
                 </tr>
-              ) : items.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+              ) : items.filter(item => (item.name || '').toLowerCase().includes((searchTerm || '').toLowerCase())).length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-[#64748b]">
                     <p className="text-lg font-medium mb-1">No items found</p>
@@ -209,7 +212,7 @@ const BaseMenu = () => {
                 </tr>
               ) : (
                 items
-                  .filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .filter(item => (item.name || '').toLowerCase().includes((searchTerm || '').toLowerCase()))
                   .map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-all group">
                     <td className="px-6 py-4 text-sm font-medium text-[#64748b]">#{item.id}</td>

@@ -117,15 +117,21 @@ const Products = () => {
       const host = window.location.hostname;
       const response = await fetch(`http://${host}:8080/api/products?page=${currentPage}&size=${pageSize}`);
       const data = await response.json();
+      
       if (data && data.content) {
         setProducts(data.content);
         setTotalElements(data.totalElements);
+      } else if (Array.isArray(data)) {
+        setProducts(data);
+        setTotalElements(data.length);
       } else {
         setProducts([]);
         setTotalElements(0);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
+      setProducts([]);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
@@ -133,17 +139,26 @@ const Products = () => {
 
   const fetchBaseItems = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/base-items');
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/base-items`);
       const data = await response.json();
-      setBaseItems(data);
+      if (data && data.content) {
+        setBaseItems(data.content);
+      } else if (Array.isArray(data)) {
+        setBaseItems(data);
+      } else {
+        setBaseItems([]);
+      }
     } catch (error) {
       console.error('Error fetching base items:', error);
+      setBaseItems([]);
     }
   };
 
   const fetchAllStalls = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/stalls');
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/stalls`);
       const data = await response.json();
       setAllStalls(data);
     } catch (error) {
@@ -153,9 +168,10 @@ const Products = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const host = window.location.hostname;
     const url = editingProduct 
-      ? `http://localhost:8080/api/products/${editingProduct.id}`
-      : 'http://localhost:8080/api/products';
+      ? `http://${host}:8080/api/products/${editingProduct.id}`
+      : `http://${host}:8080/api/products`;
     const method = editingProduct ? 'PUT' : 'POST';
 
     try {
@@ -168,6 +184,7 @@ const Products = () => {
         setShowModal(false);
         setEditingProduct(null);
         setFormData(emptyProduct);
+        setSearchTerm(''); // Clear search term to ensure updated product is visible
         fetchProducts();
       }
     } catch (error) {
@@ -187,7 +204,8 @@ const Products = () => {
 
   const handleToggleActive = async (product: Product) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${product.id}`, {
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/products/${product.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...product, active: !product.active }),
@@ -203,7 +221,8 @@ const Products = () => {
 
   const handleToggleStock = async (product: Product) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${product.id}/toggle-stock`, {
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/products/${product.id}/toggle-stock`, {
         method: 'PATCH',
       });
       if (response.ok) {
@@ -218,7 +237,8 @@ const Products = () => {
   const handleDelete = async (product: Product) => {
     if (!window.confirm(`Are you sure you want to delete ${product.name}?`)) return;
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${product.id}`, {
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/products/${product.id}`, {
         method: 'DELETE',
       });
       if (response.ok) {
@@ -303,9 +323,21 @@ const Products = () => {
             <tbody className="divide-y divide-[#e2e8f0]">
               {loading ? (
                 <tr><td colSpan={6} className="px-6 py-12 text-center text-[#64748b]"><RefreshCw className="animate-spin inline mr-2" />Loading...</td></tr>
-              ) : products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+              ) : products.filter(p => {
+                if (!p) return false;
+                const search = (searchTerm || '').toLowerCase();
+                const name = (p.name || '').toLowerCase();
+                const category = (p.category || '').toLowerCase();
+                return name.includes(search) || category.includes(search);
+              }).length === 0 ? (
                 <tr><td colSpan={6} className="px-6 py-12 text-center text-[#64748b]">No products found</td></tr>
-              ) : products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).map((product) => (
+              ) : products.filter(p => {
+                if (!p) return false;
+                const search = (searchTerm || '').toLowerCase();
+                const name = (p.name || '').toLowerCase();
+                const category = (p.category || '').toLowerCase();
+                return name.includes(search) || category.includes(search);
+              }).map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50/50 transition-all">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -327,9 +359,9 @@ const Products = () => {
                     <div className="flex flex-wrap gap-1">
                       {(() => {
                         // Combine direct stalls with stalls that have this product's category in their baseItems
-                        const directStalls = product.stalls || [];
-                        const indirectStalls = allStalls.filter(s => 
-                          s.baseItems?.some(bi => bi.name.toLowerCase() === product.category?.toLowerCase())
+                        const directStalls = (product && product.stalls) || [];
+                        const indirectStalls = (allStalls || []).filter(s => 
+                          s.baseItems?.some(bi => bi.name?.toLowerCase() === product.category?.toLowerCase())
                         ).map(s => ({ id: s.id, name: s.name }));
 
                         // Unique stalls by ID

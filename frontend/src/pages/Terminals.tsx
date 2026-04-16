@@ -60,11 +60,11 @@ const Terminals = () => {
     }
   };
 
-  const filteredTerminals = terminals.filter(t => 
-    t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.location.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
+  const filteredTerminals = terminals.filter(t => {
+    const query = (searchQuery || '').toLowerCase();
+    return (t.name || '').toLowerCase().includes(query) ||
+           (t.location || '').toLowerCase().includes(query);
+  });
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 font-inter">
       {/* Header Section */}

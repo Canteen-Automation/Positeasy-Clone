@@ -16,6 +16,16 @@ public class ProductController {
     @Autowired
     private ProductRepository productRepository;
 
+    @GetMapping("/categories")
+    public List<String> getAllCategories() {
+        return productRepository.findAll().stream()
+                .map(Product::getCategory)
+                .filter(c -> c != null && !c.isEmpty())
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
     @GetMapping
     public org.springframework.data.domain.Page<Product> getAllProducts(
             @RequestParam(defaultValue = "0") int page,

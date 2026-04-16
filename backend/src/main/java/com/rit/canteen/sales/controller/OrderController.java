@@ -40,6 +40,7 @@ public class OrderController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String paymentType,
+            @RequestParam(required = false) String orderType,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "false") boolean archived,
             @RequestParam(defaultValue = "0") int page,
@@ -65,6 +66,9 @@ public class OrderController {
                 }
                 if (paymentType != null && !paymentType.isEmpty()) {
                     predicates.add(cb.equal(root.get("paymentMethod"), paymentType));
+                }
+                if (orderType != null && !orderType.isEmpty()) {
+                    predicates.add(cb.equal(root.get("orderType"), orderType));
                 }
                 if (search != null && !search.isEmpty()) {
                     String searchLower = "%" + search.toLowerCase() + "%";
@@ -110,53 +114,61 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<Map<String, Object>> placeOrder(@RequestBody Order order) {
-        // Link items to the order for bidirectional relationship
-        if (order.getItems() != null) {
-            for (OrderItem item : order.getItems()) {
-                System.out.println("🛒 RECEIVED ITEM: " + item.getProductName() + " | StallID: " + item.getStallId() + " | StallName: " + item.getStallName());
-                item.setOrder(order);
-            }
-        }
-        
-        // Use the actual creation time or current time for counting
-        LocalDateTime now = LocalDateTime.now();
-        order.setCreatedAt(now);
-        
-        // Calculate start of current day to find how many orders placed today
-        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
-        long todaysOrderCount = orderRepository.countByCreatedAtGreaterThanEqual(startOfDay);
-        
-        // Generate formatted display ID (#001, #002...) resetting daily
-        String displayId = String.format("%03d", todaysOrderCount + 1);
-        order.setDisplayOrderId(displayId);
-        
-        // Save the complete order first
-        Order savedOrder = orderRepository.save(order);
-        
-        // --- Reduct Stock Logic ---
-        if (savedOrder.getItems() != null) {
-            for (OrderItem item : savedOrder.getItems()) {
-                Long productId = item.getProductId();
-                if (productId != null) {
-                    productRepository.findById(productId).ifPresent(product -> {
-                        int currentStock = product.getStock() != null ? product.getStock() : 0;
-                        product.setStock(currentStock - item.getQuantity());
-                        productRepository.save(product);
-                        System.out.println("Updating Stock for " + product.getName() + ": " + currentStock + " -> " + product.getStock());
-                    });
+        try {
+            // Link items to the order for bidirectional relationship
+            if (order.getItems() != null) {
+                for (OrderItem item : order.getItems()) {
+                    System.out.println("🛒 RECEIVED ITEM: " + item.getProductName());
+                    item.setOrder(order);
                 }
             }
+            
+            // Use the actual creation time or current time for counting
+            LocalDateTime now = LocalDateTime.now();
+            order.setCreatedAt(now);
+            
+            // Calculate start of current day to find how many orders placed today
+            LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
+            long todaysOrderCount = orderRepository.countByCreatedAtGreaterThanEqual(startOfDay);
+            
+            // Generate formatted display ID (#001, #002...) resetting daily
+            String displayId = String.format("%03d", todaysOrderCount + 1);
+            order.setDisplayOrderId(displayId);
+            
+            // Save the complete order first
+            Order savedOrder = orderRepository.save(order);
+            
+            // --- Reduct Stock Logic ---
+            if (savedOrder.getItems() != null) {
+                for (OrderItem item : savedOrder.getItems()) {
+                    Long productId = item.getProductId();
+                    if (productId != null) {
+                        productRepository.findById(productId).ifPresent(product -> {
+                            int currentStock = product.getStock() != null ? product.getStock() : 0;
+                            product.setStock(currentStock - item.getQuantity());
+                            productRepository.save(product);
+                            System.out.println("Updating Stock for " + product.getName() + ": " + currentStock + " -> " + product.getStock());
+                        });
+                    }
+                }
+            }
+            
+            System.out.println("Placed Daily Order: " + savedOrder.getId() + " -> Display ID: #" + displayId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("orderNumber", savedOrder.getOrderNumber());
+            response.put("displayOrderId", savedOrder.getDisplayOrderId());
+            response.put("message", "Order placed successfully");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+            return ResponseEntity.status(500).body(errorResponse);
         }
-        
-        System.out.println("Placed Daily Order: " + savedOrder.getId() + " -> Display ID: #" + displayId);
-        
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("orderNumber", savedOrder.getOrderNumber()); // Secure ID for QR
-        response.put("displayOrderId", savedOrder.getDisplayOrderId()); // Sequential ID (#001)
-        response.put("message", "Order placed successfully");
-        
-        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/user/{userId}")

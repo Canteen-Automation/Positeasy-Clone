@@ -134,10 +134,13 @@ const Vendors: React.FC = () => {
     }
   };
 
-  const filteredVendors = vendors.filter(v => 
-    v.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    v.companyName?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVendors = vendors.filter(v => {
+    if (!v) return false;
+    const search = (searchTerm || '').toLowerCase();
+    const name = (v.name || '').toLowerCase();
+    const company = (v.companyName || '').toLowerCase();
+    return name.includes(search) || company.includes(search);
+  });
 
   return (
     <>

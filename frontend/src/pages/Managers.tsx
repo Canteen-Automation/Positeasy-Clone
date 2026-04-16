@@ -193,7 +193,11 @@ const Managers = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-[#e2e8f0]">
-            {managers.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()) || m.email.toLowerCase().includes(searchQuery.toLowerCase())).map((manager) => (
+            {managers.filter(m => {
+              const query = (searchQuery || '').toLowerCase();
+              return (m.name || '').toLowerCase().includes(query) || 
+                     (m.email || '').toLowerCase().includes(query);
+            }).map((manager) => (
               <tr key={manager.id} className="hover:bg-gray-50/50 transition-colors">
                 <td className="px-6 py-5">
                   <div className="flex items-center gap-3">

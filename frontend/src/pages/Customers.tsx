@@ -146,10 +146,12 @@ const Customers: React.FC = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const filteredUsers = users.filter(user => 
-    user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.mobileNumber?.includes(searchTerm)
-  );
+  const filteredCustomers = customers.filter(user => {
+    const search = (searchTerm || '').toLowerCase();
+    const name = (user.name || '').toLowerCase();
+    return name.includes(search) ||
+           (user.mobileNumber || '').includes(searchTerm);
+  });
 
   return (
     <>

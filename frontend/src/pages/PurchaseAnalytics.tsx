@@ -161,7 +161,7 @@ const PurchaseAnalytics = () => {
   };
 
   const filteredAnalytics = analytics.filter(item => {
-    const matchesSearch = item.product.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (item.product || '').toLowerCase().includes((searchTerm || '').toLowerCase());
     const matchesFilter = filterType === 'all' || item.trend === filterType;
     return matchesSearch && matchesFilter;
   });
