@@ -459,8 +459,28 @@ const Products = () => {
                   </div>
                   <div><label className="block text-[11px] uppercase font-bold text-[#64748b] mb-1.5">Barcode</label><input type="text" value={formData.barcode} onChange={(e) => setFormData({ ...formData, barcode: e.target.value })} className="w-full px-4 py-3 border border-[#e2e8f0] rounded-xl text-sm" /></div>
                   <div><label className="block text-[11px] uppercase font-bold text-[#64748b] mb-1.5">Stock Quantity</label><input type="number" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) || 0 })} className="w-full px-4 py-3 border border-[#e2e8f0] rounded-xl text-sm font-semibold" /></div>
-                  <div><label className="block text-[11px] uppercase font-bold text-[#64748b] mb-1.5">Counter</label>
-<select value={formData.counter} onChange={(e) => setFormData({ ...formData, counter: e.target.value })} className="w-full px-4 py-3 border border-[#e2e8f0] rounded-xl text-sm"><option value="">Select Counter</option><option value="Main Counter">Main Counter</option></select></div>
+                  <div>
+                    <label className="block text-[11px] uppercase font-bold text-[#64748b] mb-1.5">Counter (Stall) *</label>
+                    <select 
+                      required
+                      value={formData.counter} 
+                      onChange={(e) => {
+                        const stallName = e.target.value;
+                        const selectedStall = allStalls.find(s => s.name === stallName);
+                        setFormData({ 
+                          ...formData, 
+                          counter: stallName,
+                          stalls: selectedStall ? [{ id: selectedStall.id, name: selectedStall.name }] : []
+                        });
+                      }} 
+                      className="w-full px-4 py-3 border border-[#e2e8f0] rounded-xl text-sm font-semibold focus:ring-4 focus:ring-[#231651]/5 focus:border-[#231651] transition-all outline-none"
+                    >
+                      <option value="">Select Stall</option>
+                      {allStalls.map(stall => (
+                        <option key={stall.id} value={stall.name}>{stall.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <div className="group">

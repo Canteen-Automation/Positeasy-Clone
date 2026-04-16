@@ -16,6 +16,9 @@ public class ProductController {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private com.rit.canteen.sales.repository.StallRepository stallRepository;
+
     @GetMapping
     public org.springframework.data.domain.Page<Product> getAllProducts(
             @RequestParam(required = false) String search,
@@ -35,11 +38,15 @@ public class ProductController {
     }
 
     @PostMapping
+    @org.springframework.transaction.annotation.Transactional
     public Product createProduct(@Valid @RequestBody Product product) {
-        return productRepository.save(product);
+        Product savedProduct = productRepository.save(product);
+        updateStallAssociations(savedProduct, product.getStalls());
+        return productRepository.findById(savedProduct.getId()).orElse(savedProduct);
     }
 
     @PutMapping("/{id}")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<Product> updateProduct(@PathVariable Long id, @Valid @RequestBody Product productDetails) {
         return productRepository.findById(id)
                 .map(product -> {
@@ -70,9 +77,38 @@ public class ProductController {
                     product.setImageData(productDetails.getImageData());
                     product.setActive(productDetails.isActive());
                     product.setStock(productDetails.getStock());
-                    return ResponseEntity.ok(productRepository.save(product));
+                    
+                    Product updated = productRepository.save(product);
+                    updateStallAssociations(updated, productDetails.getStalls());
+                    
+                    return ResponseEntity.ok(productRepository.findById(updated.getId()).orElse(updated));
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    private void updateStallAssociations(Product product, List<com.rit.canteen.sales.model.Stall> assignedStalls) {
+        // Remove product from all stalls currently associated
+        List<com.rit.canteen.sales.model.Stall> allStalls = stallRepository.findAll();
+        for (com.rit.canteen.sales.model.Stall stall : allStalls) {
+            if (stall.getProducts() != null && stall.getProducts().removeIf(p -> p.getId().equals(product.getId()))) {
+                stallRepository.save(stall);
+            }
+        }
+
+        // Add product to the newly assigned stalls
+        if (assignedStalls != null) {
+            for (com.rit.canteen.sales.model.Stall assignedStall : assignedStalls) {
+                stallRepository.findById(assignedStall.getId()).ifPresent(stall -> {
+                    if (stall.getProducts() == null) {
+                        stall.setProducts(new java.util.ArrayList<>());
+                    }
+                    if (stall.getProducts().stream().noneMatch(p -> p.getId().equals(product.getId()))) {
+                        stall.getProducts().add(product);
+                        stallRepository.save(stall);
+                    }
+                });
+            }
+        }
     }
 
     @DeleteMapping("/{id}")
