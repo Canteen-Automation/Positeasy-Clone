@@ -66,6 +66,7 @@ const Orders: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalElements, setTotalElements] = useState(0);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   // Action Menu & Edit Modal States
   const [showActionMenu, setShowActionMenu] = useState(false);
@@ -75,10 +76,26 @@ const Orders: React.FC = () => {
   const [editingItems, setEditingItems] = useState<OrderItem[]>([]);
   const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
 
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchQuery]);
+
   useEffect(() => {
     fetchOrders();
+  }, [startDate, endDate, statusFilter, paymentFilter, currentPage, pageSize, debouncedSearchQuery]);
+
+  useEffect(() => {
     fetchProducts();
-  }, [startDate, endDate, statusFilter, paymentFilter, currentPage, pageSize]);
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -102,7 +119,7 @@ const Orders: React.FC = () => {
       if (endDate) params.append('endDate', `${endDate}T23:59:59`);
       if (statusFilter) params.append('status', statusFilter);
       if (paymentFilter) params.append('paymentType', paymentFilter);
-      if (searchQuery) params.append('search', searchQuery);
+      if (debouncedSearchQuery) params.append('search', debouncedSearchQuery);
       params.append('page', currentPage.toString());
       params.append('size', pageSize.toString());
 

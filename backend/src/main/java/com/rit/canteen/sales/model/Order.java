@@ -41,6 +41,9 @@ public class Order {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private String orderType = "STORE_ORDER"; // STORE_ORDER, QR_ORDER, MY_ORDER, etc.
+
     @Column(name = "is_archived", nullable = false)
     private boolean isArchived = false;
 
@@ -96,6 +99,9 @@ public class Order {
 
     public boolean isArchived() { return isArchived; }
     public void setArchived(boolean archived) { isArchived = archived; }
+
+    public String getOrderType() { return orderType; }
+    public void setOrderType(String orderType) { this.orderType = orderType; }
 
     public List<OrderItem> getItems() { return items; }
     public void setItems(List<OrderItem> items) { this.items = items; }

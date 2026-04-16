@@ -158,16 +158,22 @@ public class UserService {
     }
 
     /**
-     * Get all registered users for administration dashboard (Paginated).
+     * Get all registered users for administration dashboard (Paginated with Search).
      */
-    public Page<LoginResponse.UserDto> getAllUsers(Pageable pageable) {
-        return userRepository.findAll(pageable)
-                .map(user -> new LoginResponse.UserDto(
-                        user.getId(), 
-                        user.getMobileNumber(), 
-                        user.getName(), 
-                        user.isLoggedIn()
-                ));
+    public Page<LoginResponse.UserDto> getAllUsers(String search, Pageable pageable) {
+        Page<User> users;
+        if (search != null && !search.isEmpty()) {
+            users = userRepository.findByNameOrMobileContainingIgnoreCase(search, pageable);
+        } else {
+            users = userRepository.findAll(pageable);
+        }
+        
+        return users.map(user -> new LoginResponse.UserDto(
+                user.getId(), 
+                user.getMobileNumber(), 
+                user.getName(), 
+                user.isLoggedIn()
+        ));
     }
 
     /**

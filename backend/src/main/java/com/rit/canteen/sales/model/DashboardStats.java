@@ -4,16 +4,17 @@ public class DashboardStats {
     private long totalSales;
     private int activeOrders;
     private int dailyCustomers;
-    private double revenueGrowth;
+    private double growth;
 
-    public DashboardStats(long totalSales, int activeOrders, int dailyCustomers, double revenueGrowth) {
+    public DashboardStats() {}
+
+    public DashboardStats(long totalSales, int activeOrders, int dailyCustomers, double growth) {
         this.totalSales = totalSales;
         this.activeOrders = activeOrders;
         this.dailyCustomers = dailyCustomers;
-        this.revenueGrowth = revenueGrowth;
+        this.growth = growth;
     }
 
-    // Getters and Setters
     public long getTotalSales() { return totalSales; }
     public void setTotalSales(long totalSales) { this.totalSales = totalSales; }
 
@@ -23,6 +24,6 @@ public class DashboardStats {
     public int getDailyCustomers() { return dailyCustomers; }
     public void setDailyCustomers(int dailyCustomers) { this.dailyCustomers = dailyCustomers; }
 
-    public double getRevenueGrowth() { return revenueGrowth; }
-    public void setRevenueGrowth(double revenueGrowth) { this.revenueGrowth = revenueGrowth; }
+    public double getGrowth() { return growth; }
+    public void setGrowth(double growth) { this.growth = growth; }
 }

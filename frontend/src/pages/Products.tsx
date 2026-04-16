@@ -94,14 +94,32 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalElements, setTotalElements] = useState(0);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
 
   const menuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchTerm]);
+
   useEffect(() => {
     fetchProducts();
+  }, [currentPage, pageSize, debouncedSearchTerm]);
+
+  useEffect(() => {
     fetchBaseItems();
     fetchAllStalls();
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setOpenMenuId(null);
@@ -109,13 +127,20 @@ const Products = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [currentPage, pageSize]);
+  }, []);
 
   const fetchProducts = async () => {
     setLoading(true);
     try {
       const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/products?page=${currentPage}&size=${pageSize}`);
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('size', pageSize.toString());
+      if (debouncedSearchTerm) {
+        params.append('search', debouncedSearchTerm);
+      }
+
+      const response = await fetch(`http://${host}:8080/api/products?${params.toString()}`);
       const data = await response.json();
       if (data && data.content) {
         setProducts(data.content);
@@ -133,9 +158,9 @@ const Products = () => {
 
   const fetchBaseItems = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/base-items');
+      const response = await fetch('http://localhost:8080/api/base-items?size=100');
       const data = await response.json();
-      setBaseItems(data);
+      setBaseItems(data.content || data);
     } catch (error) {
       console.error('Error fetching base items:', error);
     }
@@ -303,9 +328,9 @@ const Products = () => {
             <tbody className="divide-y divide-[#e2e8f0]">
               {loading ? (
                 <tr><td colSpan={6} className="px-6 py-12 text-center text-[#64748b]"><RefreshCw className="animate-spin inline mr-2" />Loading...</td></tr>
-              ) : products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+              ) : products.length === 0 ? (
                 <tr><td colSpan={6} className="px-6 py-12 text-center text-[#64748b]">No products found</td></tr>
-              ) : products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.category.toLowerCase().includes(searchTerm.toLowerCase())).map((product) => (
+              ) : products.map((product) => (
                 <tr key={product.id} className="hover:bg-gray-50/50 transition-all">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">

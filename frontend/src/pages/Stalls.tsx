@@ -194,12 +194,18 @@ const Stalls: React.FC = () => {
     try {
       const host = window.location.hostname;
       const [prodRes, baseRes] = await Promise.all([
-        fetch(`http://${host}:8080/api/products`),
-        fetch(`http://${host}:8080/api/base-items`)
+        fetch(`http://${host}:8080/api/products?size=1000`),
+        fetch(`http://${host}:8080/api/base-items?size=100`)
       ]);
       
-      if (prodRes.ok) setAllProducts(await prodRes.json());
-      if (baseRes.ok) setAllBaseItems(await baseRes.json());
+      if (prodRes.ok) {
+        const data = await prodRes.json();
+        setAllProducts(data.content || data);
+      }
+      if (baseRes.ok) {
+        const data = await baseRes.json();
+        setAllBaseItems(data.content || data);
+      }
     } catch (error) {
       console.error('Error fetching available items:', error);
     }

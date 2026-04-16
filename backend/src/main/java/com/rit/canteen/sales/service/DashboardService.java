@@ -50,7 +50,7 @@ public class DashboardService {
             hourMap.put("value", 0);
             
             for (Object[] row : hourlyData) {
-                int h = (int) row[0];
+                int h = ((Number) row[0]).intValue();
                 if (h >= i && h < i + 2) {
                     BigDecimal val = (BigDecimal) row[1];
                     hourMap.put("value", ((Number) hourMap.get("value")).doubleValue() + val.doubleValue());

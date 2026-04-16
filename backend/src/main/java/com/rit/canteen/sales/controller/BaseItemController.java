@@ -7,8 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/base-items")
 public class BaseItemController {
@@ -18,8 +16,12 @@ public class BaseItemController {
 
     @GetMapping
     public org.springframework.data.domain.Page<BaseItem> getAllBaseItems(
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+        if (search != null && !search.isEmpty()) {
+            return baseItemRepository.findByNameContainingIgnoreCase(search, org.springframework.data.domain.PageRequest.of(page, size));
+        }
         return baseItemRepository.findAll(org.springframework.data.domain.PageRequest.of(page, size));
     }
 

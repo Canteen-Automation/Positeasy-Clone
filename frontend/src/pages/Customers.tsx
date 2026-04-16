@@ -19,6 +19,7 @@ const Customers: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalElements, setTotalElements] = useState(0);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
   // Edit Modal State
   const [showEditModal, setShowEditModal] = useState(false);
@@ -35,14 +36,32 @@ const Customers: React.FC = () => {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchTerm]);
+
+  useEffect(() => {
     fetchUsers();
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, debouncedSearchTerm]);
 
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
       const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/auth/users?page=${currentPage}&size=${pageSize}`);
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('size', pageSize.toString());
+      if (debouncedSearchTerm) {
+        params.append('search', debouncedSearchTerm);
+      }
+
+      const response = await fetch(`http://${host}:8080/api/auth/users?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         if (data && data.content) {
@@ -146,11 +165,6 @@ const Customers: React.FC = () => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const filteredUsers = users.filter(user => 
-    user.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    user.mobileNumber?.includes(searchTerm)
-  );
-
   return (
     <>
       {/* Toast Notification - Moved outside animation trapping */}
@@ -232,8 +246,8 @@ const Customers: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#e2e8f0]">
-                      {filteredUsers.length > 0 ? (
-                        filteredUsers.map((user) => (
+                      {users.length > 0 ? (
+                        users.map((user) => (
                           <tr key={user.id} className="hover:bg-gray-50/50 transition-all">
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
@@ -300,7 +314,7 @@ const Customers: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6">
-                  {filteredUsers.map(user => (
+                  {users.map(user => (
                     <div key={user.id} className="group relative p-6 bg-white border border-[#e2e8f0] rounded-xl flex flex-col items-center text-center transition-all hover:shadow-lg hover:-translate-y-1">
                       <div className="absolute top-4 right-4">
                         <button onClick={() => setOpenMenuId(openMenuId === user.id ? null : user.id)} className="p-1.5 text-[#94a3b8] hover:text-[#231651] rounded-lg">

@@ -18,8 +18,12 @@ public class ProductController {
 
     @GetMapping
     public org.springframework.data.domain.Page<Product> getAllProducts(
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+        if (search != null && !search.isEmpty()) {
+            return productRepository.findByNameOrCategoryContainingIgnoreCase(search, org.springframework.data.domain.PageRequest.of(page, size));
+        }
         return productRepository.findAllWithStalls(org.springframework.data.domain.PageRequest.of(page, size));
     }
 

@@ -108,9 +108,10 @@ public class UserController {
      */
     @GetMapping("/users")
     public ResponseEntity<Page<LoginResponse.UserDto>> getAllUsers(
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<LoginResponse.UserDto> users = userService.getAllUsers(PageRequest.of(page, size));
+        Page<LoginResponse.UserDto> users = userService.getAllUsers(search, PageRequest.of(page, size));
         return ResponseEntity.ok(users);
     }
 

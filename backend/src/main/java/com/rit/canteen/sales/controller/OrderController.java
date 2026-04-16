@@ -40,6 +40,7 @@ public class OrderController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String paymentType,
+            @RequestParam(required = false) String orderType,
             @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "false") boolean archived,
             @RequestParam(defaultValue = "0") int page,
@@ -65,6 +66,9 @@ public class OrderController {
                 }
                 if (paymentType != null && !paymentType.isEmpty()) {
                     predicates.add(cb.equal(root.get("paymentMethod"), paymentType));
+                }
+                if (orderType != null && !orderType.isEmpty()) {
+                    predicates.add(cb.equal(root.get("orderType"), orderType));
                 }
                 if (search != null && !search.isEmpty()) {
                     String searchLower = "%" + search.toLowerCase() + "%";

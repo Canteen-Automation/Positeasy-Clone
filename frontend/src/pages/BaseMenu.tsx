@@ -30,6 +30,7 @@ const BaseMenu = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [totalElements, setTotalElements] = useState(0);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
   // Associated Products State
   const [selectedBaseItem, setSelectedBaseItem] = useState<BaseItem | null>(null);
@@ -39,9 +40,24 @@ const BaseMenu = () => {
 
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [debouncedSearchTerm]);
+
   useEffect(() => {
     fetchItems();
-    
+  }, [currentPage, pageSize, debouncedSearchTerm]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setOpenMenuId(null);
@@ -49,13 +65,20 @@ const BaseMenu = () => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [currentPage, pageSize]);
+  }, []);
 
   const fetchItems = async () => {
     setLoading(true);
     try {
       const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/base-items?page=${currentPage}&size=${pageSize}`);
+      const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('size', pageSize.toString());
+      if (debouncedSearchTerm) {
+        params.append('search', debouncedSearchTerm);
+      }
+
+      const response = await fetch(`http://${host}:8080/api/base-items?${params.toString()}`);
       const data = await response.json();
       if (data && data.content) {
         setItems(data.content);
@@ -200,17 +223,15 @@ const BaseMenu = () => {
                     </div>
                   </td>
                 </tr>
-              ) : items.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 ? (
+              ) : items.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center text-[#64748b]">
                     <p className="text-lg font-medium mb-1">No items found</p>
-                    <p className="text-sm">Click "Add New Item" to create your first item.</p>
+                    <p className="text-sm">Try adjusting your search or add a new item.</p>
                   </td>
                 </tr>
               ) : (
-                items
-                  .filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .map((item) => (
+                items.map((item) => (
                     <tr key={item.id} className="hover:bg-gray-50/50 transition-all group">
                     <td className="px-6 py-4 text-sm font-medium text-[#64748b]">#{item.id}</td>
                     <td className="px-6 py-4">
