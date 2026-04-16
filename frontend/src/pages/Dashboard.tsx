@@ -23,14 +23,66 @@ import { motion } from 'framer-motion';
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('Sales');
   const [timeRange, setTimeRange] = useState('Today');
+  const [customDates, setCustomDates] = useState({ from: '', to: '' });
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const getRangeDates = (range: string) => {
+    const now = new Date();
+    const start = new Date();
+    const end = new Date();
+    
+    // Set end to end of today
+    end.setHours(23, 59, 59, 999);
+
+    switch (range) {
+      case 'Today':
+        start.setHours(0, 0, 0, 0);
+        break;
+      case 'Yesterday':
+        start.setDate(now.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+        end.setDate(now.getDate() - 1);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'Week':
+        start.setDate(now.getDate() - 7);
+        start.setHours(0, 0, 0, 0);
+        break;
+      case '30 Days':
+        start.setDate(now.getDate() - 30);
+        start.setHours(0, 0, 0, 0);
+        break;
+      case 'Custom':
+        if (customDates.from && customDates.to) {
+          const from = new Date(customDates.from);
+          from.setHours(0, 0, 0, 0);
+          const to = new Date(customDates.to);
+          to.setHours(23, 59, 59, 999);
+          return { from: from.toISOString(), to: to.toISOString() };
+        }
+        return null;
+      default:
+        start.setHours(0, 0, 0, 0);
+    }
+    return { from: start.toISOString(), to: end.toISOString() };
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/dashboard/stats');
+        const range = getRangeDates(timeRange);
+        let url = '/api/dashboard/stats';
+        
+        if (range) {
+          const params = new URLSearchParams();
+          params.append('from', range.from);
+          params.append('to', range.to);
+          url += `?${params.toString()}`;
+        }
+
+        const response = await fetch(url);
         if (response.ok) {
           const result = await response.json();
           setData(result);
@@ -42,7 +94,7 @@ const Dashboard = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [timeRange, customDates]);
 
   if (isLoading || !data) {
     return (
@@ -61,8 +113,8 @@ const Dashboard = () => {
   const { stats, storeOverview, hourlySales, insights } = data;
 
   const pieData = [
-    { name: 'Full Payment', value: stats.totalSales, color: '#8b5cf6' },
-    { name: 'Credit', value: 0, color: '#fbbf24' } // Credits logic can be added later
+    { name: 'Full Payment', value: stats.periodRevenue, color: '#8b5cf6' },
+    { name: 'Credit', value: 0, color: '#fbbf24' }
   ];
 
   return (
@@ -115,12 +167,12 @@ const Dashboard = () => {
               ))}
            </div>
 
-           <div className="flex items-center justify-end mb-4 gap-4">
-              <div className="flex items-center gap-2">
-                 <div className="w-2.5 h-2.5 rounded-full border-2 border-[#0f4475]/30 bg-[#0f4475]/10" />
-                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Today's Revenue</span>
-              </div>
-           </div>
+            <div className="flex items-center justify-end mb-4 gap-4">
+               <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full border-2 border-[#0f4475]/30 bg-[#0f4475]/10" />
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{timeRange}'s Revenue</span>
+               </div>
+            </div>
 
            <div className="h-[280px] w-full mt-4">
               <ResponsiveContainer width="100%" height="100%">
@@ -170,10 +222,11 @@ const Dashboard = () => {
                    </Pie>
                 </PieChart>
               </ResponsiveContainer>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                 <h2 className="text-3xl font-black text-slate-800 tracking-tighter">₹{stats.totalSales.toLocaleString()}</h2>
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Life Time</p>
-              </div>
+               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                  <h2 className="text-3xl font-black text-slate-800 tracking-tighter">₹{stats.periodRevenue.toLocaleString()}</h2>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{timeRange === 'Today' ? 'Today' : timeRange}</p>
+                  <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">Total: ₹{stats.totalSales.toLocaleString()}</p>
+               </div>
               <div className="flex gap-6 mt-2">
                  {pieData.map(item => (
                     <div key={item.name} className="flex items-center gap-2">
@@ -188,18 +241,37 @@ const Dashboard = () => {
         {/* Right Stats Column */}
         <div className="col-span-12 lg:col-span-3 space-y-6">
            {/* Filters */}
-           <div className="flex items-center justify-between overflow-x-auto gap-2 pb-2 scrollbar-none">
-              {['Yesterday', 'Today', 'Week', '30 Days'].map(range => (
-                 <button 
-                  key={range}
-                  title={`Analyze data from ${range.toLowerCase()}`}
-                  onClick={() => setTimeRange(range)}
-                  className={`whitespace-nowrap px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl ${timeRange === range ? 'text-white bg-[#0f4475] shadow-md shadow-[#0f4475]/20' : 'text-slate-400 hover:text-slate-600'}`}
-                 >
-                    {range}
-                 </button>
-              ))}
-           </div>
+            <div className="flex flex-col gap-3">
+               <div className="flex items-center justify-between overflow-x-auto gap-2 pb-2 scrollbar-none">
+                  {['Yesterday', 'Today', 'Week', '30 Days', 'Custom'].map(range => (
+                     <button 
+                      key={range}
+                      title={`Analyze data from ${range.toLowerCase()}`}
+                      onClick={() => setTimeRange(range)}
+                      className={`whitespace-nowrap px-3 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl ${timeRange === range ? 'text-white bg-[#0f4475] shadow-md shadow-[#0f4475]/20' : 'text-slate-400 hover:text-slate-600'}`}
+                     >
+                        {range}
+                     </button>
+                  ))}
+               </div>
+               {timeRange === 'Custom' && (
+                 <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                    <input 
+                      type="date" 
+                      value={customDates.from}
+                      onChange={(e) => setCustomDates({ ...customDates, from: e.target.value })}
+                      className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-600 outline-none focus:border-[#0f4475]"
+                    />
+                    <span className="text-slate-300 text-[10px] font-bold">to</span>
+                    <input 
+                      type="date" 
+                      value={customDates.to}
+                      onChange={(e) => setCustomDates({ ...customDates, to: e.target.value })}
+                      className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-600 outline-none focus:border-[#0f4475]"
+                    />
+                 </div>
+               )}
+            </div>
 
            {/* Total Orders Card */}
            <div title="View detailed order volume and throughput" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm relative h-[180px] flex flex-col justify-between group hover:border-[#0f4475]/30 transition-all cursor-pointer">

@@ -20,14 +20,14 @@ public class DashboardService {
     @Autowired
     private OrderRepository orderRepository;
 
-    public GeneralDashboardData getGeneralDashboardData() {
-        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfToday = LocalDate.now().atTime(LocalTime.MAX);
+    public GeneralDashboardData getGeneralDashboardData(LocalDateTime from, LocalDateTime to) {
+        if (from == null) from = LocalDate.now().atStartOfDay();
+        if (to == null) to = LocalDate.now().atTime(LocalTime.MAX);
         
-        DashboardStats stats = getDashboardStats();
+        DashboardStats stats = getDashboardStats(from, to);
 
         // 1. Store Overview
-        List<Object[]> storeData = orderRepository.getStoreOverview(startOfToday, endOfToday);
+        List<Object[]> storeData = orderRepository.getStoreOverview(from, to);
         List<Map<String, Object>> storeOverview = new ArrayList<>();
         for (Object[] row : storeData) {
             Map<String, Object> store = new HashMap<>();
@@ -40,7 +40,7 @@ public class DashboardService {
         }
 
         // 2. Hourly Sales
-        List<Object[]> hourlyData = orderRepository.getHourlySales(startOfToday, endOfToday);
+        List<Object[]> hourlyData = orderRepository.getHourlySales(from, to);
         List<Map<String, Object>> hourlySales = new ArrayList<>();
         // Initialize 24 hours
         for (int i = 0; i < 24; i += 2) {
@@ -72,7 +72,7 @@ public class DashboardService {
         return new GeneralDashboardData(stats, storeOverview, hourlySales, insights);
     }
 
-    public DashboardStats getDashboardStats() {
+    public DashboardStats getDashboardStats(LocalDateTime from, LocalDateTime to) {
         LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
         LocalDateTime endOfToday = LocalDate.now().atTime(LocalTime.MAX);
         
@@ -82,8 +82,11 @@ public class DashboardService {
         BigDecimal totalRevenueRaw = orderRepository.getTotalRevenue();
         long totalSales = totalRevenueRaw != null ? totalRevenueRaw.longValue() : 0;
         
-        int activeOrders = (int) orderRepository.countByCreatedAtGreaterThanEqual(startOfToday);
-        int dailyCustomers = (int) orderRepository.countUniqueUsersToday(startOfToday);
+        BigDecimal periodRevenueRaw = orderRepository.getRevenuePerPeriod(from, to);
+        long periodRevenue = periodRevenueRaw != null ? periodRevenueRaw.longValue() : 0;
+        
+        int activeOrders = (int) orderRepository.countByCreatedAtBetween(from, to);
+        int dailyCustomers = (int) orderRepository.countUniqueUsersInRange(from, to);
 
         BigDecimal todayRevenue = orderRepository.getRevenuePerPeriod(startOfToday, endOfToday);
         BigDecimal yesterdayRevenue = orderRepository.getRevenuePerPeriod(startOfYesterday, endOfYesterday);
@@ -99,7 +102,7 @@ public class DashboardService {
             growth = 100.0;
         }
 
-        return new DashboardStats(totalSales, activeOrders, dailyCustomers, growth);
+        return new DashboardStats(totalSales, periodRevenue, activeOrders, dailyCustomers, growth);
     }
 
     public List<Order> getRecentOrders() {

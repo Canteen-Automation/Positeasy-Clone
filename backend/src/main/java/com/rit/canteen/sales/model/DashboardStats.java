@@ -2,14 +2,16 @@ package com.rit.canteen.sales.model;
 
 public class DashboardStats {
     private long totalSales;
+    private long periodRevenue;
     private int activeOrders;
     private int dailyCustomers;
     private double growth;
 
     public DashboardStats() {}
 
-    public DashboardStats(long totalSales, int activeOrders, int dailyCustomers, double growth) {
+    public DashboardStats(long totalSales, long periodRevenue, int activeOrders, int dailyCustomers, double growth) {
         this.totalSales = totalSales;
+        this.periodRevenue = periodRevenue;
         this.activeOrders = activeOrders;
         this.dailyCustomers = dailyCustomers;
         this.growth = growth;
@@ -17,6 +19,9 @@ public class DashboardStats {
 
     public long getTotalSales() { return totalSales; }
     public void setTotalSales(long totalSales) { this.totalSales = totalSales; }
+
+    public long getPeriodRevenue() { return periodRevenue; }
+    public void setPeriodRevenue(long periodRevenue) { this.periodRevenue = periodRevenue; }
 
     public int getActiveOrders() { return activeOrders; }
     public void setActiveOrders(int activeOrders) { this.activeOrders = activeOrders; }

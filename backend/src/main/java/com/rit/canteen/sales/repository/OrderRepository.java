@@ -14,6 +14,7 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
     long countByCreatedAtGreaterThanEqual(LocalDateTime startOfDay);
+    long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
     List<Order> findByIsArchivedFalseAndCreatedAtBefore(LocalDateTime timestamp);
     Optional<Order> findByOrderNumber(String orderNumber);
     
@@ -22,6 +23,9 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     @Query("SELECT COUNT(DISTINCT o.userId) FROM Order o WHERE o.createdAt >= :startOfDay")
     long countUniqueUsersToday(@Param("startOfDay") LocalDateTime startOfDay);
+
+    @Query("SELECT COUNT(DISTINCT o.userId) FROM Order o WHERE o.createdAt >= :start AND o.createdAt <= :end")
+    long countUniqueUsersInRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT SUM(o.totalAmount) FROM Order o WHERE o.createdAt >= :start AND o.createdAt <= :end")
     BigDecimal getRevenuePerPeriod(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
