@@ -18,6 +18,8 @@ import VendorDashboard from './pages/VendorDashboard.tsx';
 import PurchaseAnalytics from './pages/PurchaseAnalytics.tsx';
 import Bills from './pages/Bills.tsx';
 import PurchaseSummary from './pages/PurchaseSummary.tsx';
+import IntentDashboard from './pages/IntentDashboard.tsx';
+import IntentList from './pages/IntentList.tsx';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
@@ -62,6 +64,15 @@ function App() {
           <Route path="purchases/bills" element={<Bills />} />
           <Route path="purchases/vendor" element={<Vendors />} />
           <Route path="purchases/analytics" element={<PurchaseAnalytics />} />
+          
+          {/* Intent */}
+          <Route path="purchases/intent/orders-dashboard" element={<IntentDashboard title="ORDER DASHBOARD" />} />
+          <Route path="purchases/intent/receives-dashboard" element={<IntentDashboard title="RECEIVABLE DASHBOARD" />} />
+          <Route path="purchases/intent/orders" element={<IntentList title="ORDERS" />} />
+          <Route path="purchases/intent/receives" element={<IntentList title="RECEIVES" />} />
+          <Route path="purchases/intent/receives-summary" element={<PlaceholderPage title="Receives Summary" />} />
+          <Route path="purchases/intent/request" element={<PlaceholderPage title="Intent Request" />} />
+          <Route path="purchases/intent/stores" element={<PlaceholderPage title="Intent Stores" />} />
           
           {/* Inventory */}
           <Route path="inventory/base" element={<BaseMenu />} />

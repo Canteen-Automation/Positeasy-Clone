@@ -71,4 +71,9 @@ public class PurchaseController {
     public Map<String, Object> getSummary() {
         return purchaseService.getPurchaseSummary();
     }
+
+    @GetMapping("/intent/summary")
+    public Map<String, Object> getIntentSummary() {
+        return purchaseService.getIntentSummary();
+    }
 }
