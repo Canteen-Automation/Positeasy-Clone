@@ -29,9 +29,9 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setError(null);
     try {
       const [baseItemsRes, productsRes, stallsRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/base-items?size=100`),
-        fetch(`${API_BASE_URL}/products?size=100`),
-        fetch(`${API_BASE_URL}/stalls/active`)
+        fetch(`${API_BASE_URL}/base-items?size=100`, { cache: 'no-store' }),
+        fetch(`${API_BASE_URL}/products?size=100`, { cache: 'no-store' }),
+        fetch(`${API_BASE_URL}/stalls/active`, { cache: 'no-store' })
       ]);
 
       if (!baseItemsRes.ok || !productsRes.ok || !stallsRes.ok) {

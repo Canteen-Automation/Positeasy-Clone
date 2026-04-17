@@ -9,6 +9,7 @@ interface AuthContextType {
   register: (mobileNumber: string, name: string, pin: string) => Promise<{ success: boolean; message: string }>;
   logout: () => void;
   changePin: (currentPin: string, newPin: string) => Promise<{ success: boolean; message: string }>;
+  updateProfile: (name: string, mobileNumber: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkUserExists = async (mobileNumber: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/check`, {
+      const response = await fetch(`${API_BASE_URL}/check`, { cache: 'no-store',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobileNumber }),
@@ -42,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (mobileNumber: string, pin: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
+      const response = await fetch(`${API_BASE_URL}/login`, { cache: 'no-store',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobileNumber, pin }),
@@ -61,7 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (mobileNumber: string, name: string, pin: string) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/register`, {
+      const response = await fetch(`${API_BASE_URL}/register`, { cache: 'no-store',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobileNumber, name, pin }),
@@ -80,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     if (user) {
-      fetch(`${API_BASE_URL}/logout`, {
+      fetch(`${API_BASE_URL}/logout`, { cache: 'no-store',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobileNumber: user.mobileNumber }),
@@ -93,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const changePin = async (currentPin: string, newPin: string) => {
     if (!user) return { success: false, message: 'Not logged in' };
     try {
-      const response = await fetch(`${API_BASE_URL}/change-pin`, {
+      const response = await fetch(`${API_BASE_URL}/change-pin`, { cache: 'no-store',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mobileNumber: user.mobileNumber, currentPin, newPin }),
@@ -105,8 +106,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfile = async (name: string, mobileNumber: string) => {
+    if (!user) return { success: false, message: 'Not logged in' };
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/${user.id}`, { cache: 'no-store',
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mobileNumber }),
+      });
+      
+      if (response.ok) {
+        const updatedUserDto = await response.json();
+        // The DTO from backend might have different structure, let's map it back to User type
+        const updatedUser: User = {
+          id: updatedUserDto.id,
+          name: updatedUserDto.name,
+          mobileNumber: updatedUserDto.mobileNumber,
+          isLoggedIn: updatedUserDto.loggedIn
+        };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        return { success: true, message: 'Profile updated successfully' };
+      } else {
+        const errorData = await response.json();
+        return { success: false, message: errorData.message || 'Failed to update profile' };
+      }
+    } catch (error) {
+      return { success: false, message: 'Network error. Please try again.' };
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, checkUserExists, login, register, logout, changePin }}>
+    <AuthContext.Provider value={{ user, isLoading, checkUserExists, login, register, logout, changePin, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
