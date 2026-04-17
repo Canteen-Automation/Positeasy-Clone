@@ -177,7 +177,7 @@ public class UserService {
     }
 
     /**
-     * Update user details as an administrator.
+     * Update user details as an administrator or user.
      */
     public LoginResponse.UserDto updateUser(Long userId, String name, String mobileNumber, String newPin) {
         Optional<User> userOpt = userRepository.findById(userId);
@@ -186,8 +186,22 @@ public class UserService {
         }
 
         User user = userOpt.get();
+        
+        // Handle mobile number update with conflict check
+        if (mobileNumber != null && !mobileNumber.equals(user.getMobileNumber())) {
+            // Validate format
+            if (!mobileNumber.matches("^[0-9]{10}$")) {
+                return null; // Invalid format
+            }
+            
+            // Check for conflict
+            if (userRepository.existsByMobileNumber(mobileNumber)) {
+                return null; // Conflict: mobile number already taken
+            }
+            user.setMobileNumber(mobileNumber);
+        }
+        
         if (name != null) user.setName(name);
-        if (mobileNumber != null) user.setMobileNumber(mobileNumber);
         
         // Only update PIN if it is provided and valid
         if (newPin != null && !newPin.isBlank()) {
