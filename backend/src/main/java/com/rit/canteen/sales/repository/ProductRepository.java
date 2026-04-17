@@ -20,5 +20,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     List<Product> findByCategory(String category);
     
+    @Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL")
+    List<String> findDistinctCategories();
+    
     boolean existsByNameAndCategory(String name, String category);
 }

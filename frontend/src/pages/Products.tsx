@@ -114,6 +114,27 @@ const Products = () => {
 
   useEffect(() => {
     fetchProducts();
+
+    // SSE Real-time stock updates
+    const host = window.location.hostname;
+    const eventSource = new EventSource(`http://${host}:8080/api/stock/stream`);
+
+    eventSource.addEventListener('stockUpdate', (event: any) => {
+      try {
+        const update = JSON.parse(event.data);
+        setProducts(prevProducts => 
+          prevProducts.map(p => 
+            p.id === update.productId ? { ...p, stock: update.stock } : p
+          )
+        );
+      } catch (err) {
+        console.error('Error processing stock update:', err);
+      }
+    });
+
+    return () => {
+      eventSource.close();
+    };
   }, [currentPage, pageSize, debouncedSearchTerm]);
 
   useEffect(() => {

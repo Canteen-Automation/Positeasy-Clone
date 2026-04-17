@@ -19,6 +19,9 @@ public class ProductController {
     @Autowired
     private com.rit.canteen.sales.repository.StallRepository stallRepository;
 
+    @Autowired
+    private StockUpdateController stockUpdateController;
+
     @GetMapping
     public org.springframework.data.domain.Page<Product> getAllProducts(
             @RequestParam(required = false) String search,
@@ -32,9 +35,12 @@ public class ProductController {
 
     @GetMapping("/category/{categoryName}")
     public List<Product> getProductsByCategory(@PathVariable String categoryName) {
-        return productRepository.findAll().stream()
-                .filter(p -> categoryName.equals(p.getCategory()))
-                .toList();
+        return productRepository.findByCategory(categoryName);
+    }
+    
+    @GetMapping("/categories")
+    public List<String> getAllCategories() {
+        return productRepository.findDistinctCategories();
     }
 
     @PostMapping
@@ -80,6 +86,9 @@ public class ProductController {
                     
                     Product updated = productRepository.save(product);
                     updateStallAssociations(updated, productDetails.getStalls());
+                    
+                    // Broadcast update
+                    stockUpdateController.broadcastStockUpdate(updated.getId(), updated.getStock());
                     
                     return ResponseEntity.ok(productRepository.findById(updated.getId()).orElse(updated));
                 })
@@ -127,8 +136,40 @@ public class ProductController {
                 .map(product -> {
                     Integer currentStock = product.getStock() != null ? product.getStock() : 0;
                     product.setStock(currentStock > 0 ? 0 : 99); // Toggle between Out of Stock and In Stock
-                    return ResponseEntity.ok(productRepository.save(product));
+                    Product saved = productRepository.save(product);
+                    stockUpdateController.broadcastStockUpdate(saved.getId(), saved.getStock());
+                    return ResponseEntity.ok(saved);
                 })
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}/stock-adjust")
+    public ResponseEntity<Product> adjustStock(@PathVariable Long id, @RequestParam int delta) {
+        return productRepository.findById(id)
+                .map(product -> {
+                    int currentStock = product.getStock() != null ? product.getStock() : 0;
+                    product.setStock(Math.max(0, currentStock + delta));
+                    Product saved = productRepository.save(product);
+                    stockUpdateController.broadcastStockUpdate(saved.getId(), saved.getStock());
+                    return ResponseEntity.ok(saved);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/batch-assign-category")
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<Void> batchAssignCategory(@RequestBody java.util.Map<String, Object> payload) {
+        String categoryName = (String) payload.get("categoryName");
+        List<Integer> productIds = (List<Integer>) payload.get("productIds");
+        
+        if (categoryName == null || productIds == null) return ResponseEntity.badRequest().build();
+        
+        for (Integer id : productIds) {
+            productRepository.findById(id.longValue()).ifPresent(p -> {
+                p.setCategory(categoryName);
+                productRepository.save(p);
+            });
+        }
+        return ResponseEntity.ok().build();
     }
 }
