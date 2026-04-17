@@ -20,6 +20,7 @@ import Bills from './pages/Bills.tsx';
 import PurchaseSummary from './pages/PurchaseSummary.tsx';
 import IntentDashboard from './pages/IntentDashboard.tsx';
 import IntentList from './pages/IntentList.tsx';
+import Reports from './pages/Reports.tsx';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
@@ -84,7 +85,7 @@ function App() {
           <Route path="expense/category" element={<PlaceholderPage title="Expense Category" />} />
           
           {/* Others */}
-          <Route path="reports" element={<PlaceholderPage title="Reports" />} />
+          <Route path="reports" element={<Reports />} />
           <Route path="table" element={<PlaceholderPage title="Table Management" />} />
           <Route path="wallet" element={<PlaceholderPage title="Wallet" />} />
           <Route path="feedback" element={<PlaceholderPage title="Feedback" />} />

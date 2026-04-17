@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Target,
   ChevronRight,
   ShoppingBag,
   ArrowRight,
-  Wallet
+  Wallet,
+  BarChart3
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -21,6 +23,7 @@ import {
 import { motion } from 'framer-motion';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Sales');
   const [timeRange, setTimeRange] = useState('Today');
   const [customDates, setCustomDates] = useState({ from: '', to: '' });
@@ -136,6 +139,14 @@ const Dashboard = () => {
         </div>
         
         <div className="flex items-center gap-3">
+           <button 
+             onClick={() => navigate('/reports')}
+             className="flex items-center gap-2 bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95"
+           >
+             <BarChart3 size={16} />
+             View Full Report
+           </button>
+
            <div className="relative group">
               <select title="Filter by store type or category" className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-600 outline-none focus:border-[#0f4475] transition-all cursor-pointer shadow-sm">
                  <option>Store Type: All</option>

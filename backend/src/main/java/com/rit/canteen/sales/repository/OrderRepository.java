@@ -44,4 +44,11 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
            "GROUP BY HOUR(o.createdAt) " +
            "ORDER BY HOUR(o.createdAt)")
     List<Object[]> getHourlySales(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT i.productName, SUM(i.quantity), SUM(i.price * i.quantity) " +
+           "FROM Order o JOIN o.items i " +
+           "WHERE o.createdAt >= :start AND o.createdAt <= :end " +
+           "GROUP BY i.productName " +
+           "ORDER BY SUM(i.quantity) DESC")
+    List<Object[]> getTopSellingItems(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

@@ -212,7 +212,7 @@ const LoginScreen: React.FC = () => {
 
         <div className="login-footer-info">
           <p>© 2026 Rajalakshmi Institute of Technology</p>
-          <p>Canteen Automation System</p>
+          <p>RIT Canteen Management System</p>
         </div>
       </div>
     </div>
