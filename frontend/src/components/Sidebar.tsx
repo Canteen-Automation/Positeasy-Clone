@@ -6,7 +6,6 @@ import {
   CreditCard, 
   Gauge, 
   LayoutGrid, 
-  Megaphone, 
   MessageSquare, 
   ShoppingCart, 
   Store, 
@@ -114,17 +113,6 @@ const menuItems: MenuItem[] = [
       { title: 'Stalls', path: '/stores/stalls' }
     ] 
   },
-  { title: 'Table', icon: Table2, path: '/table' },
-  { title: 'Wallet', icon: CreditCard, path: '/wallet' },
-  { 
-    title: 'Promotions', 
-    icon: Megaphone, 
-    subMenu: [
-      { title: 'Discounts', path: '/promotions/discounts' },
-      { title: 'Coupon', path: '/promotions/coupon' },
-      { title: 'CouponTemplate', path: '/promotions/coupon-template' }
-    ] 
-  },
   { title: 'Feedback', icon: MessageSquare, path: '/feedback' },
 ];
 
@@ -152,9 +140,6 @@ const Sidebar = () => {
       'Expense': 'expense',
       'Reports': 'reports',
       'Stores': 'stores',
-      'Table': 'table',
-      'Wallet': 'wallet',
-      'Promotions': 'promotions',
       'Feedback': 'feedback'
     };
     

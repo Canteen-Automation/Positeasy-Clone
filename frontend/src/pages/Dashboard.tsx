@@ -6,7 +6,8 @@ import {
   ShoppingBag,
   ArrowRight,
   Wallet,
-  BarChart3
+  BarChart3,
+  MessageSquare
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -139,6 +140,14 @@ const Dashboard = () => {
         </div>
         
         <div className="flex items-center gap-3">
+           <button 
+             onClick={() => navigate('/feedback')}
+             className="flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all shadow-sm active:scale-95"
+           >
+             <MessageSquare size={16} />
+             Customer Feedback
+           </button>
+
            <button 
              onClick={() => navigate('/reports')}
              className="flex items-center gap-2 bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-95"

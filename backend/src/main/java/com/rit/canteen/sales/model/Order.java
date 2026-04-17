@@ -47,6 +47,9 @@ public class Order {
     @Column(name = "is_archived", nullable = false)
     private boolean isArchived = false;
 
+    @Column(name = "has_feedback", nullable = false)
+    private boolean hasFeedback = false;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
 
@@ -99,6 +102,9 @@ public class Order {
 
     public boolean isArchived() { return isArchived; }
     public void setArchived(boolean archived) { isArchived = archived; }
+
+    public boolean isHasFeedback() { return hasFeedback; }
+    public void setHasFeedback(boolean hasFeedback) { this.hasFeedback = hasFeedback; }
 
     public String getOrderType() { return orderType; }
     public void setOrderType(String orderType) { this.orderType = orderType; }

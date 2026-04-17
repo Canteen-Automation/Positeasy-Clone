@@ -21,6 +21,7 @@ import PurchaseSummary from './pages/PurchaseSummary.tsx';
 import IntentDashboard from './pages/IntentDashboard.tsx';
 import IntentList from './pages/IntentList.tsx';
 import Reports from './pages/Reports.tsx';
+import Feedback from './pages/Feedback.tsx';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
@@ -86,20 +87,13 @@ function App() {
           
           {/* Others */}
           <Route path="reports" element={<Reports />} />
-          <Route path="table" element={<PlaceholderPage title="Table Management" />} />
-          <Route path="wallet" element={<PlaceholderPage title="Wallet" />} />
-          <Route path="feedback" element={<PlaceholderPage title="Feedback" />} />
+          <Route path="feedback" element={<Feedback />} />
           
           {/* Stores */}
           <Route path="stores/terminals" element={<Terminals />} />
           <Route path="stores/managers" element={<Managers />} />
           <Route path="stores/staffs" element={<Staff />} />
           <Route path="stores/stalls" element={<Stalls />} />
-          
-          {/* Promotions */}
-          <Route path="promotions/discounts" element={<PlaceholderPage title="Discounts" />} />
-          <Route path="promotions/coupon" element={<PlaceholderPage title="Coupons" />} />
-          <Route path="promotions/coupon-template" element={<PlaceholderPage title="Coupon Templates" />} />
         </Route>
       </Routes>
     </Router>

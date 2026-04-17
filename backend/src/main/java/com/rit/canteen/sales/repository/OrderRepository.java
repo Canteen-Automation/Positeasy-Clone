@@ -13,6 +13,9 @@ import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
     List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
+    Optional<Order> findFirstByUserIdOrderByCreatedAtDesc(Long userId);
+    Optional<Order> findFirstByUserIdAndStatusAndHasFeedbackFalseOrderByCreatedAtDesc(Long userId, String status);
+    Optional<Order> findFirstByUserIdAndStatusOrderByCreatedAtDesc(Long userId, String status);
     long countByCreatedAtGreaterThanEqual(LocalDateTime startOfDay);
     long countByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
     List<Order> findByIsArchivedFalseAndCreatedAtBefore(LocalDateTime timestamp);

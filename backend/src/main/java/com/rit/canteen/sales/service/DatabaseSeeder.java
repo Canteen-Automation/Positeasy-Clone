@@ -27,9 +27,31 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         repairStallsSchema();
+        repairOrdersSchema();
+        repairFeedbackSchema();
         repairLobColumns();
         seedCategories();
         seedProducts();
+    }
+
+    private void repairFeedbackSchema() {
+        System.out.println("Checking schema consistency for 'canteen_item_ratings' table...");
+        try {
+            jdbcTemplate.execute("ALTER TABLE canteen_item_ratings ADD COLUMN IF NOT EXISTS comment VARCHAR(500)");
+            System.out.println("Feedback schema consistency confirmed.");
+        } catch (Exception e) {
+            System.err.println("Feedback schema repair notice: " + e.getMessage());
+        }
+    }
+
+    private void repairOrdersSchema() {
+        System.out.println("Checking schema consistency for 'canteen_orders' table...");
+        try {
+            jdbcTemplate.execute("ALTER TABLE canteen_orders ADD COLUMN IF NOT EXISTS has_feedback BOOLEAN DEFAULT FALSE");
+            System.out.println("Orders schema consistency confirmed.");
+        } catch (Exception e) {
+            System.err.println("Orders schema repair notice: " + e.getMessage());
+        }
     }
 
     private void repairStallsSchema() {
