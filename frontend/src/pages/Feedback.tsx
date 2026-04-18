@@ -8,7 +8,8 @@ import {
   PieChart as PieChartIcon,
   ThumbsUp,
   X,
-  Clock
+  Clock,
+  BarChart3
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -36,6 +37,17 @@ interface ItemDetail {
   rating: number;
   comment: string;
   date: string;
+  userName?: string;
+  orderNumber?: string;
+}
+
+interface ItemStats {
+  averageRating: number;
+  totalReviews: number;
+  distribution: Array<{
+    rating: number;
+    count: number;
+  }>;
 }
 
 interface FeedbackStats {
@@ -60,6 +72,7 @@ const Feedback: React.FC = () => {
   // Modal states
   const [selectedItem, setSelectedItem] = useState<RatedItem | null>(null);
   const [itemDetails, setItemDetails] = useState<ItemDetail[]>([]);
+  const [itemStats, setItemStats] = useState<ItemStats | null>(null);
   const [detailsLoading, setItemDetailsLoading] = useState(false);
   const [detailsPage, setDetailsPage] = useState(0);
   const [detailsTotal, setDetailsTotal] = useState(0);
@@ -90,15 +103,22 @@ const Feedback: React.FC = () => {
     }
   };
 
-  const fetchItemDetails = async (itemName: string, pageNum: number) => {
+  const fetchItemData = async (itemName: string, pageNum: number) => {
     setItemDetailsLoading(true);
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/feedback/item-details?productName=${encodeURIComponent(itemName)}&page=${pageNum}&size=${detailsPageSize}`);
-      const data = await response.json();
-      setItemDetails(data?.content || []);
-      setDetailsTotal(data?.totalElements || 0);
+      const [detailsRes, statsRes] = await Promise.all([
+        fetch(`http://${window.location.hostname}:8080/api/feedback/item-details?productName=${encodeURIComponent(itemName)}&page=${pageNum}&size=${detailsPageSize}`),
+        fetch(`http://${window.location.hostname}:8080/api/feedback/item-stats?productName=${encodeURIComponent(itemName)}`)
+      ]);
+      
+      const detailsData = await detailsRes.json();
+      const statsData = await statsRes.json();
+      
+      setItemDetails(detailsData?.content || []);
+      setDetailsTotal(detailsData?.totalElements || 0);
+      setItemStats(statsData);
     } catch (error) {
-      console.error('Error fetching item details:', error);
+      console.error('Error fetching item feedback data:', error);
       setItemDetails([]);
     } finally {
       setItemDetailsLoading(false);
@@ -115,7 +135,7 @@ const Feedback: React.FC = () => {
 
   useEffect(() => {
     if (selectedItem) {
-      fetchItemDetails(selectedItem.name, detailsPage);
+      fetchItemData(selectedItem.name, detailsPage);
     }
   }, [selectedItem, detailsPage]);
 
@@ -359,7 +379,46 @@ const Feedback: React.FC = () => {
               </div>
 
               <div className="p-8 overflow-y-auto flex-1 bg-slate-50/50">
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Item Specific Breakdown */}
+                  {itemStats && (
+                    <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                       <div className="flex items-center gap-3 mb-6">
+                          <div className="p-2 bg-amber-50 text-amber-500 rounded-xl">
+                             <BarChart3 size={18} />
+                          </div>
+                          <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Rating Breakdown</h3>
+                       </div>
+                       
+                       <div className="space-y-3">
+                          {[5, 4, 3, 2, 1].map(rating => {
+                             const dist = itemStats.distribution.find(d => d.rating === rating);
+                             const percentage = itemStats.totalReviews > 0 ? ((dist?.count || 0) / itemStats.totalReviews) * 100 : 0;
+                             return (
+                                <div key={rating} className="flex items-center gap-4">
+                                   <span className="text-xs font-bold text-slate-400 w-12">{rating} Stars</span>
+                                   <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                      <motion.div 
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${percentage}%` }}
+                                        className="h-full bg-amber-400"
+                                      />
+                                   </div>
+                                   <span className="text-xs font-black text-slate-600 w-8">{dist?.count || 0}</span>
+                                </div>
+                             )
+                          })}
+                       </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3 mt-4">
+                     <div className="p-2 bg-indigo-50 text-indigo-500 rounded-xl">
+                        <MessageSquare size={18} />
+                     </div>
+                     <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Customer Remarks</h3>
+                  </div>
+
                   {detailsLoading && itemDetails.length === 0 ? (
                     <div className="py-20 text-center">
                        <RefreshCw size={32} className="animate-spin mx-auto text-indigo-200 mb-4" />
@@ -367,22 +426,23 @@ const Feedback: React.FC = () => {
                     </div>
                   ) : itemDetails.map((detail, idx) => (
                     <div key={idx} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                      <div className="flex justify-between items-start mb-3">
+                      <div className="flex justify-between items-start mb-4">
                          <div className="flex items-center gap-3">
                             <div className="p-2 bg-slate-50 rounded-xl text-slate-400">
                                <Clock size={16} />
                             </div>
-                            <span className="text-xs font-bold text-slate-400 uppercase">{format(new Date(detail.date), 'dd MMM yyyy, hh:mm a')}</span>
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{format(new Date(detail.date), 'dd MMM yyyy, hh:mm a')}</span>
                          </div>
-                         {renderStars(detail.rating, 16)}
+                         {renderStars(detail.rating, 18)}
                       </div>
-                      <p className="text-slate-600 leading-relaxed font-medium italic">
-                        "{detail.comment || 'No written review provided'}"
-                      </p>
-                      <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-2">
-                         <div className="w-6 h-6 bg-indigo-50 rounded-full flex items-center justify-center text-[10px] font-black text-indigo-500">A</div>
-                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Anonymous Customer</span>
+                      
+                      <div className="bg-slate-50/80 rounded-2xl p-5 border border-slate-100 relative">
+                        <div className="absolute -top-3 left-4 bg-white px-2 text-[8px] font-black text-indigo-400 uppercase tracking-widest border border-slate-100 rounded">REMARK</div>
+                        <p className="text-slate-700 leading-relaxed font-semibold italic text-sm">
+                          "{detail.comment || 'No specific remark provided.'}"
+                        </p>
                       </div>
+
                     </div>
                   ))}
 

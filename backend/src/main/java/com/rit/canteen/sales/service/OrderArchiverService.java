@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.annotation.PostConstruct;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,6 +17,15 @@ public class OrderArchiverService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    /**
+     * Ensures all old orders are archived immediately upon application startup.
+     */
+    @PostConstruct
+    public void init() {
+        System.out.println("Application startup: Triggering proactive order archival...");
+        archivePreviousDayOrders();
+    }
 
     /**
      * Automatically archives orders from previous days at midnight (12:00 AM).

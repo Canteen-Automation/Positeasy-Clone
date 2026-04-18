@@ -4,10 +4,12 @@ import com.rit.canteen.sales.model.Feedback;
 import com.rit.canteen.sales.model.ItemRating;
 import com.rit.canteen.sales.model.Order;
 import com.rit.canteen.sales.repository.FeedbackRepository;
+import com.rit.canteen.sales.repository.ItemRatingRepository;
 import com.rit.canteen.sales.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +26,9 @@ public class FeedbackController {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private ItemRatingRepository itemRatingRepository;
+
     @GetMapping
     public Page<Feedback> getAllFeedback(
             @RequestParam(defaultValue = "0") int page,
@@ -32,27 +37,64 @@ public class FeedbackController {
     }
 
     @GetMapping("/item-details")
+    @Transactional(readOnly = true)
     public Page<Map<String, Object>> getItemDetails(
             @RequestParam String productName,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<ItemRating> ratings = feedbackRepository.findByProductName(productName, PageRequest.of(page, size));
+        String trimmedName = productName != null ? productName.trim() : "";
+        
+        // Sort by feedback.createdAt DESC
+        Sort sort = Sort.by(Sort.Direction.DESC, "feedback.createdAt");
+        Page<ItemRating> ratings = itemRatingRepository.findByProductNameIgnoreCase(trimmedName, PageRequest.of(page, size, sort));
+        
         return ratings.map(r -> {
             Map<String, Object> map = new HashMap<>();
             map.put("rating", r.getRating());
             
             // Priority: Item-specific comment -> parent Feedback comment -> empty
             String comment = r.getComment();
+            Feedback f = r.getFeedback();
             if (comment == null || comment.isBlank()) {
-                if (r.getFeedback() != null) {
-                    comment = r.getFeedback().getComment();
+                if (f != null) {
+                    comment = f.getComment();
                 }
             }
             
             map.put("comment", comment != null ? comment : "");
-            map.put("date", r.getFeedback() != null ? r.getFeedback().getCreatedAt() : java.time.LocalDateTime.now());
+            map.put("date", f != null ? f.getCreatedAt() : java.time.LocalDateTime.now());
+            map.put("userName", f != null ? f.getUserName() : "Anonymous");
+            map.put("orderNumber", (f != null && f.getOrder() != null) ? f.getOrder().getOrderNumber() : "N/A");
             return map;
         });
+    }
+
+    @GetMapping("/item-stats")
+    public Map<String, Object> getItemStats(@RequestParam String productName) {
+        Map<String, Object> stats = new HashMap<>();
+        List<Object[]> distribution = feedbackRepository.getItemRatingDistribution(productName);
+        List<Map<String, Object>> distList = new ArrayList<>();
+        
+        long totalCount = 0;
+        double sum = 0;
+        
+        for (Object[] row : distribution) {
+            Map<String, Object> item = new HashMap<>();
+            int rating = ((Number) row[0]).intValue();
+            long count = ((Number) row[1]).longValue();
+            item.put("rating", rating);
+            item.put("count", count);
+            distList.add(item);
+            
+            totalCount += count;
+            sum += (rating * count);
+        }
+        
+        stats.put("distribution", distList);
+        stats.put("totalReviews", totalCount);
+        stats.put("averageRating", totalCount > 0 ? sum / totalCount : 0.0);
+        
+        return stats;
     }
 
     @GetMapping("/stats")
@@ -66,8 +108,8 @@ public class FeedbackController {
         List<Map<String, Object>> distList = new ArrayList<>();
         for (Object[] row : distribution) {
             Map<String, Object> item = new HashMap<>();
-            item.put("rating", row[0]);
-            item.put("count", row[1]);
+            item.put("rating", ((Number) row[0]).intValue());
+            item.put("count", ((Number) row[1]).longValue());
             distList.add(item);
         }
         stats.put("distribution", distList);
@@ -77,8 +119,8 @@ public class FeedbackController {
         for (Object[] row : topRated) {
             Map<String, Object> item = new HashMap<>();
             item.put("name", row[0]);
-            item.put("average", row[1]);
-            item.put("count", row[2]);
+            item.put("average", row[1] != null ? ((Number) row[1]).doubleValue() : 0.0);
+            item.put("count", row[2] != null ? ((Number) row[2]).longValue() : 0);
             topList.add(item);
         }
         stats.put("ratedItems", topList);
