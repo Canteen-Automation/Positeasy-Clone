@@ -24,4 +24,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<String> findDistinctCategories();
     
     boolean existsByNameAndCategory(String name, String category);
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE Product p SET p.stock = p.stock - :quantity WHERE p.id = :id AND p.stock >= :quantity")
+    int decrementStock(@org.springframework.data.repository.query.Param("id") Long id, @org.springframework.data.repository.query.Param("quantity") int quantity);
 }

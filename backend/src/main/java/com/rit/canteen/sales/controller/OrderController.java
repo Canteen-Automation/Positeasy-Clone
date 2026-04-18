@@ -34,6 +34,9 @@ public class OrderController {
     @Autowired
     private com.rit.canteen.sales.service.OrderArchiverService orderArchiverService;
 
+    // Use ThreadLocal to safely store conflicts for the current request context
+    private static final ThreadLocal<List<Map<String, Object>>> requestConflicts = new ThreadLocal<>();
+
     @GetMapping("/all")
     public ResponseEntity<?> getAllOrders(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
@@ -113,54 +116,79 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<Map<String, Object>> placeOrder(@RequestBody Order order) {
-        // Link items to the order for bidirectional relationship
-        if (order.getItems() != null) {
-            for (OrderItem item : order.getItems()) {
-                System.out.println("🛒 RECEIVED ITEM: " + item.getProductName() + " | StallID: " + item.getStallId() + " | StallName: " + item.getStallName());
-                item.setOrder(order);
-            }
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> placeOrder(@RequestBody Order order) {
+        // 1. Pre-validation and linking
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Order must have items"));
         }
+
+        // 2. Atomic Stock Check & Update
+        List<Map<String, Object>> stockConflicts = new ArrayList<>();
+        requestConflicts.remove(); // Clear before use
         
-        // Use the actual creation time or current time for counting
-        LocalDateTime now = LocalDateTime.now();
-        order.setCreatedAt(now);
-        
-        // Calculate start of current day to find how many orders placed today
-        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
-        long todaysOrderCount = orderRepository.countByCreatedAtGreaterThanEqual(startOfDay);
-        
-        // Generate formatted display ID (#001, #002...) resetting daily
-        String displayId = String.format("%03d", todaysOrderCount + 1);
-        order.setDisplayOrderId(displayId);
-        
-        // Save the complete order first
-        Order savedOrder = orderRepository.save(order);
-        
-        // --- Reduct Stock Logic ---
-        if (savedOrder.getItems() != null) {
-            for (OrderItem item : savedOrder.getItems()) {
-                Long productId = item.getProductId();
-                if (productId != null) {
-                    productRepository.findById(productId).ifPresent(product -> {
-                        int currentStock = product.getStock() != null ? product.getStock() : 0;
-                        product.setStock(currentStock - item.getQuantity());
-                        productRepository.save(product);
-                        System.out.println("Updating Stock for " + product.getName() + ": " + currentStock + " -> " + product.getStock());
-                    });
+        for (OrderItem item : order.getItems()) {
+            Long productId = item.getProductId();
+            if (productId != null) {
+                int updatedRows = productRepository.decrementStock(productId, item.getQuantity());
+                
+                if (updatedRows == 0) {
+                    com.rit.canteen.sales.model.Product p = productRepository.findById(productId).orElse(null);
+                    int left = (p != null && p.getStock() != null) ? p.getStock() : 0;
+                    
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("productId", productId);
+                    conflict.put("productName", item.getProductName());
+                    conflict.put("requested", item.getQuantity());
+                    conflict.put("available", left);
+                    stockConflicts.add(conflict);
                 }
             }
         }
+
+        if (!stockConflicts.isEmpty()) {
+            requestConflicts.set(stockConflicts);
+            throw new RuntimeException("CONCURRENCY_STOCK_FAILURE");
+        }
+
+        // 3. Complete Order Details
+        for (OrderItem item : order.getItems()) {
+            item.setOrder(order);
+        }
         
-        System.out.println("Placed Daily Order: " + savedOrder.getId() + " -> Display ID: #" + displayId);
+        LocalDateTime now = LocalDateTime.now();
+        order.setCreatedAt(now);
+        LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
+        long todaysOrderCount = orderRepository.countByCreatedAtGreaterThanEqual(startOfDay);
+        String displayId = String.format("%03d", todaysOrderCount + 1);
+        order.setDisplayOrderId(displayId);
         
-        Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("orderNumber", savedOrder.getOrderNumber()); // Secure ID for QR
-        response.put("displayOrderId", savedOrder.getDisplayOrderId()); // Sequential ID (#001)
-        response.put("message", "Order placed successfully");
+        // 4. Final Save
+        Order savedOrder = orderRepository.save(order);
         
-        return ResponseEntity.ok(response);
+        System.out.println("Placed Order: " + savedOrder.getId() + " -> Display ID: #" + displayId);
+        
+        return ResponseEntity.ok(Map.of(
+            "success", true,
+            "orderNumber", savedOrder.getOrderNumber(),
+            "displayOrderId", savedOrder.getDisplayOrderId(),
+            "message", "Order placed successfully"
+        ));
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<?> handleRuntimeException(RuntimeException e) {
+        if ("CONCURRENCY_STOCK_FAILURE".equals(e.getMessage())) {
+            List<Map<String, Object>> conflicts = requestConflicts.get();
+            requestConflicts.remove();
+            return ResponseEntity.status(400).body(Map.of(
+                "success", false,
+                "errorType", "STOCK_ERROR",
+                "message", "Some items in your cart are no longer available in the requested quantity.",
+                "conflicts", conflicts != null ? conflicts : new ArrayList<>()
+            ));
+        }
+        return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage() != null ? e.getMessage() : "Internal Server Error"));
     }
 
     @GetMapping("/user/{userId}")
