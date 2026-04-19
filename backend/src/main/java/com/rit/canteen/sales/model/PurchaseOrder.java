@@ -77,4 +77,8 @@ public class PurchaseOrder {
     public BigDecimal getPayables() {
         return amount != null ? amount.subtract(paidTotal) : BigDecimal.ZERO;
     }
+
+    public BigDecimal getBalance() {
+        return amount != null ? amount.subtract(paidTotal != null ? paidTotal : BigDecimal.ZERO) : BigDecimal.ZERO;
+    }
 }

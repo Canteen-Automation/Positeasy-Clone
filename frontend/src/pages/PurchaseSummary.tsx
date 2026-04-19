@@ -62,11 +62,11 @@ const PurchaseSummary = () => {
   }
 
   const summaryStats = [
-    { title: "Total Purchases", value: `₹${data.totalAmount.toLocaleString()}`, icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-50" },
-    { title: "Total Credits", value: `₹${data.balanceAmount.toLocaleString()}`, icon: AlertCircle, color: "text-amber-500", bg: "bg-amber-50" },
-    { title: "Credit Paid", value: `₹${data.paidAmount.toLocaleString()}`, icon: AlertCircle, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { title: "Balance Credit", value: `₹${data.balanceAmount.toLocaleString()}`, icon: AlertCircle, color: "text-indigo-500", bg: "bg-indigo-50" },
-    { title: "Bills to Pay", value: data.unpaidCount.toString(), icon: AlertCircle, color: "text-blue-500", bg: "bg-blue-50" }
+    { title: "Total Purchases", value: `₹${(data?.totalAmount ?? 0).toLocaleString()}`, icon: AlertCircle, color: "text-rose-500", bg: "bg-rose-50" },
+    { title: "Total Credits", value: `₹${(data?.balanceAmount ?? 0).toLocaleString()}`, icon: AlertCircle, color: "text-amber-500", bg: "bg-amber-50" },
+    { title: "Credit Paid", value: `₹${(data?.paidAmount ?? 0).toLocaleString()}`, icon: AlertCircle, color: "text-emerald-500", bg: "bg-emerald-50" },
+    { title: "Balance Credit", value: `₹${(data?.balanceAmount ?? 0).toLocaleString()}`, icon: AlertCircle, color: "text-indigo-500", bg: "bg-indigo-50" },
+    { title: "Bills to Pay", value: (data?.unpaidCount ?? 0).toString(), icon: AlertCircle, color: "text-blue-500", bg: "bg-blue-50" }
   ];
 
   return (
@@ -149,7 +149,7 @@ const PurchaseSummary = () => {
               </div>
               <div className="h-[280px]">
                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data.trend}>
+                    <AreaChart data={data?.trend}>
                        <defs>
                           <linearGradient id="purchaseGradSum" x1="0" y1="0" x2="0" y2="1">
                              <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.1}/>
@@ -204,8 +204,8 @@ const PurchaseSummary = () => {
                               {bill.status}
                            </span>
                         </td>
-                        <td className="px-6 py-5 text-right text-xs font-black text-rose-500">₹{bill.balance.toLocaleString()}</td>
-                        <td className="px-6 py-5 text-right text-xs font-black text-[#0f4475]">₹{bill.amount.toLocaleString()}</td>
+                        <td className="px-6 py-5 text-right text-xs font-black text-rose-500">₹{(bill.balance ?? 0).toLocaleString()}</td>
+                        <td className="px-6 py-5 text-right text-xs font-black text-[#0f4475]">₹{(bill.amount ?? 0).toLocaleString()}</td>
                      </tr>
                   ))}
                </tbody>
