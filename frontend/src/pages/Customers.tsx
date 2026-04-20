@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, User, Phone, Tag, ChevronRight, UserCheck, UserMinus, MoreVertical, LayoutGrid, List, Edit2, Trash2, Shield, X, Eye, EyeOff, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
+import { Search, User, Phone, Tag, ChevronRight, UserCheck, UserMinus, MoreVertical, LayoutGrid, List, Edit2, Trash2, Shield, X, Eye, EyeOff, Loader2, AlertCircle, CheckCircle, CircleDollarSign } from 'lucide-react';
 import Pagination from '../components/Pagination';
 
 interface UserDto {
@@ -7,6 +7,7 @@ interface UserDto {
   mobileNumber: string;
   name: string;
   loggedIn: boolean;
+  ritzTokenBalance: number;
 }
 
 const Customers: React.FC = () => {
@@ -241,6 +242,7 @@ const Customers: React.FC = () => {
                         <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">Customer Info</th>
                         <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">Contact Info</th>
                         <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">Membership</th>
+                        <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">Wallet Balance</th>
                         <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider">Status</th>
                         <th className="px-6 py-4 text-xs font-bold text-[#64748b] uppercase tracking-wider text-right">Actions</th>
                       </tr>
@@ -269,6 +271,21 @@ const Customers: React.FC = () => {
                             <td className="px-6 py-4">
                               <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold whitespace-nowrap">
                                 REGULAR CUSTOMER
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
+                                  <CircleDollarSign size={16} />
+                                </div>
+                                <span className="text-sm font-black text-[#231651]">
+                                  R{user.ritzTokenBalance?.toLocaleString() || '0'}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm font-bold text-[#231651]">
+                                R{user.ritzTokenBalance?.toLocaleString() || '0'}
                               </span>
                             </td>
                             <td className="px-6 py-4">
@@ -301,7 +318,7 @@ const Customers: React.FC = () => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={5} className="px-6 py-12 text-center text-[#64748b]">
+                          <td colSpan={6} className="px-6 py-12 text-center text-[#64748b]">
                             <div className="flex flex-col items-center justify-center">
                               <User size={40} className="mb-2 opacity-20" />
                               <p className="font-medium">No customers found</p>
@@ -345,6 +362,9 @@ const Customers: React.FC = () => {
                       <div className="flex items-center gap-2 mb-6">
                         <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-lg border border-blue-100 uppercase tracking-wider">
                           RIT STUDENT
+                        </span>
+                        <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-lg border border-indigo-100 uppercase tracking-wider">
+                          R{user.ritzTokenBalance?.toLocaleString() || '0'} TOKENS
                         </span>
                       </div>
                       

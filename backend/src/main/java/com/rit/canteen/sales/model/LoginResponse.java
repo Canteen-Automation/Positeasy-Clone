@@ -43,14 +43,16 @@ public class LoginResponse {
         private String mobileNumber;
         private String name;
         private boolean isLoggedIn;
+        private java.math.BigDecimal ritzTokenBalance;
 
         public UserDto() {}
 
-        public UserDto(Long id, String mobileNumber, String name, boolean isLoggedIn) {
+        public UserDto(Long id, String mobileNumber, String name, boolean isLoggedIn, java.math.BigDecimal ritzTokenBalance) {
             this.id = id;
             this.mobileNumber = mobileNumber;
             this.name = name;
             this.isLoggedIn = isLoggedIn;
+            this.ritzTokenBalance = ritzTokenBalance;
         }
 
         public Long getId() { return id; }
@@ -63,6 +65,9 @@ public class LoginResponse {
         public void setName(String name) { this.name = name; }
 
         public boolean isLoggedIn() { return isLoggedIn; }
-        public void setLoggedIn(boolean loggedIn) { isLoggedIn = loggedIn; }
+        public void setLoggedIn(boolean loggedIn) { this.isLoggedIn = loggedIn; }
+
+        public java.math.BigDecimal getRitzTokenBalance() { return ritzTokenBalance; }
+        public void setRitzTokenBalance(java.math.BigDecimal ritzTokenBalance) { this.ritzTokenBalance = ritzTokenBalance; }
     }
 }

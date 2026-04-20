@@ -61,7 +61,7 @@ public class UserService {
         userRepository.save(user);
 
         LoginResponse.UserDto userDto = new LoginResponse.UserDto(
-                user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn()
+                user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.getRitzTokenBalance()
         );
 
         return new LoginResponse(true, "Registration successful. You are now logged in.", userDto);
@@ -88,7 +88,7 @@ public class UserService {
         userRepository.save(user);
 
         LoginResponse.UserDto userDto = new LoginResponse.UserDto(
-                user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn()
+                user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.getRitzTokenBalance()
         );
 
         return new LoginResponse(true, "Login successful.", userDto);
@@ -154,7 +154,7 @@ public class UserService {
             return null;
         }
         User user = userOpt.get();
-        return new LoginResponse.UserDto(user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn());
+        return new LoginResponse.UserDto(user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.getRitzTokenBalance());
     }
 
     /**
@@ -172,7 +172,8 @@ public class UserService {
                 user.getId(), 
                 user.getMobileNumber(), 
                 user.getName(), 
-                user.isLoggedIn()
+                user.isLoggedIn(),
+                user.getRitzTokenBalance()
         ));
     }
 
@@ -211,7 +212,7 @@ public class UserService {
         }
 
         userRepository.save(user);
-        return new LoginResponse.UserDto(user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn());
+        return new LoginResponse.UserDto(user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.getRitzTokenBalance());
     }
 
     /**

@@ -28,6 +28,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     public void run(String... args) throws Exception {
         repairStallsSchema();
         repairOrdersSchema();
+        repairUsersSchema();
         repairFeedbackSchema();
         repairLobColumns();
         seedCategories();
@@ -51,6 +52,17 @@ public class DatabaseSeeder implements CommandLineRunner {
             System.out.println("Orders schema consistency confirmed.");
         } catch (Exception e) {
             System.err.println("Orders schema repair notice: " + e.getMessage());
+        }
+    }
+
+    private void repairUsersSchema() {
+        System.out.println("Checking schema consistency for 'app_users' table...");
+        try {
+            // Add ritz_token_balance if it doesn't exist
+            jdbcTemplate.execute("ALTER TABLE app_users ADD COLUMN IF NOT EXISTS ritz_token_balance NUMERIC(19, 2) DEFAULT 0 NOT NULL");
+            System.out.println("Users schema consistency confirmed.");
+        } catch (Exception e) {
+            System.err.println("Users schema repair notice: " + e.getMessage());
         }
     }
 

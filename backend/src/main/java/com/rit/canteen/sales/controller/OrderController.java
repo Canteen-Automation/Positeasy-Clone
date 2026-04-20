@@ -14,6 +14,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import com.rit.canteen.sales.repository.UserRepository;
+import com.rit.canteen.sales.service.OrderArchiverService;
+import com.rit.canteen.sales.service.TokenService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +35,13 @@ public class OrderController {
     private ProductRepository productRepository;
     
     @Autowired
-    private com.rit.canteen.sales.service.OrderArchiverService orderArchiverService;
+    private UserRepository userRepository;
+
+    @Autowired
+    private OrderArchiverService orderArchiverService;
+
+    @Autowired
+    private TokenService tokenService;
 
     // Use ThreadLocal to safely store conflicts for the current request context
     private static final ThreadLocal<List<Map<String, Object>>> requestConflicts = new ThreadLocal<>();
@@ -163,7 +172,19 @@ public class OrderController {
         String displayId = String.format("%03d", todaysOrderCount + 1);
         order.setDisplayOrderId(displayId);
         
-        // 4. Final Save
+        // 4. Token Payment Check
+        if ("RITZ_TOKEN".equals(order.getPaymentMethod())) {
+            try {
+                tokenService.spend(order.getUser().getId(), order.getTotalAmount(), "ORD-" + displayId);
+            } catch (RuntimeException e) {
+                if ("INSUFFICIENT_TOKENS".equals(e.getMessage())) {
+                    throw new RuntimeException("INSUFFICIENT_TOKENS");
+                }
+                throw e;
+            }
+        }
+        
+        // 5. Final Save
         Order savedOrder = orderRepository.save(order);
         
         System.out.println("Placed Order: " + savedOrder.getId() + " -> Display ID: #" + displayId);
@@ -186,6 +207,13 @@ public class OrderController {
                 "errorType", "STOCK_ERROR",
                 "message", "Some items in your cart are no longer available in the requested quantity.",
                 "conflicts", conflicts != null ? conflicts : new ArrayList<>()
+            ));
+        }
+        if ("INSUFFICIENT_TOKENS".equals(e.getMessage())) {
+            return ResponseEntity.status(400).body(Map.of(
+                "success", false,
+                "errorType", "TOKEN_ERROR",
+                "message", "Insufficient Ritz Tokens. Please top up your wallet."
             ));
         }
         return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage() != null ? e.getMessage() : "Internal Server Error"));
