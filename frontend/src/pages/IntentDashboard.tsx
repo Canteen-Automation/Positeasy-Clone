@@ -58,6 +58,7 @@ interface IntentStats {
 const IntentDashboard: React.FC<IntentDashboardProps> = ({ title }) => {
   const [stats, setStats] = useState<IntentStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [filterTab, setFilterTab] = useState('All');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -193,17 +194,32 @@ const IntentDashboard: React.FC<IntentDashboardProps> = ({ title }) => {
                   <button onClick={fetchStats} className={`text-[#38bdf8] p-1.5 hover:bg-sky-50 rounded-lg transition-all ${loading ? 'animate-spin' : ''}`}><RefreshCw size={16} /></button>
                </div>
                <div className="flex gap-2 mb-4 overflow-x-auto pb-2 scrollbar-hide">
-                  {['All', 'Open', 'Billed', 'Received', 'Closed'].map((t, i) => (
-                    <button key={t} className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${i === 0 ? 'bg-[#0f4475] text-white' : 'bg-[#f8fafc] text-[#64748b] hover:bg-[#f1f5f9]'}`}>
+                  {['All', 'Open', 'Billed', 'Received', 'Closed'].map((t) => (
+                    <button 
+                       key={t} 
+                       onClick={() => setFilterTab(t)}
+                       className={`whitespace-nowrap px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${filterTab === t ? 'bg-[#0f4475] text-white shadow-md shadow-[#0f4475]/20' : 'bg-[#f8fafc] text-[#64748b] hover:bg-[#f1f5f9]'}`}
+                    >
                        {t}
                     </button>
                   ))}
                </div>
                <div className="space-y-3">
-                  {(!stats?.recentOrders || stats.recentOrders.length === 0) ? (
-                      <div className="py-12 text-center text-[#94a3b8] text-xs font-bold italic">No recent orders</div>
-                  ) : (
-                    stats.recentOrders.map(o => (
+                  {(() => {
+                    const filtered = stats?.recentOrders?.filter(o => {
+                        if (filterTab === 'All') return true;
+                        if (filterTab === 'Open') return o.status === 'OPEN';
+                        if (filterTab === 'Billed') return o.status === 'BILLED';
+                        if (filterTab === 'Received') return o.status === 'RECEIVED';
+                        if (filterTab === 'Closed') return o.status === 'CLOSE' || o.status === 'CLOSED';
+                        return true;
+                    }) || [];
+
+                    if (filtered.length === 0) {
+                        return <div className="py-12 text-center text-[#94a3b8] text-xs font-bold italic">No {filterTab.toLowerCase()} orders</div>;
+                    }
+
+                    return filtered.map(o => (
                         <div key={o.id} className="p-3 bg-[#f8fafc] border border-[#f1f5f9] rounded-xl hover:shadow-md transition-all cursor-pointer group">
                         <div className="flex justify-between items-start mb-1">
                             <span className="text-[11px] font-black text-[#1e293b]">#{o.purchaseId || o.id}</span>
@@ -211,11 +227,16 @@ const IntentDashboard: React.FC<IntentDashboardProps> = ({ title }) => {
                         </div>
                         <div className="flex justify-between items-end">
                             <span className="text-[10px] font-semibold text-[#94a3b8]">{o.date ? format(new Date(o.date), 'MMM dd, yyyy HH:mm') : 'N/A'}</span>
-                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${o.status === 'CLOSE' || o.status === 'CLOSED' ? 'text-[#ef4444] bg-[#fee2e2]' : 'text-emerald-700 bg-emerald-100'}`}>{o.status}</span>
+                            <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
+                                o.status === 'CLOSE' || o.status === 'CLOSED' ? 'text-rose-600 bg-rose-50' : 
+                                o.status === 'OPEN' ? 'text-amber-600 bg-amber-50' :
+                                o.status === 'BILLED' ? 'text-indigo-600 bg-indigo-50' :
+                                'text-emerald-700 bg-emerald-100'
+                            }`}>{o.status}</span>
                         </div>
                         </div>
-                    ))
-                  )}
+                    ));
+                  })()}
                </div>
             </div>
 
