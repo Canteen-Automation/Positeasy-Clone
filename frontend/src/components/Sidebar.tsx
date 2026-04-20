@@ -15,12 +15,14 @@ import {
   ShoppingBag,
   Receipt,
   Search,
-  LogOut
+  LogOut,
+  CircleDollarSign
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import collegeLogo from '../assets/college-logo.png';
+import colorVector from '../assets/color-vector.png';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -115,6 +117,14 @@ const menuItems: MenuItem[] = [
     ] 
   },
   { title: 'Feedback', icon: MessageSquare, path: '/feedback' },
+  { 
+    title: 'Ritz', 
+    icon: CircleDollarSign, 
+    subMenu: [
+      { title: 'Overview', path: '/ritz/overview' },
+      { title: 'Ritz in Circulation', path: '/ritz/circulation' }
+    ] 
+  },
 ];
 
 const Sidebar = () => {
@@ -141,7 +151,8 @@ const Sidebar = () => {
       'Expense': 'expense',
       'Reports': 'reports',
       'Stores': 'stores',
-      'Feedback': 'feedback'
+      'Feedback': 'feedback',
+      'Ritz': 'ritz'
     };
     
     return userPermissions.includes(permissionMap[item.title]);
@@ -341,10 +352,19 @@ const Sidebar = () => {
                 >
                   {({ isActive }) => (
                     <>
-                      <item.icon size={18} strokeWidth={2} className={cn(
-                        "transition-colors",
-                        isActive ? "text-white" : "text-[#64748b] group-hover:text-[#475569]"
-                      )} />
+                      {item.title === 'Ritz' ? (
+                        <div className={cn(
+                          "w-5 h-5 rounded-lg overflow-hidden flex items-center justify-center p-0.5",
+                          isActive ? "bg-white/20" : "bg-slate-100"
+                        )}>
+                          <img src={colorVector} alt="" className="w-full h-full object-cover rounded-sm" />
+                        </div>
+                      ) : (
+                        <item.icon size={18} strokeWidth={2} className={cn(
+                          "transition-colors",
+                          isActive ? "text-white" : "text-[#64748b] group-hover:text-[#475569]"
+                        )} />
+                      )}
                       <span className="tracking-tight">{item.title}</span>
                     </>
                   )}

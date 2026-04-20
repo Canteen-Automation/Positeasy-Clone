@@ -175,7 +175,8 @@ public class OrderController {
         // 4. Token Payment Check
         if ("RITZ_TOKEN".equals(order.getPaymentMethod())) {
             try {
-                tokenService.spend(order.getUser().getId(), order.getTotalAmount(), "ORD-" + displayId);
+                // Use userId directly for robustness
+                tokenService.spend(order.getUserId(), order.getTotalAmount(), "ORD-" + displayId);
             } catch (RuntimeException e) {
                 if ("INSUFFICIENT_TOKENS".equals(e.getMessage())) {
                     throw new RuntimeException("INSUFFICIENT_TOKENS");
@@ -236,9 +237,19 @@ public class OrderController {
 
             return orderRepository.findById(id)
                     .map(order -> {
-                        order.setStatus(newStatus.toUpperCase());
+                        String oldStatus = order.getStatus();
+                        String nextStatus = newStatus.toUpperCase();
+                        
+                        // Check for refund condition: Moving to CANCELLED from a non-cancelled state
+                        if ("CANCELLED".equals(nextStatus) && !"CANCELLED".equals(oldStatus)) {
+                            if ("RITZ_TOKEN".equals(order.getPaymentMethod())) {
+                                tokenService.refund(order.getUserId(), "ORD-" + order.getDisplayOrderId(), order.getTotalAmount(), "Status changed to CANCELLED");
+                            }
+                        }
+                        
+                        order.setStatus(nextStatus);
                         orderRepository.save(order);
-                        return ResponseEntity.ok(Map.of("success", true, "message", "Order status updated to " + newStatus));
+                        return ResponseEntity.ok(Map.of("success", true, "message", "Order status updated to " + nextStatus));
                     })
                     .orElse(ResponseEntity.notFound().build());
         } catch (Exception e) {
@@ -251,8 +262,27 @@ public class OrderController {
         try {
             return orderRepository.findById(id)
                     .map(existingOrder -> {
+                        BigDecimal oldAmount = existingOrder.getTotalAmount();
+                        BigDecimal newAmount = updatedOrder.getTotalAmount();
+                        
+                        // Handle Token Adjustments for edited orders
+                        if ("RITZ_TOKEN".equals(existingOrder.getPaymentMethod())) {
+                            int comparison = newAmount.compareTo(oldAmount);
+                            if (comparison > 0) {
+                                // Spend more
+                                tokenService.spend(existingOrder.getUserId(), newAmount.subtract(oldAmount), "ORD-EDIT-" + existingOrder.getDisplayOrderId());
+                            } else if (comparison < 0) {
+                                // This is tricky for individual tokens, but we can refund the difference amount
+                                // For simplicity/robustness, we'll refund the whole order and re-spend the new amount 
+                                // to keep unit association clean OR just record it as a topup.
+                                // Let's do a simple balance restoration for the delta.
+                                tokenService.refund(existingOrder.getUserId(), "ORD-" + existingOrder.getDisplayOrderId(), oldAmount, "Order price reduced during edit");
+                                tokenService.spend(existingOrder.getUserId(), newAmount, "ORD-" + existingOrder.getDisplayOrderId());
+                            }
+                        }
+
                         // Update basic fields
-                        existingOrder.setTotalAmount(updatedOrder.getTotalAmount());
+                        existingOrder.setTotalAmount(newAmount);
                         existingOrder.setPaymentMethod(updatedOrder.getPaymentMethod());
                         
                         // Clear and replace items for a clean update

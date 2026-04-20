@@ -277,7 +277,7 @@ const NewArrivals: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] uppercase font-black text-[#64748b] mb-2 tracking-widest ml-1">Live Selling Price (₹)</label>
+                    <label className="block text-[10px] uppercase font-black text-[#64748b] mb-2 tracking-widest ml-1">Live Selling Price (R)</label>
                     <input required type="number" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} className="w-full px-5 py-4 bg-[#231651]/5 border-2 border-transparent focus:border-[#231651]/20 rounded-2xl text-lg font-black text-[#231651] outline-none transition-all" />
                   </div>
                   <div>

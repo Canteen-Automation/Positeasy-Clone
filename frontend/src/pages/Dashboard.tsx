@@ -207,7 +207,7 @@ const Dashboard = () => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} tickFormatter={(v) => v >= 1000 ? `₹${v/1000}k` : `₹${v}`} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} tickFormatter={(v) => v >= 1000 ? `R${v/1000}k` : `R${v}`} />
                   <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                   <Area type="monotone" dataKey="value" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorSalesMain)" />
                 </AreaChart>
@@ -245,9 +245,9 @@ const Dashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                  <h2 className="text-3xl font-black text-slate-800 tracking-tighter">₹{stats.periodRevenue.toLocaleString()}</h2>
+                  <h2 className="text-3xl font-black text-slate-800 tracking-tighter">R{(stats.periodRevenue || 0).toLocaleString()}</h2>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{timeRange === 'Today' ? 'Today' : timeRange}</p>
-                  <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">Total: ₹{stats.totalSales.toLocaleString()}</p>
+                  <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">Total: R{(stats.totalSales || 0).toLocaleString()}</p>
                </div>
               <div className="flex gap-6 mt-2">
                  {pieData.map(item => (
@@ -412,7 +412,7 @@ const Dashboard = () => {
                      <div className="grid grid-cols-4 gap-4">
                         <div className="space-y-1.5">
                            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest opacity-60">Gross Sale</p>
-                           <p className="text-lg font-black text-slate-800 tracking-tighter">₹{Number(store.sale).toLocaleString()}</p>
+                           <p className="text-lg font-black text-slate-800 tracking-tighter">R{Number(store.sale).toLocaleString()}</p>
                         </div>
                         <div className="space-y-1.5">
                            <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest opacity-60">Volume</p>

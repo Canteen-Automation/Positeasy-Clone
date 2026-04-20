@@ -56,4 +56,21 @@ public class WalletController {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping("/transactions/all")
+    public ResponseEntity<List<TokenTransaction>> getAllTransactions() {
+        return ResponseEntity.ok(tokenService.getAllTransactions());
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<Map<String, Object>> getStats() {
+        return ResponseEntity.ok(tokenService.getGlobalStats());
+    }
+
+    @GetMapping("/circulation")
+    public ResponseEntity<org.springframework.data.domain.Page<com.rit.canteen.sales.model.TokenUnit>> getCirculation(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(tokenService.getAllCirculation(page, size));
+    }
 }

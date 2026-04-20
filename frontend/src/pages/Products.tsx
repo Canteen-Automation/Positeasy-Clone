@@ -395,7 +395,7 @@ const Products = () => {
                       })()}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm font-bold text-[#1e293b]">₹{product.price}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-[#1e293b]">R{product.price}</td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1.5">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold w-fit ${product.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
@@ -472,7 +472,7 @@ const Products = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div><label className="block text-[11px] uppercase font-bold text-[#64748b] mb-1.5">Base Price</label><input type="number" value={formData.basePrice} onChange={(e) => setFormData({ ...formData, basePrice: parseFloat(e.target.value) || 0 })} className="w-full px-4 py-3 border border-[#e2e8f0] rounded-xl text-sm" /></div>
-                    <div><label className="block text-[11px] uppercase font-bold text-[#64748b] mb-1.5">Sale Price</label><input type="number" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} className="w-full px-4 py-3 border border-[#e2e8f0] rounded-xl text-sm font-bold" /></div>
+                    <div><label className="block text-[11px] uppercase font-bold text-[#64748b] mb-1.5">Sale Price (R)</label><input type="number" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} className="w-full px-4 py-3 border border-[#e2e8f0] rounded-xl text-sm font-bold" /></div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div><label className="block text-[11px] uppercase font-bold text-[#64748b] mb-1.5">Discount %</label><input type="number" value={formData.discountPercent} onChange={(e) => setFormData({ ...formData, discountPercent: parseFloat(e.target.value) || 0 })} className="w-full px-4 py-3 border border-[#e2e8f0] rounded-xl text-sm" /></div>

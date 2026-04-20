@@ -29,6 +29,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         repairStallsSchema();
         repairOrdersSchema();
         repairUsersSchema();
+        repairTokenUnitsSchema();
         repairFeedbackSchema();
         repairLobColumns();
         seedCategories();
@@ -65,6 +66,25 @@ public class DatabaseSeeder implements CommandLineRunner {
             System.err.println("Users schema repair notice: " + e.getMessage());
         }
     }
+
+    private void repairTokenUnitsSchema() {
+        System.out.println("Checking schema consistency for 'token_units' table...");
+        try {
+            jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS token_units (" +
+                    "id BIGSERIAL PRIMARY KEY, " +
+                    "token_hash VARCHAR(255) UNIQUE NOT NULL, " +
+                    "owner_id BIGINT, " +
+                    "status VARCHAR(20) NOT NULL, " +
+                    "created_at TIMESTAMP NOT NULL, " +
+                    "spent_at TIMESTAMP)");
+            
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_token_units_owner_status ON token_units (owner_id, status)");
+            System.out.println("Token Units schema consistency confirmed.");
+        } catch (Exception e) {
+            System.err.println("Token Units schema repair notice: " + e.getMessage());
+        }
+    }
+
 
     private void repairStallsSchema() {
         System.out.println("Checking schema consistency for 'stalls' table...");

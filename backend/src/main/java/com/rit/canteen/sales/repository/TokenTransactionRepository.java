@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface TokenTransactionRepository extends JpaRepository<TokenTransaction, Long> {
     List<TokenTransaction> findByUserIdOrderByTimestampDesc(Long userId);
+    List<TokenTransaction> findAllByOrderByTimestampDesc();
 }

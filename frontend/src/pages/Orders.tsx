@@ -465,7 +465,7 @@ const Orders: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-[10px] text-slate-400 font-medium uppercase mb-0.5">Grand Total</div>
-                    <div className="text-lg font-black text-slate-900 leading-none">₹{order.totalAmount.toFixed(2)}</div>
+                    <div className="text-lg font-black text-slate-900 leading-none">R{order.totalAmount.toFixed(2)}</div>
                   </div>
                 </div>
 
@@ -628,9 +628,9 @@ const Orders: React.FC = () => {
                         </div>
                         <div className="flex items-center gap-8">
                            <div className="text-right">
-                              <div className="text-sm font-black text-slate-900">₹{(item.price * item.quantity).toLocaleString()}</div>
+                              <div className="text-sm font-black text-slate-900">R{(item.price * item.quantity).toLocaleString()}</div>
                               <div className="text-[10px] font-bold text-slate-400">
-                                {item.quantity} x <span className="text-indigo-400 font-black">₹{item.price}</span>
+                                {item.quantity} x <span className="text-indigo-400 font-black">R{item.price}</span>
                               </div>
                            </div>
                         </div>
@@ -700,7 +700,7 @@ const Orders: React.FC = () => {
 
                    <div className="text-right flex flex-col gap-1 min-w-[250px]">
                       <div className="text-[10px] text-indigo-400 uppercase font-black tracking-widest mb-1">Active Grand Total</div>
-                      <div className="text-4xl font-black text-emerald-400 leading-none mb-1">₹{selectedOrder.totalAmount.toLocaleString()}</div>
+                      <div className="text-4xl font-black text-emerald-400 leading-none mb-1">R{selectedOrder.totalAmount.toLocaleString()}</div>
                       <div className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em]">Transaction Pending Approval</div>
                    </div>
                 </div>
@@ -784,7 +784,7 @@ const Orders: React.FC = () => {
                           </div>
                           <div>
                             <div className="font-bold text-slate-800 text-sm">{item.productName}</div>
-                            <div className="text-[10px] font-black text-indigo-400 uppercase">₹{item.price} each</div>
+                            <div className="text-[10px] font-black text-indigo-400 uppercase">R{item.price} each</div>
                           </div>
                         </div>
                         
@@ -805,7 +805,7 @@ const Orders: React.FC = () => {
                             </button>
                           </div>
                           <div className="text-right min-w-[80px]">
-                            <div className="text-sm font-black text-slate-900 leading-none mb-1">₹{(item.price * item.quantity).toFixed(2)}</div>
+                            <div className="text-sm font-black text-slate-900 leading-none mb-1">R{(item.price * item.quantity).toFixed(2)}</div>
                             <button 
                               onClick={() => removeItem(idx)}
                               className="text-[10px] font-black text-rose-400 hover:text-rose-600 uppercase tracking-widest transition-colors flex items-center gap-1 active:scale-95"
@@ -848,7 +848,7 @@ const Orders: React.FC = () => {
                           <div className="font-bold text-slate-800 text-sm group-hover:text-indigo-600 transition-colors">{product.name}</div>
                           <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{product.category}</div>
                         </div>
-                        <div className="font-black text-emerald-600 text-xs">₹{product.price}</div>
+                        <div className="font-black text-emerald-600 text-xs">R{product.price}</div>
                       </button>
                     ))
                   ) : editSearchQuery ? (
@@ -866,7 +866,7 @@ const Orders: React.FC = () => {
                 <div className="mt-8 pt-8 border-t border-slate-200">
                    <div className="flex justify-between items-center mb-4">
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">New Order Total</span>
-                      <span className="text-2xl font-black text-emerald-600 tracking-tighter">₹{editTotal.toFixed(2)}</span>
+                      <span className="text-2xl font-black text-emerald-600 tracking-tighter">R{editTotal.toFixed(2)}</span>
                    </div>
                    <button 
                     onClick={saveOrderEdits}

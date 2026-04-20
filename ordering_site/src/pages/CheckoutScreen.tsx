@@ -181,7 +181,7 @@ const CheckoutScreen: React.FC = () => {
 
           <div className="payment-security-note">
             <ShieldCheck size={14} />
-            <span>Secured by Ritz Token Protocol. 1 Token = ₹1.00</span>
+            <span>Secured by Ritz Token Protocol. 1 Token = R1.00</span>
           </div>
         </section>
 

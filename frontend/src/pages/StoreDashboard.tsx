@@ -185,7 +185,7 @@ const StoreDashboard = () => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} tickFormatter={(v) => v >= 1000 ? `${v/1000}k` : v} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} tickFormatter={(v) => v >= 1000 ? `R${v/1000}k` : `R${v}`} />
                   <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                   <Area type="monotone" dataKey="value" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorSalesStore)" />
                 </AreaChart>
@@ -216,7 +216,7 @@ const StoreDashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                 <h2 className="text-3xl font-black text-slate-800 tracking-tighter">₹{formatCurrency(stats.totalSales)}</h2>
+                 <h2 className="text-3xl font-black text-slate-800 tracking-tighter">R{formatCurrency(stats.totalSales)}</h2>
               </div>
               <div className="flex gap-6 mt-4">
                  <div className="flex items-center gap-2">

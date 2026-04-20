@@ -23,6 +23,8 @@ import IntentList from './pages/IntentList.tsx';
 import NewArrivals from './pages/NewArrivals.tsx';
 import Reports from './pages/Reports.tsx';
 import Feedback from './pages/Feedback.tsx';
+import Ritz from './pages/Ritz.tsx';
+import RitzCirculation from './pages/RitzCirculation.tsx';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
@@ -90,6 +92,8 @@ function App() {
           {/* Others */}
           <Route path="reports" element={<Reports />} />
           <Route path="feedback" element={<Feedback />} />
+          <Route path="ritz/overview" element={<Ritz />} />
+          <Route path="ritz/circulation" element={<RitzCirculation />} />
           
           {/* Stores */}
           <Route path="stores/terminals" element={<Terminals />} />
