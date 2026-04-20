@@ -109,13 +109,29 @@ const Purchases: React.FC = () => {
   };
 
   const handleItemChange = (index: number, field: keyof PurchaseOrderItem, value: string | number) => {
-    const updatedItems = [...newOrder.items];
-    const item = { ...updatedItems[index], [field]: value };
-    if (field === 'quantity' || field === 'rate') {
-      item.total = Number(item.quantity) * Number(item.rate);
-    }
-    updatedItems[index] = item;
-    setNewOrder({ ...newOrder, items: updatedItems });
+    setNewOrder(prev => {
+      const updatedItems = [...prev.items];
+      const item = { ...updatedItems[index], [field]: value };
+      if (field === 'quantity' || field === 'rate' || field === 'productName') {
+        item.total = Number(item.quantity) * Number(item.rate);
+      }
+      updatedItems[index] = item;
+      return { ...prev, items: updatedItems };
+    });
+  };
+
+  const handleProductSelect = (index: number, product: any) => {
+    setNewOrder(prev => {
+      const updatedItems = [...prev.items];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        productName: product.name,
+        rate: product.basePrice || 0,
+        total: Number(updatedItems[index].quantity) * Number(product.basePrice || 0)
+      };
+      return { ...prev, items: updatedItems };
+    });
+    setActiveSearchIdx(null);
   };
 
   const calculateTotal = () => {
@@ -442,10 +458,9 @@ const Purchases: React.FC = () => {
                                                         <button
                                                             key={p.id}
                                                             type="button"
-                                                            onClick={() => {
-                                                                handleItemChange(idx, 'productName', p.name);
-                                                                handleItemChange(idx, 'rate', p.basePrice || 0);
-                                                                setActiveSearchIdx(null);
+                                                            onMouseDown={(e) => {
+                                                                e.preventDefault(); // Prevent focus loss
+                                                                handleProductSelect(idx, p);
                                                             }}
                                                             className="w-full text-left px-4 py-3 hover:bg-indigo-50 flex flex-col transition-colors border-b border-[#f1f5f9] last:border-0"
                                                         >

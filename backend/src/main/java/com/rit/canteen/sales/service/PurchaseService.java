@@ -154,13 +154,31 @@ public class PurchaseService {
         for (PurchaseOrderItem item : order.getItems()) {
             Product draftProduct = new Product();
             draftProduct.setName(item.getProductName());
+            
+            // Try to find an existing live product with the same name to copy metadata
+            String itemName = item.getProductName();
+            List<Product> existingProducts = productRepository.findByNameRobust(itemName);
+            if (!existingProducts.isEmpty()) {
+                Product existing = existingProducts.get(0);
+                draftProduct.setCategory(existing.getCategory());
+                draftProduct.setImageData(existing.getImageData());
+                draftProduct.setDescription(existing.getDescription());
+                draftProduct.setTag(existing.getTag());
+                draftProduct.setCounter(existing.getCounter());
+                draftProduct.setPrice(existing.getPrice());
+            }
+            
             draftProduct.setStock(item.getQuantity() != null ? item.getQuantity().intValue() : 0);
             draftProduct.setBasePrice(item.getRate());
             draftProduct.setDraft(true);
             draftProduct.setActive(false); // Not live yet
             
             // Set a unique product ID if possible
-            draftProduct.setProductId("DRAFT-" + String.format("%04d", new java.util.Random().nextInt(10000)) + "-" + item.getId());
+            if (!existingProducts.isEmpty()) {
+                draftProduct.setProductId(existingProducts.get(0).getProductId());
+            } else {
+                draftProduct.setProductId("DRAFT-" + String.format("%04d", new java.util.Random().nextInt(10000)) + "-" + item.getId());
+            }
             
             productRepository.save(draftProduct);
         }

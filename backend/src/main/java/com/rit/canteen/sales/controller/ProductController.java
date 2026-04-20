@@ -183,36 +183,74 @@ public class ProductController {
     public ResponseEntity<Product> publishProduct(@PathVariable Long id, @RequestBody Product productDetails) {
         return productRepository.findById(id)
                 .map(product -> {
-                    // Generate new PRD ID
-                    String newProductId = "PRD-" + String.format("%04d", new java.util.Random().nextInt(10000));
+                    String finalProductId = productDetails.getProductId();
                     
-                    // Update all details first
-                    product.setName(productDetails.getName());
-                    product.setProductId(newProductId);
-                    product.setCategory(productDetails.getCategory());
-                    product.setDescription(productDetails.getDescription());
-                    product.setBasePrice(productDetails.getBasePrice());
-                    product.setPrice(productDetails.getPrice());
-                    product.setOfferPrice(productDetails.getOfferPrice());
-                    product.setCounter(productDetails.getCounter());
-                    product.setTag(productDetails.getTag());
-                    product.setBarcode(productDetails.getBarcode());
-                    product.setImageData(productDetails.getImageData());
-                    product.setStock(productDetails.getStock());
-                    
-                    product.getSessions().clear();
-                    if (productDetails.getSessions() != null) {
-                        product.getSessions().addAll(productDetails.getSessions());
+                    // If it's a draft ID or blank, try to find an existing live product by name first
+                    if (finalProductId == null || finalProductId.startsWith("DRAFT-") || finalProductId.isEmpty()) {
+                        List<Product> nameMatches = productRepository.findByNameRobust(productDetails.getName());
+                        if (!nameMatches.isEmpty()) {
+                            finalProductId = nameMatches.get(0).getProductId();
+                        }
                     }
                     
-                    // Finalize
-                    product.setDraft(false);
-                    product.setActive(true);
-                    
-                    Product updated = productRepository.save(product);
-                    updateStallAssociations(updated, productDetails.getStalls());
-                    
-                    return ResponseEntity.ok(productRepository.findById(updated.getId()).orElse(updated));
+                    // If still a draft ID or blank, generate a new PRD ID
+                    if (finalProductId == null || finalProductId.startsWith("DRAFT-") || finalProductId.isEmpty()) {
+                        finalProductId = "PRD-" + String.format("%04d", new java.util.Random().nextInt(10000));
+                    }
+
+                    // Check if a live product with this ID already exists (to merge)
+                    final String targetId = finalProductId;
+                    java.util.Optional<Product> existingLive = productRepository.findByProductIdRobust(targetId);
+
+                    if (existingLive.isPresent()) {
+                        Product live = existingLive.get();
+                        // MERGE: Update stock and other details
+                        live.setStock((live.getStock() != null ? live.getStock() : 0) + (productDetails.getStock() != null ? productDetails.getStock() : 0));
+                        live.setName(productDetails.getName());
+                        live.setCategory(productDetails.getCategory());
+                        live.setDescription(productDetails.getDescription());
+                        live.setBasePrice(productDetails.getBasePrice());
+                        live.setPrice(productDetails.getPrice());
+                        live.setOfferPrice(productDetails.getOfferPrice());
+                        live.setCounter(productDetails.getCounter());
+                        live.setTag(productDetails.getTag());
+                        live.setImageData(productDetails.getImageData());
+                        live.setDraft(false);
+                        live.setActive(true);
+                        
+                        Product savedLive = productRepository.save(live);
+                        productRepository.delete(product); // Delete the draft
+                        updateStallAssociations(savedLive, productDetails.getStalls());
+                        return ResponseEntity.ok(productRepository.findById(savedLive.getId()).orElse(savedLive));
+                    } else {
+                        // CREATE/UPDATE as new live product
+                        product.setName(productDetails.getName());
+                        product.setProductId(finalProductId);
+                        product.setCategory(productDetails.getCategory());
+                        product.setDescription(productDetails.getDescription());
+                        product.setBasePrice(productDetails.getBasePrice());
+                        product.setPrice(productDetails.getPrice());
+                        product.setOfferPrice(productDetails.getOfferPrice());
+                        product.setCounter(productDetails.getCounter());
+                        product.setTag(productDetails.getTag());
+                        product.setBarcode(productDetails.getBarcode());
+                        product.setImageData(productDetails.getImageData());
+                        product.setStock(productDetails.getStock());
+                        
+                        product.getSessions().clear();
+                        if (productDetails.getSessions() != null) {
+                            product.getSessions().addAll(productDetails.getSessions());
+                        }
+                        
+                        // Finalize
+                        product.setDraft(false);
+                        product.setActive(true);
+                        
+                        Product updated = productRepository.save(product);
+                        updateStallAssociations(updated, productDetails.getStalls());
+                        
+                        return ResponseEntity.ok(productRepository.findById(updated.getId()).orElse(updated));
+                    }
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

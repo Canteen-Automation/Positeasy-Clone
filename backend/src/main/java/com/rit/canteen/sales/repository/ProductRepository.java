@@ -24,6 +24,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<String> findDistinctCategories();
 
     List<Product> findByIsDraftTrue();
+
+    @Query("SELECT p FROM Product p WHERE LOWER(TRIM(p.name)) = LOWER(TRIM(:name)) AND (p.isDraft = false OR p.isDraft IS NULL)")
+    List<Product> findByNameRobust(@org.springframework.data.repository.query.Param("name") String name);
+
+    @Query("SELECT p FROM Product p WHERE p.productId = :productId AND (p.isDraft = false OR p.isDraft IS NULL)")
+    java.util.Optional<Product> findByProductIdRobust(@org.springframework.data.repository.query.Param("productId") String productId);
     
     boolean existsByNameAndCategory(String name, String category);
     @org.springframework.data.jpa.repository.Modifying
