@@ -86,8 +86,8 @@ public class TokenService {
         BigDecimal currentBalance = user.getRitzTokenBalance() != null ? user.getRitzTokenBalance() : BigDecimal.ZERO;
         BigDecimal newBalance = currentBalance.add(amount);
         
-        if (newBalance.compareTo(new BigDecimal("5000")) > 0) {
-            throw new RuntimeException("Wallet limit exceeded (Max: 5,000 Ritz Tokens)");
+        if (amount.compareTo(new BigDecimal("5000")) > 0) {
+            throw new RuntimeException("Single transaction limit exceeded (Max: 5,000 Ritz Tokens)");
         }
 
         user.setRitzTokenBalance(newBalance);
