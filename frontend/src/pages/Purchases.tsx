@@ -23,7 +23,9 @@ interface PurchaseOrder {
 const Purchases: React.FC = () => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const [vendors, setVendors] = useState<{id: number, name: string}[]>([]);
+  const [availableProducts, setAvailableProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeSearchIdx, setActiveSearchIdx] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -49,6 +51,15 @@ const Purchases: React.FC = () => {
   useEffect(() => {
     fetchOrders();
     fetchVendors();
+    fetchProducts();
+    
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.product-search-container')) {
+        setActiveSearchIdx(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const fetchOrders = async () => {
@@ -75,6 +86,18 @@ const Purchases: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching vendors:', error);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch('/api/products?size=1000');
+      if (response.ok) {
+        const data = await response.json();
+        setAvailableProducts(data.content || data);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
     }
   };
 
@@ -383,7 +406,7 @@ const Purchases: React.FC = () => {
                     </button>
                 </div>
                 
-                <div className="border border-[#e2e8f0] rounded-2xl overflow-hidden">
+                <div className="border border-[#e2e8f0] rounded-2xl">
                     <table className="w-full text-left">
                         <thead className="bg-gray-50 border-b border-[#e2e8f0]">
                             <tr>
@@ -397,8 +420,58 @@ const Purchases: React.FC = () => {
                         <tbody className="divide-y divide-[#e2e8f0]">
                             {newOrder.items.map((item, idx) => (
                                 <tr key={idx}>
-                                    <td className="px-4 py-3">
-                                        <input type="text" placeholder="Product name..." value={item.productName} onChange={e => handleItemChange(idx, 'productName', e.target.value)} className="w-full bg-transparent text-sm font-bold outline-none" />
+                                    <td className="px-4 py-3 relative product-search-container">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Search or type product..." 
+                                            value={item.productName} 
+                                            onChange={e => handleItemChange(idx, 'productName', e.target.value)} 
+                                            onFocus={() => setActiveSearchIdx(idx)}
+                                            className="w-full bg-transparent text-sm font-bold outline-none" 
+                                        />
+                                        {activeSearchIdx === idx && (
+                                            <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-[#e2e8f0] rounded-xl shadow-2xl z-[150] max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                                                {availableProducts
+                                                    .filter(p => {
+                                                        const name = p.name || '';
+                                                        const query = (item.productName || '').toLowerCase();
+                                                        return name.toLowerCase().includes(query);
+                                                    })
+                                                    .slice(0, 10)
+                                                    .map(p => (
+                                                        <button
+                                                            key={p.id}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleItemChange(idx, 'productName', p.name);
+                                                                handleItemChange(idx, 'rate', p.basePrice || 0);
+                                                                setActiveSearchIdx(null);
+                                                            }}
+                                                            className="w-full text-left px-4 py-3 hover:bg-indigo-50 flex flex-col transition-colors border-b border-[#f1f5f9] last:border-0"
+                                                        >
+                                                            <span className="text-sm font-bold text-[#1e293b]">{p.name}</span>
+                                                            <div className="flex items-center gap-2 mt-0.5">
+                                                                <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase font-black tracking-tighter">{p.category || 'No Category'}</span>
+                                                                <span className="text-[10px] font-bold text-[#231651]">Cost: ₹{p.basePrice || 0}</span>
+                                                            </div>
+                                                        </button>
+                                                    ))
+                                                }
+                                                {item.productName && !availableProducts.some(p => p.name.toLowerCase() === item.productName.toLowerCase()) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveSearchIdx(null)}
+                                                        className="w-full text-left px-4 py-3 hover:bg-amber-50 flex items-center gap-3 transition-colors text-amber-600"
+                                                    >
+                                                        <Plus size={16} />
+                                                        <span className="text-sm font-bold">Order "{item.productName}" as new item</span>
+                                                    </button>
+                                                )}
+                                                {availableProducts.length === 0 && (
+                                                    <div className="px-4 py-3 text-xs text-[#64748b] italic">No existing products found</div>
+                                                )}
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3">
                                         <input type="number" value={item.quantity} onChange={e => handleItemChange(idx, 'quantity', parseFloat(e.target.value))} className="w-full bg-transparent text-sm font-bold outline-none" />
