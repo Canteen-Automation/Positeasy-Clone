@@ -111,3 +111,65 @@
   font-weight: 800 !important;
   font-size: 0.85rem !important;
 }
+
+@media print {
+  .no-print, 
+  header, 
+  aside, 
+  nav,
+  button,
+  .w-64,
+  .ml-64,
+  .fixed,
+  input,
+  select,
+  .recharts-responsive-container {
+    display: none !important;
+  }
+
+  main, 
+  .flex-1, 
+  .ml-64 { 
+    margin-left: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 20px !important;
+  }
+
+  .bg-white, 
+  .bg-slate-50\/50, 
+  .premium-card {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  h1 {
+    font-size: 24pt !important;
+    margin-bottom: 20px !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  th {
+    background-color: #f8fafc !important;
+    -webkit-print-color-adjust: exact;
+    color: black !important;
+  }
+
+  td, th {
+    border: 1px solid #e2e8f0 !important;
+    padding: 10px !important;
+    font-size: 10pt !important;
+  }
+}

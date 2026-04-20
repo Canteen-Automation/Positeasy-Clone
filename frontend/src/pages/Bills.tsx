@@ -108,15 +108,38 @@ const Bills: React.FC = () => {
           
           <div className="flex items-center gap-3">
             <button 
+              onClick={() => {
+                const headers = ['Purchase ID', 'Date', 'Vendor', 'Amount', 'Paid', 'Payables', 'Status', 'Reference'];
+                const csvRows = filteredOrders.map(order => [
+                  order.purchaseId,
+                  order.date ? format(new Date(order.date), 'yyyy-MM-dd') : '',
+                  order.vendor?.name || '',
+                  order.amount,
+                  order.paidTotal,
+                  (order.amount - order.paidTotal).toFixed(2),
+                  order.status,
+                  order.referenceId || ''
+                ].map(v => `"${v}"`).join(','));
+                
+                const csvContent = [headers.join(','), ...csvRows].join('\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.setAttribute('download', `bills_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              }}
               title="Download bill report"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all shadow-sm no-print"
             >
               <Download size={18} />
               Export
             </button>
             <button 
+              onClick={() => window.print()}
               title="Print all bills"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+              className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 no-print"
             >
               <Printer size={18} />
               Print Batch
