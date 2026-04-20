@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { 
@@ -57,6 +58,7 @@ interface IntentStats {
 const IntentDashboard: React.FC<IntentDashboardProps> = ({ title }) => {
   const [stats, setStats] = useState<IntentStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchStats();
@@ -221,11 +223,15 @@ const IntentDashboard: React.FC<IntentDashboardProps> = ({ title }) => {
                <h3 className="text-sm font-black text-[#1e293b] mb-4">Quick Links</h3>
                <div className="space-y-2">
                   {[
-                    { label: 'Inventory', icon: Boxes },
-                    { label: 'Raw Materials', icon: Package },
-                    { label: 'Draft Orders', icon: FileText }
+                    { label: 'Inventory', icon: Boxes, path: '/inventory/products' },
+                    { label: 'Raw Materials', icon: Package, path: '/inventory/base' },
+                    { label: 'Draft Orders', icon: FileText, path: '/purchases/orders' }
                   ].map(l => (
-                    <button key={l.label} className="w-full flex items-center justify-between p-3.5 bg-[#f8fafc] border border-[#f1f5f9] rounded-xl hover:bg-gray-50 transition-all group">
+                    <button 
+                      key={l.label} 
+                      onClick={() => navigate(l.path)}
+                      className="w-full flex items-center justify-between p-3.5 bg-[#f8fafc] border border-[#f1f5f9] rounded-xl hover:bg-gray-50 transition-all group"
+                    >
                        <div className="flex items-center gap-3">
                           <div className="p-2 bg-white rounded-lg shadow-sm text-[#94a3b8] group-hover:text-[#0f4475] transition-colors">
                              <l.icon size={16} />
