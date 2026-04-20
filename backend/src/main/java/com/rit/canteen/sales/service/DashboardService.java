@@ -5,6 +5,9 @@ import com.rit.canteen.sales.model.GeneralDashboardData;
 import com.rit.canteen.sales.model.Order;
 import com.rit.canteen.sales.model.TrendingItem;
 import com.rit.canteen.sales.repository.OrderRepository;
+import com.rit.canteen.sales.repository.PurchaseOrderRepository;
+import com.rit.canteen.sales.repository.VendorRepository;
+import com.rit.canteen.sales.model.ProcurementDashboardData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +23,12 @@ public class DashboardService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private PurchaseOrderRepository purchaseOrderRepository;
+
+    @Autowired
+    private VendorRepository vendorRepository;
 
     public GeneralDashboardData getGeneralDashboardData(LocalDateTime from, LocalDateTime to) {
         if (from == null) from = LocalDate.now().atStartOfDay();
@@ -130,6 +139,12 @@ public class DashboardService {
         BigDecimal todayRevenue = orderRepository.getRevenuePerPeriod(startOfToday, endOfToday);
         BigDecimal yesterdayRevenue = orderRepository.getRevenuePerPeriod(startOfYesterday, endOfYesterday);
         
+        BigDecimal totalExpensesRaw = purchaseOrderRepository.getTotalPurchaseAmount();
+        long totalExpenses = totalExpensesRaw != null ? totalExpensesRaw.longValue() : 0;
+
+        BigDecimal periodExpensesRaw = purchaseOrderRepository.getTotalPurchaseAmountInRange(from, to);
+        long periodExpenses = periodExpensesRaw != null ? periodExpensesRaw.longValue() : 0;
+
         double growth = 0;
         if (yesterdayRevenue != null && yesterdayRevenue.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal today = todayRevenue != null ? todayRevenue : BigDecimal.ZERO;
@@ -141,7 +156,49 @@ public class DashboardService {
             growth = 100.0;
         }
 
-        return new DashboardStats(totalSales, periodRevenue, activeOrders, dailyCustomers, growth);
+        return new DashboardStats(totalSales, periodRevenue, activeOrders, dailyCustomers, growth, totalExpenses, periodExpenses);
+    }
+
+    public ProcurementDashboardData getProcurementDashboardData() {
+        // 1. Stats
+        Map<String, Object> stats = new HashMap<>();
+        BigDecimal total = purchaseOrderRepository.getTotalPurchaseAmount();
+        stats.put("totalProcurement", total != null ? total : BigDecimal.ZERO);
+        stats.put("activeVendors", vendorRepository.count());
+        stats.put("pendingPOs", purchaseOrderRepository.countByStatus("OPEN"));
+        stats.put("fillRate", 94.2); // Derived or static for now
+
+        // 2. Trends (Last 6 entries)
+        List<Object[]> trendRaw = purchaseOrderRepository.getPurchaseTrend();
+        List<Map<String, Object>> trends = new ArrayList<>();
+        String[] months = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+        
+        for (int i = Math.max(0, trendRaw.size() - 6); i < trendRaw.size(); i++) {
+            Object[] row = trendRaw.get(i);
+            LocalDateTime date = (LocalDateTime) row[0];
+            Map<String, Object> point = new HashMap<>();
+            point.put("month", months[date.getMonthValue() - 1]);
+            point.put("purchases", row[1]);
+            point.put("orders", 1); // Sample for volume
+            trends.add(point);
+        }
+
+        // 3. Top Vendors
+        List<Object[]> vendorRaw = purchaseOrderRepository.getVendorSummary(
+                LocalDate.now().minusMonths(1).atStartOfDay(),
+                LocalDateTime.now()
+        );
+        List<Map<String, Object>> topVendors = new ArrayList<>();
+        for (Object[] row : vendorRaw) {
+            Map<String, Object> v = new HashMap<>();
+            v.put("name", row[0]);
+            v.put("volume", row[1]);
+            v.put("orders", row[2]);
+            v.put("color", "bg-indigo-100 text-indigo-600");
+            topVendors.add(v);
+        }
+
+        return new ProcurementDashboardData(stats, trends, topVendors);
     }
 
     public List<Order> getRecentOrders() {

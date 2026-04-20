@@ -1,6 +1,7 @@
 package com.rit.canteen.sales.controller;
 
 import com.rit.canteen.sales.model.GeneralDashboardData;
+import com.rit.canteen.sales.model.ProcurementDashboardData;
 import com.rit.canteen.sales.model.Order;
 import com.rit.canteen.sales.service.DashboardService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,11 @@ public class DashboardController {
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime from,
             @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime to) {
         return dashboardService.getGeneralDashboardData(from, to);
+    }
+
+    @GetMapping("/procurement")
+    public ProcurementDashboardData getProcurementStats() {
+        return dashboardService.getProcurementDashboardData();
     }
 
     @GetMapping("/recent-orders")

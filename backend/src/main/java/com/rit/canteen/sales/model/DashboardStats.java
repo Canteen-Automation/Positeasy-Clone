@@ -6,15 +6,19 @@ public class DashboardStats {
     private int activeOrders;
     private int dailyCustomers;
     private double growth;
+    private long totalExpenses;
+    private long periodExpenses;
 
     public DashboardStats() {}
 
-    public DashboardStats(long totalSales, long periodRevenue, int activeOrders, int dailyCustomers, double growth) {
+    public DashboardStats(long totalSales, long periodRevenue, int activeOrders, int dailyCustomers, double growth, long totalExpenses, long periodExpenses) {
         this.totalSales = totalSales;
         this.periodRevenue = periodRevenue;
         this.activeOrders = activeOrders;
         this.dailyCustomers = dailyCustomers;
         this.growth = growth;
+        this.totalExpenses = totalExpenses;
+        this.periodExpenses = periodExpenses;
     }
 
     public long getTotalSales() { return totalSales; }
@@ -31,4 +35,10 @@ public class DashboardStats {
 
     public double getGrowth() { return growth; }
     public void setGrowth(double growth) { this.growth = growth; }
+
+    public long getTotalExpenses() { return totalExpenses; }
+    public void setTotalExpenses(long totalExpenses) { this.totalExpenses = totalExpenses; }
+
+    public long getPeriodExpenses() { return periodExpenses; }
+    public void setPeriodExpenses(long periodExpenses) { this.periodExpenses = periodExpenses; }
 }

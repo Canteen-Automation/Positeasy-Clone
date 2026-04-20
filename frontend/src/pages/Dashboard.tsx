@@ -7,7 +7,9 @@ import {
   ArrowRight,
   Wallet,
   BarChart3,
-  MessageSquare
+  MessageSquare,
+  Flame,
+  TrendingUp
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -114,7 +116,7 @@ const Dashboard = () => {
     );
   }
 
-  const { stats, storeOverview, hourlySales, insights } = data;
+  const { stats, storeOverview, hourlySales, insights, trendingItems } = data;
 
   const pieData = [
     { name: 'Full Payment', value: stats.periodRevenue, color: '#8b5cf6' },
@@ -316,11 +318,57 @@ const Dashboard = () => {
                  <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">Total Expenses</h4>
               </div>
               <div className="text-center pb-2">
-                 <h2 className="text-3xl font-black text-slate-800 tracking-tighter">₹0</h2>
+                 <h2 className="text-3xl font-black text-slate-800 tracking-tighter">₹{stats.periodExpenses.toLocaleString()}</h2>
               </div>
            </div>
         </div>
       </div>
+      
+      {/* Trending Items Section */}
+      <section>
+         <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+               <div className="p-2 bg-rose-50 text-rose-500 rounded-xl">
+                  <Flame size={20} />
+               </div>
+               <h3 className="text-sm font-black text-slate-800 tracking-tight uppercase tracking-[0.1em]">Best Selling Food</h3>
+            </div>
+            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+               Performance Index <TrendingUp size={12} className="text-emerald-500" />
+            </div>
+         </div>
+
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {trendingItems.map((item: any, idx: number) => (
+               <motion.div 
+                 key={idx}
+                 whileHover={{ y: -5 }}
+                 className="bg-white p-5 rounded-[28px] border border-slate-100 shadow-sm hover:shadow-xl hover:border-indigo-500/20 transition-all group overflow-hidden relative cursor-default"
+               >
+                  <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-black text-slate-900 border border-slate-100 z-10 shadow-sm">
+                     TOP #{idx+1}
+                  </div>
+                  <div className="w-full h-32 rounded-2xl mb-5 overflow-hidden bg-slate-50">
+                     <img 
+                       src={item.imageUrl} 
+                       alt={item.name} 
+                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
+                     />
+                  </div>
+                  <div className="flex justify-between items-start mb-2">
+                     <div>
+                        <h4 className="text-sm font-black text-slate-800 leading-tight mb-1 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item.name}</h4>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.category}</p>
+                     </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
+                     <div className="text-[10px] text-slate-400 font-black uppercase tracking-tight">Orders Count</div>
+                     <div className="text-lg font-black text-indigo-900 tracking-tighter">{item.orderCount} <span className="text-[10px] font-bold text-slate-300">Unit(s)</span></div>
+                  </div>
+               </motion.div>
+            ))}
+         </div>
+      </section>
 
       {/* Bottom Section */}
       <div className="grid grid-cols-12 gap-8 mt-4 pb-12">

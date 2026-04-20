@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   ShoppingBag, 
@@ -21,14 +22,7 @@ import {
   Bar
 } from 'recharts';
 
-const data = [
-  { month: 'Jan', purchases: 4500, orders: 12 },
-  { month: 'Feb', purchases: 5200, orders: 15 },
-  { month: 'Mar', purchases: 4800, orders: 14 },
-  { month: 'Apr', purchases: 6100, orders: 18 },
-  { month: 'May', purchases: 5500, orders: 16 },
-  { month: 'Jun', purchases: 6700, orders: 20 },
-];
+// Removed static data
 
 const StatCard = ({ title, value, change, icon: Icon, color, delay }: any) => (
   <motion.div
@@ -52,6 +46,43 @@ const StatCard = ({ title, value, change, icon: Icon, color, delay }: any) => (
 );
 
 const VendorDashboard = () => {
+  const [data, setData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/dashboard/procurement');
+        if (response.ok) {
+          const result = await response.json();
+          setData(result);
+        }
+      } catch (error) {
+        console.error('Error fetching procurement data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (isLoading || !data) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-50/50">
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="text-[#231651] font-black uppercase tracking-widest text-sm"
+        >
+          Analyzing Supply Chain...
+        </motion.div>
+      </div>
+    );
+  }
+
+  const { stats, trends, topVendors } = data;
+
   return (
     <div className="p-8 space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -67,10 +98,10 @@ const VendorDashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard title="Total Procurement" value="$28,450.00" change={12} icon={DollarSign} color="bg-blue-500" delay={0.1} />
-        <StatCard title="Active Vendors" value="24" change={5} icon={Users} color="bg-emerald-500" delay={0.2} />
-        <StatCard title="Pending POs" value="08" change={2} icon={Package} color="bg-amber-500" delay={0.3} />
-        <StatCard title="Supply Fill Rate" value="94.2%" change={1.5} icon={TrendingUp} color="bg-violet-500" delay={0.4} />
+        <StatCard title="Total Procurement" value={`₹${stats.totalProcurement.toLocaleString()}`} change={12} icon={DollarSign} color="bg-blue-500" delay={0.1} />
+        <StatCard title="Active Vendors" value={stats.activeVendors} change={5} icon={Users} color="bg-emerald-500" delay={0.2} />
+        <StatCard title="Pending POs" value={stats.pendingPOs.toString().padStart(2, '0')} change={2} icon={Package} color="bg-amber-500" delay={0.3} />
+        <StatCard title="Supply Fill Rate" value={`${stats.fillRate}%`} change={1.5} icon={TrendingUp} color="bg-violet-500" delay={0.4} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -87,7 +118,7 @@ const VendorDashboard = () => {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data}>
+              <AreaChart data={trends}>
                 <defs>
                   <linearGradient id="colorPurchases" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#231651" stopOpacity={0.1}/>
@@ -117,7 +148,7 @@ const VendorDashboard = () => {
           </div>
           <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
+              <BarChart data={trends}>
                 <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 11, fontWeight: 700}} />
                 <Tooltip />
@@ -131,27 +162,27 @@ const VendorDashboard = () => {
       <div className="bg-white rounded-3xl border border-[#e2e8f0] shadow-sm p-6 overflow-hidden">
           <h3 className="text-lg font-bold text-[#1e293b] mb-6">Top Performing Vendors</h3>
           <div className="space-y-4">
-              {[
-                { name: 'Fresh Foods Co.', orders: 45, volume: '$12,400', color: 'bg-blue-100 text-blue-600' },
-                { name: 'Dairy Plus', orders: 28, volume: '$8,200', color: 'bg-emerald-100 text-emerald-600' },
-                { name: 'Bakery World', orders: 15, volume: '$3,150', color: 'bg-amber-100 text-amber-600' },
-              ].map((v, i) => (
-                  <div key={i} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl hover:bg-gray-50 transition-all cursor-pointer group">
-                      <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl ${v.color} flex items-center justify-center font-bold text-sm`}>
-                              {v.name.charAt(0)}
-                          </div>
-                          <div>
-                              <p className="text-sm font-bold text-[#1e293b] group-hover:text-[#231651] transition-colors">{v.name}</p>
-                              <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">{v.orders} Orders this month</p>
-                          </div>
-                      </div>
-                      <div className="text-right">
-                          <p className="text-sm font-black text-[#1e293b]">{v.volume}</p>
-                          <p className="text-[10px] font-bold text-emerald-600 uppercase">Excellent Status</p>
-                      </div>
-                  </div>
-              ))}
+              {topVendors.length > 0 ? (
+                topVendors.map((v: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl hover:bg-gray-50 transition-all cursor-pointer group">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-xl ${v.color || 'bg-indigo-100 text-indigo-600'} flex items-center justify-center font-bold text-sm`}>
+                                {v.name.charAt(0)}
+                            </div>
+                            <div>
+                                <p className="text-sm font-bold text-[#1e293b] group-hover:text-[#231651] transition-colors">{v.name}</p>
+                                <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">{v.orders} Orders this month</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-sm font-black text-[#1e293b]">₹{v.volume.toLocaleString()}</p>
+                            <p className="text-[10px] font-bold text-emerald-600 uppercase">Excellent Status</p>
+                        </div>
+                    </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-slate-400 font-medium italic">No vendor performance data available for this period.</div>
+              )}
           </div>
       </div>
     </div>
