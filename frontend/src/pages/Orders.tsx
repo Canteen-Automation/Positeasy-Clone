@@ -518,54 +518,26 @@ const Orders: React.FC = () => {
               {/* Order Detail Header */}
               <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-white sticky top-0 z-10">
                 <div className="flex items-center gap-4">
-                  <div className="bg-indigo-50 p-3 rounded-xl text-indigo-600">
+                  <div className="bg-indigo-900 p-3 rounded-xl text-white shadow-lg shadow-indigo-100">
                     <ShoppingBag size={24} />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2 tracking-tight">
-                      Order #{selectedOrder.displayOrderId}
+                    <h2 className="text-2xl font-black text-slate-900 flex items-center gap-2 tracking-tight uppercase">
+                       Active Order #{selectedOrder.displayOrderId}
                     </h2>
-                    <p className="text-xs text-slate-400 font-medium tracking-wide">ID: {selectedOrder.orderNumber}</p>
+                    <p className="text-xs text-slate-400 font-black tracking-[0.2em] uppercase">Session ID: {selectedOrder.orderNumber}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button className="text-emerald-500 hover:bg-emerald-50 p-2 rounded-lg transition-colors border border-transparent hover:border-emerald-100">
-                    <MessageCircle size={20} />
-                  </button>
-                  
-                  <div className="relative action-menu-container">
-                    <button 
-                      onClick={() => setShowActionMenu(!showActionMenu)}
-                      title="More actions"
-                      className={`p-2 rounded-lg transition-all ${showActionMenu ? 'bg-slate-100 text-indigo-600' : 'text-slate-400 hover:bg-slate-50'}`}
-                    >
-                      <MoreVertical size={20} />
-                    </button>
-                    {showActionMenu && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-2xl z-20 overflow-hidden py-1 animate-in fade-in zoom-in duration-200">
-                        <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50">Manual Actions</div>
-                        <button 
-                          onClick={() => handleMarkUndelivered(selectedOrder.id)}
-                          className="w-full text-left px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
-                        >
-                          <RotateCcw size={16} className="text-amber-500" /> Mark Undelivered
-                        </button>
-                         <button 
-                          onClick={handleEditOrder}
-                          title="Modify items in this order"
-                          className="w-full text-left px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
-                        >
-                          <Edit2 size={16} className="text-indigo-500" /> Edit Order Items
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={`ml-2 px-4 py-1.5 rounded-lg text-xs font-bold uppercase border shadow-sm ${getStatusColor(selectedOrder.status)}`}>
-                    {selectedOrder.status}
+                  <div className="flex items-center gap-2">
+                    <div className="text-right mr-3">
+                       <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest leading-none mb-1">Creation Time</div>
+                       <div className="text-xs font-bold text-slate-700">{format(new Date(selectedOrder.createdAt), 'HH:mm:ss')}</div>
+                    </div>
+                    <div className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase border shadow-sm ${getStatusColor(selectedOrder.status)}`}>
+                       {selectedOrder.status}
+                    </div>
                   </div>
                 </div>
-              </div>
 
               {/* Tabs Container */}
               <div className="px-6 bg-white border-b border-slate-50 flex gap-8">
@@ -584,27 +556,56 @@ const Orders: React.FC = () => {
 
               {/* Content Scroll Area */}
               <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                <div className="grid grid-cols-3 gap-12 mb-12">
-                  <div className="space-y-1.5">
-                    <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Date & Time</div>
-                    <div className="text-sm font-bold text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                      {format(new Date(selectedOrder.createdAt), 'yyyy-MM-dd HH:mm:ss')}
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Payment Type</div>
-                    <div className="text-sm font-bold text-indigo-900 bg-indigo-50 p-3 rounded-lg border border-indigo-100 flex items-center gap-2">
-                       <CreditCard size={14} />
-                       {selectedOrder.paymentMethod.toUpperCase()}
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest">Payment ID</div>
-                    <div className="text-sm font-mono font-medium text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 flex items-center justify-between group">
-                       <span className="truncate">Pay_{selectedOrder.orderNumber.split('-')[1] || '000'}...</span>
-                       <button className="opacity-0 group-hover:opacity-100 transition-opacity"><RefreshCw size={12} /></button>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-2 gap-8 mb-12">
+                   <div className="p-6 rounded-2xl border border-slate-100 bg-slate-50 flex items-center gap-6">
+                      <div className="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center text-slate-400">
+                         <User size={28} />
+                      </div>
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1">Customer Info</div>
+                         <div className="text-lg font-black text-slate-800 leading-none mb-1">{selectedOrder.user?.name || 'Walk-in Customer'}</div>
+                         <div className="text-xs font-bold text-slate-400">{selectedOrder.user?.mobileNumber || 'No Contact Data'}</div>
+                      </div>
+                   </div>
+                   <div className="p-6 rounded-2xl border border-slate-100 bg-slate-50 flex items-center gap-6 relative">
+                      <div className="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center text-indigo-500">
+                         <CreditCard size={28} />
+                      </div>
+                      <div>
+                         <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1">Payment Method</div>
+                         <div className="text-lg font-black text-slate-800 leading-none mb-1">{selectedOrder.paymentMethod.toUpperCase()}</div>
+                         <div className="text-xs font-bold text-indigo-400">Secure Sync ID: {selectedOrder.orderNumber.split('-')[1] || '000'}</div>
+                      </div>
+                      
+                      {/* Interactive Controls Overlay for active orders */}
+                      <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        <button 
+                          onClick={handleEditOrder}
+                          className="p-2 bg-white rounded-lg border border-slate-200 text-indigo-500 shadow-sm hover:border-indigo-400 transition-all active:scale-95"
+                          title="Edit Order"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <div className="relative action-menu-container">
+                          <button 
+                            onClick={() => setShowActionMenu(!showActionMenu)}
+                            className={`p-2 rounded-lg border transition-all ${showActionMenu ? 'bg-slate-900 text-white' : 'bg-white border-slate-200 text-slate-400 hover:border-slate-400'}`}
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                          {showActionMenu && (
+                            <div className="absolute right-0 bottom-full mb-2 w-48 bg-white border border-slate-200 rounded-xl shadow-2xl z-20 overflow-hidden py-1 animate-in fade-in zoom-in duration-200">
+                              <button 
+                                onClick={() => handleMarkUndelivered(selectedOrder.id)}
+                                className="w-full text-left px-4 py-3 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                              >
+                                <RotateCcw size={14} className="text-amber-500" /> Mark Undelivered
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                   </div>
                 </div>
 
                 <div className="space-y-4">
@@ -640,30 +641,28 @@ const Orders: React.FC = () => {
               </div>
 
               {/* Bottom Summary Panel */}
-              <div className="bg-slate-50 p-8 border-t border-slate-100 shadow-[0_-4px_20px_rgba(0,0,0,0.02)]">
-                <div className="flex justify-between mb-8">
-                   <div className="flex gap-12">
+              {/* Bottom Totals Summary - Re-engineered for Active Status */}
+              <div className="bg-[#231651] p-8 text-white relative mt-8">
+                {/* Decorative Pattern Background for Active Orders */}
+                <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:20px_20px]" />
+                
+                <div className="flex justify-between relative z-10">
+                   <div className="flex gap-12 items-center">
                       <div>
-                        <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1.5">Total Items</div>
-                        <div className="text-xl font-black text-slate-800">{selectedOrder.items.length}</div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1.5">Total Quantity</div>
-                        <div className="text-xl font-black text-slate-800">
-                          {selectedOrder.items.reduce((sum, item) => sum + item.quantity, 0)}
-                        </div>
+                        <div className="text-[10px] text-indigo-300 uppercase font-black tracking-widest mb-2">Unique Items</div>
+                        <div className="text-2xl font-black">{selectedOrder.items.length} Items</div>
                       </div>
                       
                       {/* QR Verification Section */}
-                      <div className="flex items-center gap-4 pl-8 border-l border-slate-200">
+                      <div className="flex items-center gap-5 pl-12 border-l border-white/10">
                         <div className="relative">
                           <div 
                             onClick={() => setShowQRMenu(!showQRMenu)}
-                            className="p-1.5 bg-white rounded-lg border border-slate-200 shadow-sm transition-all hover:scale-105 hover:border-indigo-300 cursor-pointer qr-canvas relative group"
+                            className="p-1.5 bg-white rounded-lg shadow-sm transition-all hover:scale-105 hover:ring-2 hover:ring-white/50 cursor-pointer qr-canvas relative group"
                           >
                             <QRCodeCanvas 
                               value={selectedOrder.orderNumber} 
-                              size={56} 
+                              size={60} 
                               level="H"
                               includeMargin={false}
                             />
@@ -693,44 +692,36 @@ const Orders: React.FC = () => {
                           )}
                         </div>
                         <div>
-                          <div className="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-0.5">Verify Order</div>
-                          <div className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">Scan for Terminal Sync</div>
+                          <div className="text-[9px] text-indigo-300 uppercase font-black tracking-widest mb-0.5">Verification</div>
+                          <div className="text-[10px] font-black text-white uppercase tracking-tighter opacity-80">Manual Sync ID</div>
                         </div>
                       </div>
                    </div>
-                   <div className="text-right flex flex-col gap-2 min-w-[200px]">
-                      <div className="flex justify-between items-center text-xs text-slate-500 font-bold">
-                        <span>Order Summary</span>
-                        <span className="font-black">₹{selectedOrder.totalAmount.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-base text-slate-900 font-black pt-2 border-t border-slate-200">
-                        <span>Total Sum</span>
-                        <span className="text-2xl text-emerald-600">₹{selectedOrder.totalAmount.toLocaleString()}</span>
-                      </div>
-                      <div className={`flex justify-between items-center text-sm font-black pt-1 ${selectedOrder.status.toUpperCase() === 'COMPLETED' ? 'text-slate-400' : 'text-rose-600'}`}>
-                        <span>Balance Due</span>
-                        <span>₹{selectedOrder.status.toUpperCase() === 'COMPLETED' ? '0.00' : selectedOrder.totalAmount.toLocaleString()}</span>
-                      </div>
+
+                   <div className="text-right flex flex-col gap-1 min-w-[250px]">
+                      <div className="text-[10px] text-indigo-400 uppercase font-black tracking-widest mb-1">Active Grand Total</div>
+                      <div className="text-4xl font-black text-emerald-400 leading-none mb-1">₹{selectedOrder.totalAmount.toLocaleString()}</div>
+                      <div className="text-[10px] text-white/40 font-bold uppercase tracking-[0.2em]">Transaction Pending Approval</div>
                    </div>
                 </div>
                 
-                <div className="flex gap-3">
+                <div className="mt-8 pt-8 border-t border-white/10 flex gap-4 relative z-10">
                   <button 
-                    onClick={() => window.print()}
-                    className="flex-1 bg-white border border-slate-200 text-slate-700 py-3 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-slate-50 transition-all active:scale-[0.98]"
+                    onClick={() => handlePrintQR()}
+                    className="flex-1 bg-white/10 backdrop-blur-md border border-white/20 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-white/20 transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
                   >
-                    Print Receipt
+                    <Printer size={16} /> Print Token
                   </button>
                   <button 
                     onClick={() => handleApproveOrder(selectedOrder.id)}
                     disabled={selectedOrder.status.toUpperCase() === 'COMPLETED'}
-                    className={`flex-1 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md active:scale-[0.98] ${
+                    className={`flex-1 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] ${
                       selectedOrder.status.toUpperCase() === 'COMPLETED'
                         ? 'bg-emerald-500 text-white cursor-not-allowed opacity-80'
-                        : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-100'
+                        : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-900/20'
                     }`}
                   >
-                    {selectedOrder.status.toUpperCase() === 'COMPLETED' ? 'Order Completed' : 'Approve Order'}
+                    {selectedOrder.status.toUpperCase() === 'COMPLETED' ? 'Session Completed' : 'Approve & Release'}
                   </button>
                 </div>
               </div>
