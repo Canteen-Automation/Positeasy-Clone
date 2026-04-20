@@ -16,7 +16,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
            "OR u.mobileNumber LIKE CONCAT('%', :search, '%')")
     org.springframework.data.domain.Page<User> findByNameOrMobileContainingIgnoreCase(String search, org.springframework.data.domain.Pageable pageable);
 
-    @jakarta.persistence.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM User u WHERE u.id = :id")
     Optional<User> findByIdWithLock(@org.springframework.data.repository.query.Param("id") Long id);
 }

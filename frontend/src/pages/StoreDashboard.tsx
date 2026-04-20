@@ -41,16 +41,67 @@ const StoreDashboard = () => {
     return isNaN(num) ? '0' : num.toLocaleString();
   };
 
+  const toLocalISOString = (date: Date) => {
+    const tzo = -date.getTimezoneOffset(),
+        pad = (num: number) => {
+            const norm = Math.floor(Math.abs(num));
+            return (norm < 10 ? '0' : '') + norm;
+        };
+    return date.getFullYear() +
+        '-' + pad(date.getMonth() + 1) +
+        '-' + pad(date.getDate()) +
+        'T' + pad(date.getHours()) +
+        ':' + pad(date.getMinutes()) +
+        ':' + pad(date.getSeconds()) +
+        '.' + pad(date.getMilliseconds());
+  };
+
+  const getRangeDates = (range: string) => {
+    const now = new Date();
+    const start = new Date();
+    const end = new Date();
+    
+    // Set end to end of today
+    end.setHours(23, 59, 59, 999);
+
+    switch (range) {
+      case 'Today':
+        start.setHours(0, 0, 0, 0);
+        break;
+      case 'Yesterday':
+        start.setDate(now.getDate() - 1);
+        start.setHours(0, 0, 0, 0);
+        end.setDate(now.getDate() - 1);
+        end.setHours(23, 59, 59, 999);
+        break;
+      case 'Week':
+        start.setDate(now.getDate() - 7);
+        start.setHours(0, 0, 0, 0);
+        break;
+      case '30 Days':
+        start.setDate(now.getDate() - 30);
+        start.setHours(0, 0, 0, 0);
+        break;
+      default:
+        start.setHours(0, 0, 0, 0);
+    }
+    return { from: toLocalISOString(start), to: toLocalISOString(end) };
+  };
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/dashboard/stats');
+        const range = getRangeDates(timeRange);
+        const params = new URLSearchParams();
+        params.append('from', range.from);
+        params.append('to', range.to);
+        
+        const response = await fetch(`/api/dashboard/stats?${params.toString()}`);
         if (response.ok) {
           const data = await response.json();
           console.log('Dashboard data received successfully:', data);
           
-          // Set basic stats from general stats if available
           if (data.stats) {
             setStats({
               totalSales: data.stats.totalSales,
@@ -60,7 +111,6 @@ const StoreDashboard = () => {
             });
           }
 
-          // Override with RIT Canteen specific data if found in overview
           if (data.storeOverview && data.storeOverview.length > 0) {
              const ritStore = data.storeOverview.find((s: any) => s.name === 'RIT Canteen');
              if (ritStore) {
@@ -68,12 +118,11 @@ const StoreDashboard = () => {
                    ...prev,
                    totalSales: ritStore.sale,
                    activeOrders: ritStore.orders,
-                   dailyCustomers: ritStore.orders * 0.9, // Approximation
+                   dailyCustomers: ritStore.orders * 0.9,
                 }));
              }
           }
 
-          // Set other dynamic data
           if (data.trendingItems) setTrendingItems(data.trendingItems);
           if (data.hourlySales) setSalesData(data.hourlySales);
           if (data.insights) setInsights(data.insights);
@@ -85,7 +134,7 @@ const StoreDashboard = () => {
       }
     };
     fetchStats();
-  }, []);
+  }, [timeRange]);
 
   const pieData = [
     { name: 'Full Payment', value: Number(stats.totalSales) || 0, color: '#8b5cf6' },

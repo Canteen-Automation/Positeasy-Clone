@@ -33,6 +33,22 @@ const Dashboard = () => {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const toLocalISOString = (date: Date) => {
+    const tzo = -date.getTimezoneOffset(),
+        dif = tzo >= 0 ? '+' : '-',
+        pad = (num: number) => {
+            const norm = Math.floor(Math.abs(num));
+            return (norm < 10 ? '0' : '') + norm;
+        };
+    return date.getFullYear() +
+        '-' + pad(date.getMonth() + 1) +
+        '-' + pad(date.getDate()) +
+        'T' + pad(date.getHours()) +
+        ':' + pad(date.getMinutes()) +
+        ':' + pad(date.getSeconds()) +
+        '.' + pad(date.getMilliseconds());
+  };
+
   const getRangeDates = (range: string) => {
     const now = new Date();
     const start = new Date();
@@ -65,13 +81,13 @@ const Dashboard = () => {
           from.setHours(0, 0, 0, 0);
           const to = new Date(customDates.to);
           to.setHours(23, 59, 59, 999);
-          return { from: from.toISOString(), to: to.toISOString() };
+          return { from: toLocalISOString(from), to: toLocalISOString(to) };
         }
         return null;
       default:
         start.setHours(0, 0, 0, 0);
     }
-    return { from: start.toISOString(), to: end.toISOString() };
+    return { from: toLocalISOString(start), to: toLocalISOString(end) };
   };
 
   useEffect(() => {
@@ -88,6 +104,7 @@ const Dashboard = () => {
           url += `?${params.toString()}`;
         }
 
+        console.log('[DASHBOARD-TRACE] Fetching stats from:', url);
         const response = await fetch(url);
         if (response.ok) {
           const result = await response.json();

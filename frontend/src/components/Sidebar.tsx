@@ -122,7 +122,8 @@ const menuItems: MenuItem[] = [
     icon: CircleDollarSign, 
     subMenu: [
       { title: 'Overview', path: '/ritz/overview' },
-      { title: 'Ritz in Circulation', path: '/ritz/circulation' }
+      { title: 'Ritz in Circulation', path: '/ritz/circulation' },
+      { title: 'Manage Wallets', path: '/ritz/wallets' }
     ] 
   },
 ];

@@ -9,8 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/wallet")
@@ -32,6 +34,20 @@ public class WalletController {
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
         }
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<Map<String, Object>>> getUsers() {
+        List<User> users = userRepository.findAll();
+        List<Map<String, Object>> userList = users.stream().map(user -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("id", user.getId());
+            map.put("name", user.getName());
+            map.put("mobileNumber", user.getMobileNumber());
+            map.put("ritzTokenBalance", user.getRitzTokenBalance());
+            return map;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(userList);
     }
 
     @GetMapping("/transactions/{userId}")

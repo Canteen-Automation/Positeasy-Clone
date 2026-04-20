@@ -7,6 +7,7 @@ import com.rit.canteen.sales.model.TrendingItem;
 import com.rit.canteen.sales.repository.OrderRepository;
 import com.rit.canteen.sales.repository.PurchaseOrderRepository;
 import com.rit.canteen.sales.repository.VendorRepository;
+import com.rit.canteen.sales.repository.TokenTransactionRepository;
 import com.rit.canteen.sales.model.ProcurementDashboardData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,11 +30,15 @@ public class DashboardService {
 
     @Autowired
     private VendorRepository vendorRepository;
+    
+    @Autowired
+    private TokenTransactionRepository tokenTransactionRepository;
 
     public GeneralDashboardData getGeneralDashboardData(LocalDateTime from, LocalDateTime to) {
         if (from == null) from = LocalDate.now().atStartOfDay();
         if (to == null) to = LocalDate.now().atTime(LocalTime.MAX);
         
+        System.out.println("[DIAGNOSTIC] Final timestamp range for service logic: " + from + " to " + to);
         DashboardStats stats = getDashboardStats(from, to);
 
         System.out.println("Fetching dashboard data for range: " + from + " to " + to);
@@ -94,7 +99,9 @@ public class DashboardService {
             orderInsight.put("color", "bg-rose-50 text-rose-600 border-rose-100");
             insights.add(orderInsight);
 
-            BigDecimal avg = stats.getTotalSales() > 0 ? BigDecimal.valueOf(stats.getTotalSales()).divide(BigDecimal.valueOf(stats.getActiveOrders()), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            BigDecimal avg = (stats.getTotalSales() > 0 && stats.getActiveOrders() > 0) 
+                ? BigDecimal.valueOf(stats.getTotalSales()).divide(BigDecimal.valueOf(stats.getActiveOrders()), 2, RoundingMode.HALF_UP) 
+                : BigDecimal.ZERO;
             Map<String, String> avgInsight = new HashMap<>();
             avgInsight.put("text", "₹" + avg + " average order value! Either everyone's hungry or just living large 🔥😋");
             avgInsight.put("color", "bg-emerald-50 text-emerald-600 border-emerald-100");
@@ -127,17 +134,22 @@ public class DashboardService {
         LocalDateTime startOfYesterday = LocalDate.now().minusDays(1).atStartOfDay();
         LocalDateTime endOfYesterday = LocalDate.now().minusDays(1).atTime(LocalTime.MAX);
 
-        BigDecimal totalRevenueRaw = orderRepository.getTotalRevenue();
+        System.out.println("[DIAGNOSTIC] Fetching Total Revenue...");
+        BigDecimal totalRevenueRaw = tokenTransactionRepository.sumByType(com.rit.canteen.sales.model.TokenTransaction.TransactionType.TOPUP);
+        System.out.println("[DIAGNOSTIC] Raw Total Revenue: " + totalRevenueRaw);
         long totalSales = totalRevenueRaw != null ? totalRevenueRaw.longValue() : 0;
         
-        BigDecimal periodRevenueRaw = orderRepository.getRevenuePerPeriod(from, to);
+        System.out.println("[DIAGNOSTIC] Fetching Period Revenue for range: " + from + " to " + to);
+        BigDecimal periodRevenueRaw = tokenTransactionRepository.sumByTypeInRange(com.rit.canteen.sales.model.TokenTransaction.TransactionType.TOPUP, from, to);
+        System.out.println("[DIAGNOSTIC] Raw Period Revenue: " + periodRevenueRaw);
         long periodRevenue = periodRevenueRaw != null ? periodRevenueRaw.longValue() : 0;
         
         int activeOrders = (int) orderRepository.countByCreatedAtBetween(from, to);
         int dailyCustomers = (int) orderRepository.countUniqueUsersInRange(from, to);
 
-        BigDecimal todayRevenue = orderRepository.getRevenuePerPeriod(startOfToday, endOfToday);
-        BigDecimal yesterdayRevenue = orderRepository.getRevenuePerPeriod(startOfYesterday, endOfYesterday);
+        BigDecimal todayRevenue = tokenTransactionRepository.sumByTypeInRange(com.rit.canteen.sales.model.TokenTransaction.TransactionType.TOPUP, startOfToday, endOfToday);
+        BigDecimal yesterdayRevenue = tokenTransactionRepository.sumByTypeInRange(com.rit.canteen.sales.model.TokenTransaction.TransactionType.TOPUP, startOfYesterday, endOfYesterday);
+        System.out.println("[DIAGNOSTIC] Today vs Yesterday: " + todayRevenue + " / " + yesterdayRevenue);
         
         BigDecimal totalExpensesRaw = purchaseOrderRepository.getTotalPurchaseAmount();
         long totalExpenses = totalExpensesRaw != null ? totalExpensesRaw.longValue() : 0;
