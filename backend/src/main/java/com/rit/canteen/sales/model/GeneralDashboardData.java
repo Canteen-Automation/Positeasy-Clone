@@ -7,15 +7,17 @@ public class GeneralDashboardData {
     private DashboardStats stats;
     private List<Map<String, Object>> storeOverview;
     private List<Map<String, Object>> hourlySales;
-    private List<String> insights;
+    private List<Map<String, String>> insights;
+    private List<TrendingItem> trendingItems;
 
     public GeneralDashboardData() {}
 
-    public GeneralDashboardData(DashboardStats stats, List<Map<String, Object>> storeOverview, List<Map<String, Object>> hourlySales, List<String> insights) {
+    public GeneralDashboardData(DashboardStats stats, List<Map<String, Object>> storeOverview, List<Map<String, Object>> hourlySales, List<Map<String, String>> insights, List<TrendingItem> trendingItems) {
         this.stats = stats;
         this.storeOverview = storeOverview;
         this.hourlySales = hourlySales;
         this.insights = insights;
+        this.trendingItems = trendingItems;
     }
 
     public DashboardStats getStats() { return stats; }
@@ -27,6 +29,9 @@ public class GeneralDashboardData {
     public List<Map<String, Object>> getHourlySales() { return hourlySales; }
     public void setHourlySales(List<Map<String, Object>> hourlySales) { this.hourlySales = hourlySales; }
 
-    public List<String> getInsights() { return insights; }
-    public void setInsights(List<String> insights) { this.insights = insights; }
+    public List<Map<String, String>> getInsights() { return insights; }
+    public void setInsights(List<Map<String, String>> insights) { this.insights = insights; }
+
+    public List<TrendingItem> getTrendingItems() { return trendingItems; }
+    public void setTrendingItems(List<TrendingItem> trendingItems) { this.trendingItems = trendingItems; }
 }

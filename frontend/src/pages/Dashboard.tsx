@@ -328,15 +328,15 @@ const Dashboard = () => {
          <div className="col-span-12 lg:col-span-5 bg-white rounded-[32px] border border-slate-100 shadow-sm p-8 flex flex-col">
             <h3 className="text-sm font-black text-slate-800 tracking-tight mb-8 uppercase tracking-widest">Business Intelligence</h3>
             <div className="space-y-4 flex-1">
-               {insights.map((insight: string, idx: number) => (
+               {insights.map((insight: any, idx: number) => (
                   <motion.div 
                     initial={{ x: -20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: idx * 0.1 }}
                     key={idx} 
-                    className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-md hover:border-transparent transition-all cursor-default"
+                    className={`p-5 rounded-2xl border transition-all cursor-default ${insight.color || 'border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-md hover:border-transparent'}`}
                   >
-                     <p className="text-[11px] font-black text-slate-600 leading-relaxed uppercase tracking-tight">{insight}</p>
+                     <p className="text-[11px] font-black text-slate-600 leading-relaxed uppercase tracking-tight">{insight.text || insight}</p>
                   </motion.div>
                ))}
             </div>

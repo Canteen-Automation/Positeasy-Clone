@@ -15,6 +15,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { format, subDays } from 'date-fns';
+import { QRCodeCanvas } from 'qrcode.react';
 import Pagination from '../components/Pagination';
 
 interface OrderItem {
@@ -336,7 +337,7 @@ const ArchivedOrders: React.FC = () => {
               {/* Bottom Totals Summary */}
               <div className="bg-slate-900 p-8 text-white">
                 <div className="flex justify-between">
-                   <div className="flex gap-12">
+                   <div className="flex gap-12 items-center">
                       <div>
                         <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-2">Unique Items</div>
                         <div className="text-2xl font-black">{selectedOrder.items.length}</div>
@@ -346,6 +347,32 @@ const ArchivedOrders: React.FC = () => {
                         <div className="text-xs font-black px-3 py-1 bg-white/10 rounded-full border border-white/20 inline-flex items-center gap-2 uppercase">
                           <Clock size={12} /> Closed File
                         </div>
+                      </div>
+
+                      {/* QR Verification with Status Blur */}
+                      <div className="flex items-center gap-5 pl-12 border-l border-white/10">
+                         <div className="relative flex items-center justify-center bg-white/5 p-2 rounded-xl border border-white/10 group/qr transition-all">
+                            <div className={`transition-all duration-700 ${['COMPLETED', 'CANCELLED'].includes(selectedOrder.status.toUpperCase()) ? 'blur-[3px] opacity-20' : ''}`}>
+                               <QRCodeCanvas 
+                                  value={selectedOrder.orderNumber} 
+                                  size={64} 
+                                  level="H"
+                                  bgColor="transparent"
+                                  fgColor="#ffffff"
+                               />
+                            </div>
+                            {['COMPLETED', 'CANCELLED'].includes(selectedOrder.status.toUpperCase()) && (
+                               <div className="absolute inset-0 flex items-center justify-center rotate-[-12deg] pointer-events-none">
+                                  <span className={`text-[10px] font-black text-white px-3 py-1 rounded-lg border border-white/20 shadow-2xl uppercase tracking-[0.2em] backdrop-blur-md ${selectedOrder.status.toUpperCase() === 'COMPLETED' ? 'bg-emerald-500/80' : 'bg-rose-500/80'}`}>
+                                     {selectedOrder.status.toUpperCase() === 'COMPLETED' ? 'DELIVERED' : 'EXPIRED'}
+                                  </span>
+                                </div>
+                            )}
+                         </div>
+                         <div>
+                            <div className="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Verification</div>
+                            <div className="text-[10px] font-black text-white uppercase tracking-tighter opacity-80">Ledger Sync QR</div>
+                         </div>
                       </div>
                    </div>
                    <div className="text-right flex flex-col gap-1 min-w-[250px]">

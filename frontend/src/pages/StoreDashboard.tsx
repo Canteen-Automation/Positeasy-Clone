@@ -21,75 +21,91 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 
-const salesData = [
-  { time: '12am', value: 0 },
-  { time: '2am', value: 0 },
-  { time: '4am', value: 0 },
-  { time: '6am', value: 0 },
-  { time: '8am', value: 5000 },
-  { time: '10am', value: 16000 },
-  { time: '12pm', value: 6000 },
-];
-
-const trendingItems = [
-  { name: "GHEE ROAST", category: "BREAK FAST", qty: 64, image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=200&q=80" },
-  { name: "KAL DOSA (2pcs)", category: "BREAK FAST", qty: 60, image: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=200&q=80" },
-  { name: "VEG S.W", category: "SNACKS", qty: 51, image: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=200&q=80" },
-  { name: "PLAIN DOSA", category: "BREAK FAST", qty: 51, image: "https://images.unsplash.com/photo-1610192244261-3f33de3f55e4?w=200&q=80" }
-];
 
 const StoreDashboard = () => {
   const [activeTab, setActiveTab] = useState('Sales');
   const [timeRange, setTimeRange] = useState('Today');
   const [stats, setStats] = useState({
-    totalSales: 48438,
-    activeOrders: 912,
-    dailyCustomers: 813,
-    revenueGrowth: 12.5
+    totalSales: 0,
+    activeOrders: 0,
+    dailyCustomers: 0,
+    revenueGrowth: 0
   });
+  const [trendingItems, setTrendingItems] = useState<any[]>([]);
+  const [salesData, setSalesData] = useState<any[]>([]);
+  const [insights, setInsights] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const formatCurrency = (val: any) => {
+    const num = Number(val);
+    return isNaN(num) ? '0' : num.toLocaleString();
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setIsLoading(true);
         const response = await fetch('/api/dashboard/stats');
         if (response.ok) {
           const data = await response.json();
-          // Find RIT Canteen in storeOverview if available, otherwise use general stats
+          console.log('Dashboard data received successfully:', data);
+          
+          // Set basic stats from general stats if available
+          if (data.stats) {
+            setStats({
+              totalSales: data.stats.totalSales,
+              activeOrders: data.stats.activeOrders,
+              dailyCustomers: data.stats.dailyCustomers,
+              revenueGrowth: data.stats.growth
+            });
+          }
+
+          // Override with RIT Canteen specific data if found in overview
           if (data.storeOverview && data.storeOverview.length > 0) {
              const ritStore = data.storeOverview.find((s: any) => s.name === 'RIT Canteen');
              if (ritStore) {
-                setStats({
+                setStats(prev => ({
+                   ...prev,
                    totalSales: ritStore.sale,
                    activeOrders: ritStore.orders,
                    dailyCustomers: ritStore.orders * 0.9, // Approximation
-                   revenueGrowth: 12.5
-                });
-             } else {
-                setStats(data.stats);
+                }));
              }
-          } else {
-             setStats(data.stats);
           }
+
+          // Set other dynamic data
+          if (data.trendingItems) setTrendingItems(data.trendingItems);
+          if (data.hourlySales) setSalesData(data.hourlySales);
+          if (data.insights) setInsights(data.insights);
         }
       } catch (error) {
         console.error('Error fetching dashboard stats:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchStats();
   }, []);
 
   const pieData = [
-    { name: 'Full Payment', value: stats.totalSales, color: '#8b5cf6' },
+    { name: 'Full Payment', value: Number(stats.totalSales) || 0, color: '#8b5cf6' },
     { name: 'Credit', value: 0, color: '#fbbf24' }
   ];
 
-  const insights = [
-    { text: `${stats.activeOrders} orders at RIT Canteen! Clearly the crowd's found their happy place 💃🕺`, color: "bg-rose-50 text-rose-600 border-rose-100" },
-    { text: `₹${(stats.totalSales / (stats.activeOrders || 1)).toFixed(2)} average order value at RIT Canteen! Either everyone's hungry or just living large 🔥😋`, color: "bg-emerald-50 text-emerald-600 border-emerald-100" },
-    { text: `RIT Canteen had ${stats.activeOrders} orders but only ${Math.round(stats.dailyCustomers)} customers — Maybe customers are shy and didn't give their names 🥰`, color: "bg-orange-50 text-orange-600 border-orange-100" },
-    { text: `RIT Canteen clocked ₹${stats.totalSales.toLocaleString()} — ka-ching! That's called business booming 💸📈`, color: "bg-blue-50 text-blue-600 border-blue-100" },
-    { text: "RIT Canteen reaches its morning sales peak around 9AM — breakfast rush in full swing 🍳🥞", color: "bg-indigo-50 text-indigo-600 border-indigo-100" }
-  ];
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-50/50">
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
+          transition={{ repeat: Infinity, duration: 1.5 }}
+          className="text-[#0f4475] font-black uppercase tracking-widest text-sm"
+        >
+          Analyzing Store Data...
+        </motion.div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen font-inter">
@@ -200,7 +216,7 @@ const StoreDashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                 <h2 className="text-3xl font-black text-slate-800 tracking-tighter">₹{stats.totalSales.toLocaleString()}</h2>
+                 <h2 className="text-3xl font-black text-slate-800 tracking-tighter">₹{formatCurrency(stats.totalSales)}</h2>
               </div>
               <div className="flex gap-6 mt-4">
                  <div className="flex items-center gap-2">

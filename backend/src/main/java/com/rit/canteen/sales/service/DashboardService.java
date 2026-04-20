@@ -3,6 +3,7 @@ package com.rit.canteen.sales.service;
 import com.rit.canteen.sales.model.DashboardStats;
 import com.rit.canteen.sales.model.GeneralDashboardData;
 import com.rit.canteen.sales.model.Order;
+import com.rit.canteen.sales.model.TrendingItem;
 import com.rit.canteen.sales.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class DashboardService {
         
         DashboardStats stats = getDashboardStats(from, to);
 
+        System.out.println("Fetching dashboard data for range: " + from + " to " + to);
         // 1. Store Overview
         List<Object[]> storeData = orderRepository.getStoreOverview(from, to);
         List<Map<String, Object>> storeOverview = new ArrayList<>();
@@ -59,17 +61,54 @@ public class DashboardService {
             hourlySales.add(hourMap);
         }
 
-        // 3. Dynamic Insights
-        List<String> insights = new ArrayList<>();
-        if (stats.getActiveOrders() > 0) {
-            insights.add(stats.getActiveOrders() + " orders today! Clearly the crowd's found their happy place 💃🕺");
-            BigDecimal avg = stats.getTotalSales() > 0 ? BigDecimal.valueOf(stats.getTotalSales()).divide(BigDecimal.valueOf(stats.getActiveOrders()), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
-            insights.add("₹" + avg + " average order value! Proof that happy bellies don't need heavy bills 🤤🔥");
-        } else {
-            insights.add("Waiting for the first orders of the day to roll in... ☕");
+        // 3. Trending Items
+        List<Object[]> trendingData = orderRepository.getTopSellingItems(from, to);
+        List<TrendingItem> trendingItems = new ArrayList<>();
+        for (int i = 0; i < Math.min(trendingData.size(), 4); i++) {
+            Object[] row = trendingData.get(i);
+            String name = (String) row[0];
+            String category = (String) row[1];
+            long qty = ((Number) row[2]).longValue();
+            String imageData = (String) row[3];
+            
+            // Format image data for frontend
+            String imageUrl = imageData != null ? (imageData.startsWith("http") ? imageData : (imageData.startsWith("data:") ? imageData : "data:image/png;base64," + imageData)) : "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80";
+            
+            trendingItems.add(new TrendingItem(name, category, qty, imageUrl));
         }
 
-        return new GeneralDashboardData(stats, storeOverview, hourlySales, insights);
+        // 4. Dynamic Insights
+        List<Map<String, String>> insights = new ArrayList<>();
+        if (stats.getActiveOrders() > 0) {
+            Map<String, String> orderInsight = new HashMap<>();
+            orderInsight.put("text", stats.getActiveOrders() + " orders at RIT Canteen! Clearly the crowd's found their happy place 💃🕺");
+            orderInsight.put("color", "bg-rose-50 text-rose-600 border-rose-100");
+            insights.add(orderInsight);
+
+            BigDecimal avg = stats.getTotalSales() > 0 ? BigDecimal.valueOf(stats.getTotalSales()).divide(BigDecimal.valueOf(stats.getActiveOrders()), 2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            Map<String, String> avgInsight = new HashMap<>();
+            avgInsight.put("text", "₹" + avg + " average order value! Either everyone's hungry or just living large 🔥😋");
+            avgInsight.put("color", "bg-emerald-50 text-emerald-600 border-emerald-100");
+            insights.add(avgInsight);
+
+            Map<String, String> customerInsight = new HashMap<>();
+            customerInsight.put("text", "RIT Canteen had " + stats.getActiveOrders() + " orders but only " + stats.getDailyCustomers() + " customers — Maybe customers are shy! 🥰");
+            customerInsight.put("color", "bg-orange-50 text-orange-600 border-orange-100");
+            insights.add(customerInsight);
+
+            Map<String, String> revenueInsight = new HashMap<>();
+            revenueInsight.put("text", "RIT Canteen clocked ₹" + String.format("%,d", stats.getTotalSales()) + " — ka-ching! That's called business booming 💸📈");
+            revenueInsight.put("color", "bg-blue-50 text-blue-600 border-blue-100");
+            insights.add(revenueInsight);
+        } else {
+            Map<String, String> emptyInsight = new HashMap<>();
+            emptyInsight.put("text", "Waiting for the first orders of the day to roll in... ☕");
+            emptyInsight.put("color", "bg-indigo-50 text-indigo-600 border-indigo-100");
+            insights.add(emptyInsight);
+        }
+
+        System.out.println("Dashboard data generated successfully with " + trendingItems.size() + " trending items.");
+        return new GeneralDashboardData(stats, storeOverview, hourlySales, insights, trendingItems);
     }
 
     public DashboardStats getDashboardStats(LocalDateTime from, LocalDateTime to) {

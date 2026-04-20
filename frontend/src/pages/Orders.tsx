@@ -15,9 +15,11 @@ import {
   Check,
   X as XIcon,
   RotateCcw,
-  Edit2
+  Edit2,
+  Printer
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { QRCodeCanvas } from 'qrcode.react';
 import Pagination from '../components/Pagination';
 
 interface OrderItem {
@@ -75,6 +77,8 @@ const Orders: React.FC = () => {
   const [editSearchQuery, setEditSearchQuery] = useState('');
   const [editingItems, setEditingItems] = useState<OrderItem[]>([]);
   const [isUpdatingOrder, setIsUpdatingOrder] = useState(false);
+  const [showQRMenu, setShowQRMenu] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Debounce search query
   useEffect(() => {
@@ -246,6 +250,72 @@ const Orders: React.FC = () => {
       console.error('Error saving edits:', error);
     } finally {
       setIsUpdatingOrder(false);
+    }
+  };
+
+  const handlePrintQR = () => {
+    const canvas = document.querySelector('.qr-canvas canvas') as HTMLCanvasElement;
+    if (!canvas || !selectedOrder) return;
+    
+    const qrDataURL = canvas.toDataURL('image/png');
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print QR Code - Order #${selectedOrder.displayOrderId}</title>
+            <style>
+              body { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; margin: 0; }
+              img { width: 300px; height: 300px; }
+              .order-info { margin-top: 40px; text-align: center; }
+              h1 { margin: 0; font-size: 24px; }
+              p { margin: 5px 0; color: #666; }
+            </style>
+          </head>
+          <body>
+            <img src="${qrDataURL}" />
+            <div class="order-info">
+              <h1>Order #${selectedOrder.displayOrderId}</h1>
+              <p>Scan to verify at terminal</p>
+              <p>Customer: ${selectedOrder.user?.name || 'Walk-in'}</p>
+            </div>
+            <script>
+              window.onload = () => {
+                window.print();
+                setTimeout(() => window.close(), 100);
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+  };
+
+  const handleRegenerateQR = async () => {
+    if (!selectedOrder) return;
+    setIsRegenerating(true);
+    try {
+      const newOrderNumber = `ORD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/${selectedOrder.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...selectedOrder,
+          orderNumber: newOrderNumber
+        })
+      });
+
+      if (response.ok) {
+        fetchOrders(); // This will refresh the whole list and the selected order
+        setShowQRMenu(false);
+      } else {
+        alert('Failed to regenerate sync ID');
+      }
+    } catch (error) {
+      console.error('Error regenerating QR:', error);
+    } finally {
+      setIsRegenerating(false);
     }
   };
 
@@ -581,6 +651,50 @@ const Orders: React.FC = () => {
                         <div className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1.5">Total Quantity</div>
                         <div className="text-xl font-black text-slate-800">
                           {selectedOrder.items.reduce((sum, item) => sum + item.quantity, 0)}
+                        </div>
+                      </div>
+                      
+                      {/* QR Verification Section */}
+                      <div className="flex items-center gap-4 pl-8 border-l border-slate-200">
+                        <div className="relative">
+                          <div 
+                            onClick={() => setShowQRMenu(!showQRMenu)}
+                            className="p-1.5 bg-white rounded-lg border border-slate-200 shadow-sm transition-all hover:scale-105 hover:border-indigo-300 cursor-pointer qr-canvas relative group"
+                          >
+                            <QRCodeCanvas 
+                              value={selectedOrder.orderNumber} 
+                              size={56} 
+                              level="H"
+                              includeMargin={false}
+                            />
+                            <div className="absolute inset-0 bg-indigo-600/0 group-hover:bg-indigo-600/5 transition-colors rounded-lg flex items-center justify-center">
+                              <Plus size={16} className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+
+                          {showQRMenu && (
+                            <div className="absolute bottom-full left-0 mb-4 w-64 bg-white border border-slate-200 rounded-2xl shadow-2xl z-20 overflow-hidden py-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                              <div className="px-4 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-50">Sync Actions</div>
+                              <button 
+                                onClick={handlePrintQR}
+                                className="w-full text-left px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors"
+                              >
+                                <Printer size={16} className="text-emerald-500" /> Print Sync Token
+                              </button>
+                              <button 
+                                onClick={handleRegenerateQR}
+                                disabled={isRegenerating}
+                                className="w-full text-left px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-3 transition-colors disabled:opacity-50"
+                              >
+                                <RefreshCw size={16} className={`text-indigo-500 ${isRegenerating ? 'animate-spin' : ''}`} /> 
+                                {isRegenerating ? 'Regenerating...' : 'Regenerate Sync ID'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-[9px] text-slate-400 uppercase font-black tracking-widest mb-0.5">Verify Order</div>
+                          <div className="text-[10px] font-black text-slate-800 uppercase tracking-tighter">Scan for Terminal Sync</div>
                         </div>
                       </div>
                    </div>
