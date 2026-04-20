@@ -213,7 +213,7 @@ const ArchivedOrders: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="text-[10px] text-slate-400 font-medium uppercase mb-0.5">Grand Total</div>
-                    <div className="text-lg font-black text-slate-900 leading-none">R{order.totalAmount.toFixed(2)}</div>
+                    <div className="text-lg font-black text-slate-900 leading-none">₹{order.totalAmount.toFixed(2)}</div>
                   </div>
                 </div>
 
@@ -325,8 +325,8 @@ const ArchivedOrders: React.FC = () => {
                            </div>
                         </div>
                         <div className="text-right">
-                            <div className="text-sm font-black text-slate-900">R{(item.price * item.quantity).toLocaleString()}</div>
-                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">@ R{item.price}</div>
+                            <div className="text-sm font-black text-slate-900">₹{(item.price * item.quantity).toLocaleString()}</div>
+                            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">@ ₹{item.price}</div>
                         </div>
                       </div>
                     ))}
@@ -377,7 +377,7 @@ const ArchivedOrders: React.FC = () => {
                    </div>
                    <div className="text-right flex flex-col gap-1 min-w-[250px]">
                       <div className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Final Settlement</div>
-                      <div className="text-4xl font-black text-emerald-400 leading-none mb-1">R{selectedOrder.totalAmount.toLocaleString()}</div>
+                      <div className="text-4xl font-black text-emerald-400 leading-none mb-1">₹{selectedOrder.totalAmount.toLocaleString()}</div>
                       <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">Transaction Fully Reconciled</div>
                    </div>
                 </div>

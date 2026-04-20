@@ -279,13 +279,13 @@ const Customers: React.FC = () => {
                                   <CircleDollarSign size={16} />
                                 </div>
                                 <span className="text-sm font-black text-[#231651]">
-                                  R{user.ritzTokenBalance?.toLocaleString() || '0'}
+                                  ₹{user.ritzTokenBalance?.toLocaleString() || '0'}
                                 </span>
                               </div>
                             </td>
                             <td className="px-6 py-4">
                               <span className="text-sm font-bold text-[#231651]">
-                                R{user.ritzTokenBalance?.toLocaleString() || '0'}
+                                ₹{user.ritzTokenBalance?.toLocaleString() || '0'}
                               </span>
                             </td>
                             <td className="px-6 py-4">
@@ -364,7 +364,7 @@ const Customers: React.FC = () => {
                           RIT STUDENT
                         </span>
                         <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-lg border border-indigo-100 uppercase tracking-wider">
-                          R{user.ritzTokenBalance?.toLocaleString() || '0'} TOKENS
+                          ₹{user.ritzTokenBalance?.toLocaleString() || '0'} TOKENS
                         </span>
                       </div>
                       

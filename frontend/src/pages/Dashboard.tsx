@@ -224,7 +224,7 @@ const Dashboard = () => {
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} tickFormatter={(v) => v >= 1000 ? `R${v/1000}k` : `R${v}`} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 700}} tickFormatter={(v) => v >= 1000 ? `₹${v/1000}k` : `₹${v}`} />
                   <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
                   <Area type="monotone" dataKey="value" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorSalesMain)" />
                 </AreaChart>
@@ -262,9 +262,9 @@ const Dashboard = () => {
                 </PieChart>
               </ResponsiveContainer>
                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                  <h2 className="text-3xl font-black text-slate-800 tracking-tighter">R{(stats.periodRevenue || 0).toLocaleString()}</h2>
+                  <h2 className="text-3xl font-black text-slate-800 tracking-tighter">₹{(stats.periodRevenue || 0).toLocaleString()}</h2>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">{timeRange === 'Today' ? 'Today' : timeRange}</p>
-                  <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">Total: R{(stats.totalSales || 0).toLocaleString()}</p>
+                  <p className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">Total: ₹{(stats.totalSales || 0).toLocaleString()}</p>
                </div>
               <div className="flex gap-6 mt-2">
                  {pieData.map(item => (
@@ -365,13 +365,17 @@ const Dashboard = () => {
                   <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-black text-slate-900 border border-slate-100 z-10 shadow-sm">
                      TOP #{idx+1}
                   </div>
-                  <div className="w-full h-32 rounded-2xl mb-5 overflow-hidden bg-slate-50">
-                     <img 
-                       src={item.imageUrl} 
-                       alt={item.name} 
-                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
-                     />
-                  </div>
+                      <div className="w-full h-32 rounded-2xl mb-5 overflow-hidden bg-slate-50 flex items-center justify-center">
+                         {item.imageUrl ? (
+                            <img 
+                              src={item.imageUrl} 
+                              alt={item.name} 
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-90 group-hover:opacity-100" 
+                            />
+                         ) : (
+                            <div className="w-full h-full bg-slate-50/50" />
+                         )}
+                      </div>
                   <div className="flex justify-between items-start mb-2">
                      <div>
                         <h4 className="text-sm font-black text-slate-800 leading-tight mb-1 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item.name}</h4>
@@ -401,7 +405,9 @@ const Dashboard = () => {
                     key={idx} 
                     className={`p-5 rounded-2xl border transition-all cursor-default ${insight.color || 'border-slate-100 bg-slate-50/50 hover:bg-white hover:shadow-md hover:border-transparent'}`}
                   >
-                     <p className="text-[11px] font-black text-slate-600 leading-relaxed uppercase tracking-tight">{insight.text || insight}</p>
+                     <p className="text-[11px] font-black text-slate-600 leading-relaxed uppercase tracking-tight">
+                        {(insight.text || insight).replace(/R(?=[0-9])/g, '₹')}
+                     </p>
                   </motion.div>
                ))}
             </div>
@@ -429,7 +435,7 @@ const Dashboard = () => {
                      <div className="grid grid-cols-4 gap-4">
                         <div className="space-y-1.5">
                            <p className="text-[9px] font-black text-rose-500 uppercase tracking-widest opacity-60">Gross Sale</p>
-                           <p className="text-lg font-black text-slate-800 tracking-tighter">R{Number(store.sale).toLocaleString()}</p>
+                           <p className="text-lg font-black text-slate-800 tracking-tighter">₹{Number(store.sale).toLocaleString()}</p>
                         </div>
                         <div className="space-y-1.5">
                            <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest opacity-60">Volume</p>

@@ -16,4 +16,9 @@ public class BackendApplication {
 		SpringApplication.run(BackendApplication.class, args);
 	}
 
+	@jakarta.annotation.PostConstruct
+	public void init() {
+		java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Kolkata"));
+		System.out.println("[TIMEZONE] Global JVM TimeZone set to: " + java.util.TimeZone.getDefault().getID());
+	}
 }

@@ -105,10 +105,10 @@ const Reports: React.FC = () => {
     
     const summaryData = [
       ['Metric', 'Value'],
-      ['Total Sales Revenue', `INR ${data.totalSales.toLocaleString()}`],
+      ['Total Sales Revenue', `₹ ${data.totalSales.toLocaleString()}`],
       ['Total Orders Fulfilled', data.totalOrders.toString()],
-      ['Total Inventory Purchases', `INR ${data.totalPurchases.toLocaleString()}`],
-      ['Net Performance', `INR ${(data.totalSales - data.totalPurchases).toLocaleString()}`],
+      ['Total Inventory Purchases', `₹ ${data.totalPurchases.toLocaleString()}`],
+      ['Net Performance', `₹ ${(data.totalSales - data.totalPurchases).toLocaleString()}`],
       ['Top Performing Vendor', data.topVendor]
     ];
 
@@ -126,7 +126,7 @@ const Reports: React.FC = () => {
     autoTable(doc, {
       startY: finalY1 + 20,
       head: [['Product Name', 'Quantity Sold', 'Revenue']],
-      body: data.topSellingItems.map(item => [item.name, item.quantity, `INR ${item.revenue.toLocaleString()}`]),
+      body: data.topSellingItems.map(item => [item.name, item.quantity, `₹ ${item.revenue.toLocaleString()}`]),
       theme: 'grid'
     });
 
@@ -136,7 +136,7 @@ const Reports: React.FC = () => {
     autoTable(doc, {
       startY: finalY2 + 20,
       head: [['Vendor Name', 'Total Orders', 'Spend Amount']],
-      body: data.vendorSummary.map(v => [v.name, v.orderCount, `INR ${v.amount.toLocaleString()}`]),
+      body: data.vendorSummary.map(v => [v.name, v.orderCount, `₹ ${v.amount.toLocaleString()}`]),
       theme: 'striped'
     });
 

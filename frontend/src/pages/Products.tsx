@@ -395,7 +395,7 @@ const Products = () => {
                       })()}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm font-bold text-[#1e293b]">R{product.price}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-[#1e293b]">₹{product.price}</td>
                   <td className="px-6 py-4">
                     <div className="flex flex-col gap-1.5">
                       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold w-fit ${product.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>

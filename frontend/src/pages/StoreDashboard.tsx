@@ -358,8 +358,12 @@ const StoreDashboard = () => {
                        <tr key={idx} className="group cursor-pointer hover:bg-slate-50/50 transition-all">
                           <td className="py-4">
                              <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-50 group-hover:scale-105 transition-transform">
-                                   <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-50 group-hover:scale-105 transition-transform flex items-center justify-center">
+                                   {item.imageUrl ? (
+                                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                                   ) : (
+                                      <div className="w-full h-full bg-slate-100" />
+                                   )}
                                 </div>
                                 <div className="space-y-0.5">
                                    <p className="text-[9px] font-black text-[#0f4475] uppercase tracking-widest brightness-110">{item.category}</p>
@@ -368,7 +372,7 @@ const StoreDashboard = () => {
                              </div>
                           </td>
                           <td className="py-4 text-right">
-                             <span className="text-sm font-black text-slate-800">{item.qty}</span>
+                             <span className="text-sm font-black text-slate-800">{item.orderCount}</span>
                           </td>
                        </tr>
                     ))}

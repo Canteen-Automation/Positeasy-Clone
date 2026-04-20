@@ -128,6 +128,10 @@ public class OrderController {
     @PostMapping
     @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> placeOrder(@RequestBody Order order) {
+        System.out.println("[REVENUE-TRACE] Incoming Place Order Request -> User: " + order.getUserId() + 
+                           " | Total: " + order.getTotalAmount() + 
+                           " | Items: " + (order.getItems() != null ? order.getItems().size() : 0));
+
         // 1. Pre-validation and linking
         if (order.getItems() == null || order.getItems().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Order must have items"));
@@ -164,6 +168,9 @@ public class OrderController {
         // 3. Complete Order Details
         for (OrderItem item : order.getItems()) {
             item.setOrder(order);
+            if (item.getStallName() == null || item.getStallName().isEmpty() || item.getStallName().equals("Unknown Stall")) {
+                item.setStallName("RIT Canteen");
+            }
         }
         
         LocalDateTime now = LocalDateTime.now();
@@ -189,7 +196,16 @@ public class OrderController {
         // 5. Final Save
         Order savedOrder = orderRepository.save(order);
         
-        System.out.println("Placed Order: " + savedOrder.getId() + " -> Display ID: #" + displayId);
+        System.out.println("[REVENUE-TRACE] Saved Order: " + savedOrder.getOrderNumber() + 
+                           " | Display ID: #" + savedOrder.getDisplayOrderId() + 
+                           " | CreatedAt: " + savedOrder.getCreatedAt() + 
+                           " | Payment: " + savedOrder.getPaymentMethod());
+        
+        if (savedOrder.getItems() != null) {
+            savedOrder.getItems().forEach(item -> 
+                System.out.println("[REVENUE-TRACE] Saved Item: " + item.getProductName() + 
+                                   " | Stall: " + item.getStallName()));
+        }
         
         return ResponseEntity.ok(Map.of(
             "success", true,

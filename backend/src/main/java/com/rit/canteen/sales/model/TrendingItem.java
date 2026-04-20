@@ -3,16 +3,16 @@ package com.rit.canteen.sales.model;
 public class TrendingItem {
     private String name;
     private String category;
-    private long qty;
-    private String image;
+    private long orderCount;
+    private String imageUrl;
 
     public TrendingItem() {}
 
-    public TrendingItem(String name, String category, long qty, String image) {
+    public TrendingItem(String name, String category, long orderCount, String imageUrl) {
         this.name = name;
         this.category = category;
-        this.qty = qty;
-        this.image = image;
+        this.orderCount = orderCount;
+        this.imageUrl = imageUrl;
     }
 
     public String getName() { return name; }
@@ -21,9 +21,9 @@ public class TrendingItem {
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
 
-    public long getQty() { return qty; }
-    public void setQty(long qty) { this.qty = qty; }
+    public long getOrderCount() { return orderCount; }
+    public void setOrderCount(long orderCount) { this.orderCount = orderCount; }
 
-    public String getImage() { return image; }
-    public void setImage(String image) { this.image = image; }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

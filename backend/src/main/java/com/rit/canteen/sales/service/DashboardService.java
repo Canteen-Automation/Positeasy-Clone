@@ -35,8 +35,9 @@ public class DashboardService {
     private TokenTransactionRepository tokenTransactionRepository;
 
     public GeneralDashboardData getGeneralDashboardData(LocalDateTime from, LocalDateTime to) {
-        if (from == null) from = LocalDate.now().atStartOfDay();
-        if (to == null) to = LocalDate.now().atTime(LocalTime.MAX);
+        java.time.ZoneId zone = java.time.ZoneId.of("Asia/Kolkata");
+        if (from == null) from = java.time.LocalDate.now(zone).atStartOfDay();
+        if (to == null) to = java.time.LocalDate.now(zone).atTime(java.time.LocalTime.MAX);
         
         System.out.println("[DIAGNOSTIC] Final timestamp range for service logic: " + from + " to " + to);
         DashboardStats stats = getDashboardStats(from, to);
@@ -47,11 +48,17 @@ public class DashboardService {
         List<Map<String, Object>> storeOverview = new ArrayList<>();
         for (Object[] row : storeData) {
             Map<String, Object> store = new HashMap<>();
-            store.put("name", row[0] != null ? row[0] : "Unknown Stall");
-            store.put("sale", row[1] != null ? row[1] : 0);
-            store.put("orders", row[2] != null ? row[2] : 0);
-            store.put("taxes", 0); // Placeholder
-            store.put("purchase", 0); // Placeholder
+            String stallName = (row[0] != null && !row[0].toString().equals("Unknown Stall")) ? row[0].toString() : "RIT Canteen";
+            BigDecimal saleVal = row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO;
+            long orderCount = row[2] != null ? ((Number) row[2]).longValue() : 0;
+            
+            System.out.println("[REVENUE-TRACE] Store Overview Result -> Stall: " + stallName + " | Sales: " + saleVal + " | Orders: " + orderCount);
+            
+            store.put("name", stallName);
+            store.put("sale", saleVal);
+            store.put("orders", orderCount);
+            store.put("taxes", 0);
+            store.put("purchase", 0);
             storeOverview.add(store);
         }
 
@@ -86,7 +93,7 @@ public class DashboardService {
             String imageData = (String) row[3];
             
             // Format image data for frontend
-            String imageUrl = imageData != null ? (imageData.startsWith("http") ? imageData : (imageData.startsWith("data:") ? imageData : "data:image/png;base64," + imageData)) : "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&q=80";
+            String imageUrl = imageData != null ? (imageData.startsWith("http") ? imageData : (imageData.startsWith("data:") ? imageData : "data:image/png;base64," + imageData)) : null;
             
             trendingItems.add(new TrendingItem(name, category, qty, imageUrl));
         }
@@ -103,7 +110,7 @@ public class DashboardService {
                 ? BigDecimal.valueOf(stats.getTotalSales()).divide(BigDecimal.valueOf(stats.getActiveOrders()), 2, RoundingMode.HALF_UP) 
                 : BigDecimal.ZERO;
             Map<String, String> avgInsight = new HashMap<>();
-            avgInsight.put("text", "₹" + avg + " average order value! Either everyone's hungry or just living large 🔥😋");
+            avgInsight.put("text", "R" + avg + " average order value! Either everyone's hungry or just living large 🔥😋");
             avgInsight.put("color", "bg-emerald-50 text-emerald-600 border-emerald-100");
             insights.add(avgInsight);
 
@@ -113,7 +120,7 @@ public class DashboardService {
             insights.add(customerInsight);
 
             Map<String, String> revenueInsight = new HashMap<>();
-            revenueInsight.put("text", "RIT Canteen clocked ₹" + String.format("%,d", stats.getTotalSales()) + " — ka-ching! That's called business booming 💸📈");
+            revenueInsight.put("text", "RIT Canteen clocked R" + String.format("%,d", stats.getTotalSales()) + " — ka-ching! That's called business booming 💸📈");
             revenueInsight.put("color", "bg-blue-50 text-blue-600 border-blue-100");
             insights.add(revenueInsight);
         } else {
@@ -128,11 +135,13 @@ public class DashboardService {
     }
 
     public DashboardStats getDashboardStats(LocalDateTime from, LocalDateTime to) {
-        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
-        LocalDateTime endOfToday = LocalDate.now().atTime(LocalTime.MAX);
+        System.out.println("[REVENUE-TRACE] Dashboard Request Range: " + from + " to " + to);
+        java.time.ZoneId zone = java.time.ZoneId.of("Asia/Kolkata");
+        LocalDateTime startOfToday = LocalDate.now(zone).atStartOfDay();
+        LocalDateTime endOfToday = LocalDate.now(zone).atTime(LocalTime.MAX);
         
-        LocalDateTime startOfYesterday = LocalDate.now().minusDays(1).atStartOfDay();
-        LocalDateTime endOfYesterday = LocalDate.now().minusDays(1).atTime(LocalTime.MAX);
+        LocalDateTime startOfYesterday = LocalDate.now(zone).minusDays(1).atStartOfDay();
+        LocalDateTime endOfYesterday = LocalDate.now(zone).minusDays(1).atTime(LocalTime.MAX);
 
         System.out.println("[DIAGNOSTIC] Fetching Total Revenue...");
         BigDecimal totalRevenueRaw = tokenTransactionRepository.sumByType(com.rit.canteen.sales.model.TokenTransaction.TransactionType.TOPUP);
@@ -146,6 +155,8 @@ public class DashboardService {
         
         int activeOrders = (int) orderRepository.countByCreatedAtBetween(from, to);
         int dailyCustomers = (int) orderRepository.countUniqueUsersInRange(from, to);
+        
+        System.out.println("[REVENUE-TRACE] Active Orders in Range: " + activeOrders + " | Unique Customers: " + dailyCustomers);
 
         BigDecimal todayRevenue = tokenTransactionRepository.sumByTypeInRange(com.rit.canteen.sales.model.TokenTransaction.TransactionType.TOPUP, startOfToday, endOfToday);
         BigDecimal yesterdayRevenue = tokenTransactionRepository.sumByTypeInRange(com.rit.canteen.sales.model.TokenTransaction.TransactionType.TOPUP, startOfYesterday, endOfYesterday);

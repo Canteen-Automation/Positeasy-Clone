@@ -639,7 +639,7 @@ const Stalls: React.FC = () => {
                                      </div>
                                      <div>
                                         <p className="font-bold text-[#1e293b] text-sm">{product.name}</p>
-                                        <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">R{product.price} • {product.category}</p>
+                                        <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-wider">₹{product.price} • {product.category}</p>
                                      </div>
                                   </div>
                                   <div className={`w-6 h-6 rounded flex items-center justify-center border-2 transition-all ${isSelected ? 'bg-[#231651] border-[#231651]' : 'border-slate-200 bg-white'}`}>
