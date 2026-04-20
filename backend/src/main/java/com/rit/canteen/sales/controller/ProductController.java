@@ -33,6 +33,11 @@ public class ProductController {
         return productRepository.findAllWithStalls(org.springframework.data.domain.PageRequest.of(page, size));
     }
 
+    @GetMapping("/drafts")
+    public List<Product> getDraftProducts() {
+        return productRepository.findByIsDraftTrue();
+    }
+
     @GetMapping("/category/{categoryName}")
     public List<Product> getProductsByCategory(@PathVariable String categoryName) {
         return productRepository.findByCategory(categoryName);
@@ -171,5 +176,44 @@ public class ProductController {
             });
         }
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/publish")
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<Product> publishProduct(@PathVariable Long id, @RequestBody Product productDetails) {
+        return productRepository.findById(id)
+                .map(product -> {
+                    // Generate new PRD ID
+                    String newProductId = "PRD-" + String.format("%04d", new java.util.Random().nextInt(10000));
+                    
+                    // Update all details first
+                    product.setName(productDetails.getName());
+                    product.setProductId(newProductId);
+                    product.setCategory(productDetails.getCategory());
+                    product.setDescription(productDetails.getDescription());
+                    product.setBasePrice(productDetails.getBasePrice());
+                    product.setPrice(productDetails.getPrice());
+                    product.setOfferPrice(productDetails.getOfferPrice());
+                    product.setCounter(productDetails.getCounter());
+                    product.setTag(productDetails.getTag());
+                    product.setBarcode(productDetails.getBarcode());
+                    product.setImageData(productDetails.getImageData());
+                    product.setStock(productDetails.getStock());
+                    
+                    product.getSessions().clear();
+                    if (productDetails.getSessions() != null) {
+                        product.getSessions().addAll(productDetails.getSessions());
+                    }
+                    
+                    // Finalize
+                    product.setDraft(false);
+                    product.setActive(true);
+                    
+                    Product updated = productRepository.save(product);
+                    updateStallAssociations(updated, productDetails.getStalls());
+                    
+                    return ResponseEntity.ok(productRepository.findById(updated.getId()).orElse(updated));
+                })
+                .orElse(ResponseEntity.notFound().build());
     }
 }

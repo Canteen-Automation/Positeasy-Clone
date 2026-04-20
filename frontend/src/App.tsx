@@ -20,6 +20,7 @@ import Bills from './pages/Bills.tsx';
 import PurchaseSummary from './pages/PurchaseSummary.tsx';
 import IntentDashboard from './pages/IntentDashboard.tsx';
 import IntentList from './pages/IntentList.tsx';
+import NewArrivals from './pages/NewArrivals.tsx';
 import Reports from './pages/Reports.tsx';
 import Feedback from './pages/Feedback.tsx';
 
@@ -77,6 +78,7 @@ function App() {
           <Route path="purchases/intent/stores" element={<PlaceholderPage title="Intent Stores" />} />
           
           {/* Inventory */}
+          <Route path="inventory/new-arrivals" element={<NewArrivals />} />
           <Route path="inventory/base" element={<BaseMenu />} />
           <Route path="inventory/products" element={<Products />} />
           <Route path="inventory/online" element={<Navigate to="/inventory/products" replace />} />

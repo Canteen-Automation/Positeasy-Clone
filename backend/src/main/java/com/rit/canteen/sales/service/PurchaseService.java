@@ -1,9 +1,12 @@
 package com.rit.canteen.sales.service;
 
+import com.rit.canteen.sales.model.Product;
 import com.rit.canteen.sales.model.PurchaseOrder;
+import com.rit.canteen.sales.model.PurchaseOrderItem;
 import com.rit.canteen.sales.model.Vendor;
 import com.rit.canteen.sales.repository.PurchaseOrderRepository;
 import com.rit.canteen.sales.repository.VendorRepository;
+import com.rit.canteen.sales.repository.ProductRepository;
 import com.rit.canteen.sales.repository.PurchaseOrderHistoryRepository;
 import com.rit.canteen.sales.model.PurchaseOrderHistory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,9 @@ public class PurchaseService {
 
     @Autowired
     private PurchaseOrderHistoryRepository historyRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     public List<PurchaseOrder> getAllOrders() {
         return purchaseOrderRepository.findAll();
@@ -59,6 +65,11 @@ public class PurchaseService {
         }
 
         PurchaseOrder savedOrder = purchaseOrderRepository.save(order);
+
+        // Handle Product Import if status is RECEIVED
+        if ("RECEIVED".equals(savedOrder.getStatus())) {
+            importToNewArrivals(savedOrder);
+        }
 
         // Update vendor statistics (only for NEW orders to avoid double counting, 
         // OR we should adjust the difference for updates - but user mostly wants new orders tracked)
@@ -135,5 +146,23 @@ public class PurchaseService {
         summary.put("trend", trendData);
         
         return summary;
+    }
+
+    private void importToNewArrivals(PurchaseOrder order) {
+        if (order.getItems() == null) return;
+        
+        for (PurchaseOrderItem item : order.getItems()) {
+            Product draftProduct = new Product();
+            draftProduct.setName(item.getProductName());
+            draftProduct.setStock(item.getQuantity() != null ? item.getQuantity().intValue() : 0);
+            draftProduct.setBasePrice(item.getRate());
+            draftProduct.setDraft(true);
+            draftProduct.setActive(false); // Not live yet
+            
+            // Set a unique product ID if possible
+            draftProduct.setProductId("DRAFT-" + String.format("%04d", new java.util.Random().nextInt(10000)) + "-" + item.getId());
+            
+            productRepository.save(draftProduct);
+        }
     }
 }

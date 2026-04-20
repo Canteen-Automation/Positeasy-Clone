@@ -22,6 +22,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     
     @Query("SELECT DISTINCT p.category FROM Product p WHERE p.category IS NOT NULL")
     List<String> findDistinctCategories();
+
+    List<Product> findByIsDraftTrue();
     
     boolean existsByNameAndCategory(String name, String category);
     @org.springframework.data.jpa.repository.Modifying

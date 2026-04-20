@@ -63,6 +63,8 @@ public class Product {
 
     private Integer stock = 0;
 
+    private Boolean isDraft = false;
+
     @ManyToMany(mappedBy = "products", fetch = FetchType.EAGER)
     @JsonIgnoreProperties({"products", "baseItems", "sessions", "imageData"})
     private List<Stall> stalls = new ArrayList<>();
@@ -141,4 +143,7 @@ public class Product {
 
     public List<Stall> getStalls() { return stalls; }
     public void setStalls(List<Stall> stalls) { this.stalls = stalls; }
+
+    public boolean isDraft() { return isDraft != null && isDraft; }
+    public void setDraft(Boolean draft) { isDraft = draft; }
 }

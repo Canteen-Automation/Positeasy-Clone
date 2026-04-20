@@ -90,6 +90,7 @@ const menuItems: MenuItem[] = [
     title: 'Inventory', 
     icon: ShoppingCart, 
     subMenu: [
+      { title: 'New Arrivals', path: '/inventory/new-arrivals' },
       { title: 'Base Items', path: '/inventory/base' },
       { title: 'Products', path: '/inventory/products' }
     ] 
