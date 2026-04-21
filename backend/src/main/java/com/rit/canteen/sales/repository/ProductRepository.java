@@ -30,6 +30,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     @Query("SELECT p FROM Product p WHERE p.productId = :productId AND (p.isDraft = false OR p.isDraft IS NULL)")
     java.util.Optional<Product> findByProductIdRobust(@org.springframework.data.repository.query.Param("productId") String productId);
+
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.stalls WHERE p.id = :id")
+    java.util.Optional<Product> findByIdWithStalls(@org.springframework.data.repository.query.Param("id") Long id);
     
     boolean existsByNameAndCategory(String name, String category);
     @org.springframework.data.jpa.repository.Modifying

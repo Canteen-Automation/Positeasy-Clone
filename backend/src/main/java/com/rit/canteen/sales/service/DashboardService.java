@@ -8,6 +8,7 @@ import com.rit.canteen.sales.repository.OrderRepository;
 import com.rit.canteen.sales.repository.PurchaseOrderRepository;
 import com.rit.canteen.sales.repository.VendorRepository;
 import com.rit.canteen.sales.repository.TokenTransactionRepository;
+import com.rit.canteen.sales.repository.UserRepository;
 import com.rit.canteen.sales.model.ProcurementDashboardData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,9 @@ public class DashboardService {
     
     @Autowired
     private TokenTransactionRepository tokenTransactionRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     public GeneralDashboardData getGeneralDashboardData(LocalDateTime from, LocalDateTime to) {
         java.time.ZoneId zone = java.time.ZoneId.of("Asia/Kolkata");
@@ -168,6 +172,8 @@ public class DashboardService {
         BigDecimal periodExpensesRaw = purchaseOrderRepository.getTotalPurchaseAmountInRange(from, to);
         long periodExpenses = periodExpensesRaw != null ? periodExpensesRaw.longValue() : 0;
 
+        long suspendedUserCount = userRepository.countByIsSuspended(true);
+
         double growth = 0;
         if (yesterdayRevenue != null && yesterdayRevenue.compareTo(BigDecimal.ZERO) > 0) {
             BigDecimal today = todayRevenue != null ? todayRevenue : BigDecimal.ZERO;
@@ -179,7 +185,7 @@ public class DashboardService {
             growth = 100.0;
         }
 
-        return new DashboardStats(totalSales, periodRevenue, activeOrders, dailyCustomers, growth, totalExpenses, periodExpenses);
+        return new DashboardStats(totalSales, periodRevenue, activeOrders, dailyCustomers, growth, totalExpenses, periodExpenses, suspendedUserCount);
     }
 
     public ProcurementDashboardData getProcurementDashboardData() {

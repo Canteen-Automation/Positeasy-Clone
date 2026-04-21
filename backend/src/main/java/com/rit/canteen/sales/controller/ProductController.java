@@ -42,6 +42,13 @@ public class ProductController {
         return productRepository.findByIsDraftTrue();
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return productRepository.findByIdWithStalls(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/category/{categoryName}")
     public List<Product> getProductsByCategory(@PathVariable String categoryName) {
         return productRepository.findByCategory(categoryName);

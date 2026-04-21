@@ -195,7 +195,7 @@ const RitzPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`text-base font-black ${t.type === 'TOPUP' ? 'text-emerald-600' : 'text-slate-800'}`}>
-                        {t.type === 'TOPUP' ? '+' : '-'} {t.amount.toLocaleString()}
+                        {t.type === 'TOPUP' ? '+' : '-'} R{t.amount.toLocaleString()}
                       </span>
                     </td>
                     <td className="px-6 py-4">
