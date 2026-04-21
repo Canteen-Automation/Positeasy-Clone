@@ -27,6 +27,7 @@ const Login = () => {
     sessionStorage.removeItem('isLoggedIn');
     sessionStorage.removeItem('userRole');
     sessionStorage.removeItem('userPermissions');
+    localStorage.removeItem('systemUser');
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -51,6 +52,10 @@ const Login = () => {
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('userRole', user.role.toLowerCase());
         sessionStorage.setItem('userPermissions', JSON.stringify(user.permissions || []));
+        
+        // Persist user profile for personalized greetings and settings
+        localStorage.setItem('systemUser', JSON.stringify(user));
+        
         navigate('/store-dashboard');
       } else {
         const error = await response.text();

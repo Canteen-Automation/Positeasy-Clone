@@ -167,39 +167,16 @@ const StoreDashboard = () => {
              </button>
              <h2 className="text-xs font-black text-[#0f4475] uppercase tracking-widest">Store Dashboard</h2>
           </div>
-          <h1 className="text-2xl font-black text-slate-800">Good morning, RIT Canteen</h1>
+          <h1 className="text-2xl font-black text-slate-800">
+            Good morning, {(() => {
+              const saved = localStorage.getItem('systemUser');
+              return saved ? JSON.parse(saved).name : 'Partner';
+            })()}
+          </h1>
         </div>
         
         <div className="flex items-center gap-3">
-           <div className="flex items-center gap-2">
-              <div className="relative group">
-                 <select title="Switch established store location" className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-600 outline-none focus:border-[#0f4475] transition-all cursor-pointer shadow-sm">
-                    <option>RIT Canteen</option>
-                 </select>
-                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <ChevronRight size={14} className="rotate-90 text-slate-400" />
-                 </div>
-              </div>
-              <div className="relative group">
-                 <select title="Toggle between available display views" className="appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2 pr-10 text-xs font-bold text-slate-600 outline-none focus:border-[#0f4475] transition-all cursor-pointer shadow-sm">
-                    <option>All</option>
-                 </select>
-                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                    <ChevronRight size={14} className="rotate-90 text-slate-400" />
-                 </div>
-              </div>
-           </div>
-           <div className="flex items-center gap-2">
-              <button title="Synchronize latest live data from backend" className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-slate-600 transition-all shadow-sm">
-                 <RotateCcw size={18} />
-              </button>
-              <button title="Mark this store dashboard as favorite for quick access" className="p-2 bg-white border border-slate-200 rounded-xl text-amber-500 hover:scale-110 transition-all shadow-sm">
-                 <Star size={18} fill="#f59e0b" />
-              </button>
-           </div>
-           <div title="Authenticated User: Abiram" className="w-8 h-8 rounded-full bg-[#0f4475] text-white flex items-center justify-center font-bold text-sm shadow-md cursor-pointer hover:ring-2 ring-[#0f4475]/20 transition-all">
-              A
-           </div>
+          {/* Action buttons or profile placeholder can go here if needed later */}
         </div>
       </div>
 

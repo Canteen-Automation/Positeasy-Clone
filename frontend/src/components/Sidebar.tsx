@@ -164,6 +164,7 @@ const Sidebar = () => {
     sessionStorage.removeItem('isLoggedIn');
     sessionStorage.removeItem('userRole');
     sessionStorage.removeItem('userPermissions');
+    localStorage.removeItem('systemUser');
     navigate('/login');
   };
 

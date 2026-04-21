@@ -27,6 +27,7 @@ import Ritz from './pages/Ritz.tsx';
 import RitzCirculation from './pages/RitzCirculation.tsx';
 import ManageWallets from './pages/ManageWallets.tsx';
 import ManageCoupons from './pages/ManageCoupons.tsx';
+import Settings from './pages/Settings.tsx';
 
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -106,6 +107,9 @@ function App() {
           <Route path="stores/managers" element={<Managers />} />
           <Route path="stores/staffs" element={<Staff />} />
           <Route path="stores/stalls" element={<Stalls />} />
+
+          {/* Settings */}
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>

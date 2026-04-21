@@ -1,4 +1,5 @@
 import { Bell, Search, Settings, HelpCircle, Calendar } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Header = () => {
   const currentDate = new Date().toLocaleDateString('en-US', {
@@ -33,9 +34,9 @@ const Header = () => {
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </button>
           
-          <button className="p-2 text-[#64748b] hover:text-[#1e293b] hover:bg-gray-100 rounded-lg transition-all">
+          <Link to="/settings" className="p-2 text-[#64748b] hover:text-[#231651] hover:bg-indigo-50 rounded-lg transition-all">
             <Settings size={20} />
-          </button>
+          </Link>
           
           <button className="p-2 text-[#64748b] hover:text-[#1e293b] hover:bg-gray-100 rounded-lg transition-all">
             <HelpCircle size={20} />

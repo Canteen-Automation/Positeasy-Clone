@@ -62,4 +62,31 @@ public class SystemAuthController {
         userService.deleteManager(id); // Using existing delete logic
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/admins")
+    public ResponseEntity<List<SystemUser>> getAdmins() {
+        return ResponseEntity.ok(userService.getMasters());
+    }
+
+    @PostMapping("/admins")
+    public ResponseEntity<SystemUser> addAdmin(@RequestBody SystemUser admin) {
+        return ResponseEntity.ok(userService.createMaster(admin));
+    }
+
+    @PostMapping("/update-master")
+    public ResponseEntity<?> updateMaster(@RequestBody Map<String, Object> data) {
+        try {
+            Object idObj = data.get("id");
+            Long id = (idObj != null) ? Long.valueOf(idObj.toString()) : 0L;
+            
+            String email = (String) data.get("email");
+            String password = (String) data.get("password");
+            String name = (String) data.get("name");
+            
+            userService.updateMasterAccount(id, email, password, name);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Credentials updated successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
 }
