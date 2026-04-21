@@ -123,7 +123,8 @@ const menuItems: MenuItem[] = [
     subMenu: [
       { title: 'Overview', path: '/ritz/overview' },
       { title: 'Ritz in Circulation', path: '/ritz/circulation' },
-      { title: 'Manage Wallets', path: '/ritz/wallets' }
+      { title: 'Manage Wallets', path: '/ritz/wallets' },
+      { title: 'Coupon Codes', path: '/ritz/coupons' }
     ] 
   },
 ];

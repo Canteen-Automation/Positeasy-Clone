@@ -26,6 +26,8 @@ import Feedback from './pages/Feedback.tsx';
 import Ritz from './pages/Ritz.tsx';
 import RitzCirculation from './pages/RitzCirculation.tsx';
 import ManageWallets from './pages/ManageWallets.tsx';
+import ManageCoupons from './pages/ManageCoupons.tsx';
+
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
@@ -96,6 +98,8 @@ function App() {
           <Route path="ritz/overview" element={<Ritz />} />
           <Route path="ritz/circulation" element={<RitzCirculation />} />
           <Route path="ritz/wallets" element={<ManageWallets />} />
+          <Route path="ritz/coupons" element={<ManageCoupons />} />
+
           
           {/* Stores */}
           <Route path="stores/terminals" element={<Terminals />} />
