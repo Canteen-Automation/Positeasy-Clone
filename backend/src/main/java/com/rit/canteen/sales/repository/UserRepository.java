@@ -19,4 +19,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM User u WHERE u.id = :id")
     Optional<User> findByIdWithLock(@org.springframework.data.repository.query.Param("id") Long id);
+
+    long countByIsSuspended(boolean isSuspended);
 }

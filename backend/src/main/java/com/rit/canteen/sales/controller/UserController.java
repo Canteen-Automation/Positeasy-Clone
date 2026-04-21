@@ -138,4 +138,18 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * Toggle user suspension status.
+     * PATCH /api/auth/users/{id}/suspend
+     */
+    @PatchMapping("/users/{id}/suspend")
+    public ResponseEntity<LoginResponse.UserDto> toggleSuspension(@PathVariable Long id) {
+        LoginResponse.UserDto updated = userService.toggleSuspension(id);
+        if (updated != null) {
+            return ResponseEntity.ok(updated);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }

@@ -7,6 +7,7 @@ interface UserDto {
   mobileNumber: string;
   name: string;
   loggedIn: boolean;
+  isSuspended: boolean;
   ritzTokenBalance: number;
 }
 
@@ -66,7 +67,13 @@ const Customers: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         if (data && data.content) {
-          setUsers(data.content);
+          // Normalize the data (backend sends 'suspended', frontend expects 'isSuspended')
+          const normalizedUsers = data.content.map((u: any) => ({
+            ...u,
+            isSuspended: u.isSuspended !== undefined ? u.isSuspended : u.suspended,
+            loggedIn: u.loggedIn !== undefined ? u.loggedIn : u.isLoggedIn
+          }));
+          setUsers(normalizedUsers);
           setTotalElements(data.totalElements);
         } else {
           setUsers([]);
@@ -111,6 +118,25 @@ const Customers: React.FC = () => {
       }
     } catch (error) {
       console.error('Error deleting user:', error);
+      showNotification('Error connecting to server', 'error');
+    }
+  };
+
+  const handleSuspendToggle = async (user: UserDto) => {
+    try {
+      const host = window.location.hostname;
+      const response = await fetch(`http://${host}:8080/api/auth/users/${user.id}/suspend`, {
+        method: 'PATCH',
+      });
+      if (response.ok) {
+        showNotification(`${user.name} ${user.isSuspended ? 'unsuspended' : 'suspended'} successfully`, 'success');
+        fetchUsers();
+        setOpenMenuId(null);
+      } else {
+        showNotification('Failed to update suspension status', 'error');
+      }
+    } catch (error) {
+      console.error('Error toggling suspension:', error);
       showNotification('Error connecting to server', 'error');
     }
   };
@@ -284,18 +310,15 @@ const Customers: React.FC = () => {
                               </div>
                             </td>
                             <td className="px-6 py-4">
-                              <span className="text-sm font-bold text-[#231651]">
-                                ₹{user.ritzTokenBalance?.toLocaleString() || '0'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
                               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                                user.loggedIn 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : 'bg-gray-100 text-gray-600'
+                                user.isSuspended
+                                  ? 'bg-red-100 text-red-700'
+                                  : user.loggedIn 
+                                    ? 'bg-green-100 text-green-700' 
+                                    : 'bg-gray-100 text-gray-600'
                               }`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${user.loggedIn ? 'bg-green-500' : 'bg-gray-400'}`} />
-                                {user.loggedIn ? 'Active Now' : 'Offline'}
+                                <div className={`w-1.5 h-1.5 rounded-full ${user.isSuspended ? 'bg-red-500' : user.loggedIn ? 'bg-green-500' : 'bg-gray-400'}`} />
+                                {user.isSuspended ? 'Suspended' : user.loggedIn ? 'Active Now' : 'Offline'}
                               </span>
                             </td>
                             <td className="px-6 py-4 text-right relative">
@@ -307,6 +330,10 @@ const Customers: React.FC = () => {
                                 <div className="absolute right-6 top-10 w-40 bg-white rounded-xl shadow-2xl border border-[#e2e8f0] z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
                                   <button onClick={() => handleEditClick(user)} className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 text-[#475569] font-medium border-b border-[#f1f5f9]">
                                     <Edit2 size={16} /> Edit User
+                                  </button>
+                                  <button onClick={() => handleSuspendToggle(user)} className={`w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 font-medium border-b border-[#f1f5f9] ${user.isSuspended ? 'text-amber-600' : 'text-red-500'}`}>
+                                    {user.isSuspended ? <UserCheck size={16} /> : <UserMinus size={16} />}
+                                    {user.isSuspended ? 'Unsuspend User' : 'Suspend User'}
                                   </button>
                                   <button onClick={() => handleDeleteClick(user)} className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 text-red-600 font-medium font-bold">
                                     <Trash2 size={16} /> Delete User
@@ -339,8 +366,12 @@ const Customers: React.FC = () => {
                         </button>
                         {openMenuId === user.id && (
                           <div className="absolute right-0 mt-2 w-40 bg-white rounded-xl shadow-2xl border border-[#e2e8f0] z-50 overflow-hidden">
-                            <button onClick={() => handleEditClick(user)} className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 text-[#475569] font-medium">
+                            <button onClick={() => handleEditClick(user)} className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 text-[#475569] font-medium border-b border-[#f1f5f9]">
                               <Edit2 size={16} /> Edit
+                            </button>
+                            <button onClick={() => handleSuspendToggle(user)} className={`w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 font-medium border-b border-[#f1f5f9] ${user.isSuspended ? 'text-amber-600' : 'text-red-500'}`}>
+                              {user.isSuspended ? <UserCheck size={16} /> : <UserMinus size={16} />}
+                              {user.isSuspended ? 'Unsuspend' : 'Suspend'}
                             </button>
                             <button onClick={() => handleDeleteClick(user)} className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 text-red-600 font-medium">
                               <Trash2 size={16} /> Delete
@@ -363,6 +394,11 @@ const Customers: React.FC = () => {
                         <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-lg border border-blue-100 uppercase tracking-wider">
                           RIT STUDENT
                         </span>
+                        {user.isSuspended && (
+                          <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded-lg border border-red-100 uppercase tracking-wider">
+                            SUSPENDED
+                          </span>
+                        )}
                         <span className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-lg border border-indigo-100 uppercase tracking-wider">
                           ₹{user.ritzTokenBalance?.toLocaleString() || '0'} TOKENS
                         </span>

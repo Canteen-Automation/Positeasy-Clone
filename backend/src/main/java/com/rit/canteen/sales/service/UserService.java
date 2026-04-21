@@ -61,7 +61,7 @@ public class UserService {
         userRepository.save(user);
 
         LoginResponse.UserDto userDto = new LoginResponse.UserDto(
-                user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.getRitzTokenBalance()
+                user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.isSuspended(), user.getRitzTokenBalance()
         );
 
         return new LoginResponse(true, "Registration successful. You are now logged in.", userDto);
@@ -79,6 +79,10 @@ public class UserService {
 
         User user = userOpt.get();
 
+        if (user.isSuspended()) {
+            return new LoginResponse(false, "Your account has been suspended. Please contact the administrator.");
+        }
+
         if (!passwordEncoder.matches(pin, user.getPinHash())) {
             return new LoginResponse(false, "Incorrect PIN. Please try again.");
         }
@@ -88,7 +92,7 @@ public class UserService {
         userRepository.save(user);
 
         LoginResponse.UserDto userDto = new LoginResponse.UserDto(
-                user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.getRitzTokenBalance()
+                user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.isSuspended(), user.getRitzTokenBalance()
         );
 
         return new LoginResponse(true, "Login successful.", userDto);
@@ -154,7 +158,7 @@ public class UserService {
             return null;
         }
         User user = userOpt.get();
-        return new LoginResponse.UserDto(user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.getRitzTokenBalance());
+        return new LoginResponse.UserDto(user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.isSuspended(), user.getRitzTokenBalance());
     }
 
     /**
@@ -173,6 +177,7 @@ public class UserService {
                 user.getMobileNumber(), 
                 user.getName(), 
                 user.isLoggedIn(),
+                user.isSuspended(),
                 user.getRitzTokenBalance()
         ));
     }
@@ -212,7 +217,28 @@ public class UserService {
         }
 
         userRepository.save(user);
-        return new LoginResponse.UserDto(user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.getRitzTokenBalance());
+        return new LoginResponse.UserDto(user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.isSuspended(), user.getRitzTokenBalance());
+    }
+
+    /**
+     * Toggle the suspension status of a user.
+     */
+    public LoginResponse.UserDto toggleSuspension(Long userId) {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            return null;
+        }
+
+        User user = userOpt.get();
+        user.setSuspended(!user.isSuspended());
+        
+        // If suspended, forcefully log them out
+        if (user.isSuspended()) {
+            user.setLoggedIn(false);
+        }
+        
+        userRepository.save(user);
+        return new LoginResponse.UserDto(user.getId(), user.getMobileNumber(), user.getName(), user.isLoggedIn(), user.isSuspended(), user.getRitzTokenBalance());
     }
 
     /**

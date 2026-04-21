@@ -37,6 +37,9 @@ public class User {
     @Column(nullable = false)
     private java.math.BigDecimal ritzTokenBalance = java.math.BigDecimal.ZERO;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean isSuspended = false;
+
     @Column(nullable = true)
     private LocalDateTime lastLoginAt;
 
@@ -53,6 +56,9 @@ public class User {
 
     public java.math.BigDecimal getRitzTokenBalance() { return ritzTokenBalance; }
     public void setRitzTokenBalance(java.math.BigDecimal ritzTokenBalance) { this.ritzTokenBalance = ritzTokenBalance; }
+
+    public boolean isSuspended() { return isSuspended; }
+    public void setSuspended(boolean suspended) { isSuspended = suspended; }
 
     public String getPinHash() { return pinHash; }
     public void setPinHash(String pinHash) { this.pinHash = pinHash; }

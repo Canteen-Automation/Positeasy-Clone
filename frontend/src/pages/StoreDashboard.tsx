@@ -5,7 +5,8 @@ import {
   Wallet,
   ArrowRight,
   RotateCcw,
-  Star
+  Star,
+  UserMinus
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -29,7 +30,8 @@ const StoreDashboard = () => {
     totalSales: 0,
     activeOrders: 0,
     dailyCustomers: 0,
-    revenueGrowth: 0
+    revenueGrowth: 0,
+    suspendedUserCount: 0
   });
   const [trendingItems, setTrendingItems] = useState<any[]>([]);
   const [salesData, setSalesData] = useState<any[]>([]);
@@ -107,7 +109,8 @@ const StoreDashboard = () => {
               totalSales: data.stats.totalSales,
               activeOrders: data.stats.activeOrders,
               dailyCustomers: data.stats.dailyCustomers,
-              revenueGrowth: data.stats.growth
+              revenueGrowth: data.stats.growth,
+              suspendedUserCount: data.stats.suspendedUserCount
             });
           }
 
@@ -290,8 +293,21 @@ const StoreDashboard = () => {
               </div>
            </div>
 
+           {/* Restricted Accounts Card */}
+           <div title="Monitor suspended customer accounts" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[130px] flex flex-col justify-between group cursor-pointer hover:border-red-500/30 transition-all">
+              <div className="flex items-center gap-3">
+                 <div className="p-2 bg-red-50 text-red-500 rounded-xl group-hover:scale-110 transition-transform">
+                    <UserMinus size={20} />
+                 </div>
+                 <h4 className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">Restricted Accounts</h4>
+              </div>
+              <div className="text-center">
+                 <h2 className="text-4xl font-black text-slate-800 tracking-tighter">{stats?.suspendedUserCount || 0}</h2>
+              </div>
+           </div>
+
            {/* Expenses Card */}
-           <div title="Monitor store operational expenditures" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[150px] flex flex-col justify-between group cursor-pointer hover:border-[#0f4475]/30 transition-all">
+           <div title="Monitor store operational expenditures" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm h-[130px] flex flex-col justify-between group cursor-pointer hover:border-[#0f4475]/30 transition-all">
               <div className="flex items-center gap-3">
                  <div className="p-2 bg-amber-100 text-[#0f4475] rounded-xl shadow-sm">
                     <Wallet size={20} />
