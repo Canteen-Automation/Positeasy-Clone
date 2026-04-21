@@ -20,8 +20,8 @@ public class SystemNotification {
     @Column(nullable = false)
     private String type; // FEEDBACK, PURCHASE, PRODUCT, COUPON
 
-    @Column(nullable = false)
-    private boolean isRead = false;
+    @Column(name = "is_read", nullable = false)
+    private Boolean isReadStatus = false;
 
     @Column(nullable = true)
     private String link; // URL to navigate to
@@ -57,8 +57,8 @@ public class SystemNotification {
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
 
-    public boolean isRead() { return isRead; }
-    public void setRead(boolean read) { isRead = read; }
+    public Boolean isReadStatus() { return isReadStatus; }
+    public void setReadStatus(Boolean readStatus) { isReadStatus = readStatus; }
 
     public String getLink() { return link; }
     public void setLink(String link) { this.link = link; }

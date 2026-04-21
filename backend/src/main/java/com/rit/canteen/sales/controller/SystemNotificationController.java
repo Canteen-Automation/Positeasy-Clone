@@ -15,14 +15,31 @@ public class SystemNotificationController {
     @Autowired
     private SystemNotificationService notificationService;
 
+    @GetMapping("/test")
+    public String testReachability() {
+        return "Notification API is Reachable and whitelisted!";
+    }
+
     @GetMapping
     public List<SystemNotification> getUnread() {
-        return notificationService.getUnreadNotifications();
+        try {
+            return notificationService.getUnreadNotifications();
+        } catch (Exception e) {
+            System.err.println("[CRITICAL] Failed to fetch unread notifications:");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @GetMapping("/all")
     public List<SystemNotification> getAll() {
-        return notificationService.getAllNotifications();
+        try {
+            return notificationService.getAllNotifications();
+        } catch (Exception e) {
+            System.err.println("[CRITICAL] Failed to fetch all notifications:");
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     @PostMapping("/mark-read/{id}")

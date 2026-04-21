@@ -28,6 +28,7 @@ import RitzCirculation from './pages/RitzCirculation.tsx';
 import ManageWallets from './pages/ManageWallets.tsx';
 import ManageCoupons from './pages/ManageCoupons.tsx';
 import Settings from './pages/Settings.tsx';
+import NotFound from './pages/NotFound.tsx';
 
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -111,6 +112,7 @@ function App() {
           {/* Settings */}
           <Route path="settings" element={<Settings />} />
         </Route>
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );

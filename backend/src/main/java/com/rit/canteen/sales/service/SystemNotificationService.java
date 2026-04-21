@@ -28,7 +28,7 @@ public class SystemNotificationService {
     }
 
     public List<SystemNotification> getUnreadNotifications() {
-        return notificationRepository.findByIsReadFalseOrderByCreatedAtDesc();
+        return notificationRepository.findByReadStatusFalse();
     }
 
     public List<SystemNotification> getAllNotifications() {
@@ -38,16 +38,16 @@ public class SystemNotificationService {
     @Transactional
     public void markAsRead(Long id) {
         notificationRepository.findById(id).ifPresent(n -> {
-            n.setRead(true);
+            n.setReadStatus(Boolean.TRUE);
             notificationRepository.save(n);
         });
     }
 
     @Transactional
     public void markAllAsRead() {
-        List<SystemNotification> unread = notificationRepository.findByIsReadFalseOrderByCreatedAtDesc();
+        List<SystemNotification> unread = notificationRepository.findByReadStatusFalse();
         for (SystemNotification n : unread) {
-            n.setRead(true);
+            n.setReadStatus(Boolean.TRUE);
         }
         notificationRepository.saveAll(unread);
     }
