@@ -44,8 +44,11 @@ const PAGES = [
 const Header = () => {
   const navigate = useNavigate();
   const searchRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showResults, setShowResults] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const filteredPages = PAGES.filter(page => 
@@ -60,10 +63,31 @@ const Header = () => {
     day: 'numeric',
   });
 
+  const fetchNotifications = async () => {
+    try {
+      const response = await fetch(`http://${window.location.hostname}:8080/api/notifications`);
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowResults(false);
+      }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -71,14 +95,15 @@ const Header = () => {
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
+    if (e.key === 'ArrowDown' && showResults) {
       setSelectedIndex(prev => (prev + 1) % filteredPages.length);
-    } else if (e.key === 'ArrowUp') {
+    } else if (e.key === 'ArrowUp' && showResults) {
       setSelectedIndex(prev => (prev - 1 + filteredPages.length) % filteredPages.length);
-    } else if (e.key === 'Enter' && filteredPages[selectedIndex]) {
+    } else if (e.key === 'Enter' && showResults && filteredPages[selectedIndex]) {
       handleNavigate(filteredPages[selectedIndex].path);
     } else if (e.key === 'Escape') {
       setShowResults(false);
+      setShowNotifications(false);
     }
   };
 
@@ -86,6 +111,37 @@ const Header = () => {
     navigate(path);
     setSearchTerm('');
     setShowResults(false);
+  };
+
+  const handleNotificationClick = async (notif: any) => {
+      try {
+        await fetch(`http://${window.location.hostname}:8080/api/notifications/mark-read/${notif.id}`, { method: 'POST' });
+        if (notif.link) navigate(notif.link);
+        setShowNotifications(false);
+        fetchNotifications();
+      } catch (error) {
+        console.error('Error marking notification as read:', error);
+      }
+  };
+
+  const markAllAsRead = async () => {
+      try {
+        await fetch(`http://${window.location.hostname}:8080/api/notifications/mark-all-read`, { method: 'POST' });
+        fetchNotifications();
+        setShowNotifications(false);
+      } catch (error) {
+        console.error('Error marking all as read:', error);
+      }
+  };
+
+  const getNotificationIcon = (type: string) => {
+      switch(type) {
+          case 'FEEDBACK': return <MessageSquare size={16} className="text-emerald-500" />;
+          case 'PURCHASE': return <ShoppingBag size={16} className="text-indigo-500" />;
+          case 'PRODUCT': return <Package size={16} className="text-amber-500" />;
+          case 'COUPON': return <Ticket size={16} className="text-rose-500" />;
+          default: return <Bell size={16} className="text-slate-400" />;
+      }
   };
 
   return (
@@ -161,10 +217,72 @@ const Header = () => {
         </div>
 
         <div className="flex items-center gap-4 border-l border-[#e2e8f0] pl-6">
-          <button className="relative p-2 text-[#64748b] hover:text-[#1e293b] hover:bg-gray-100 rounded-lg transition-all group">
-            <Bell size={20} />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-          </button>
+          <div className="relative" ref={notificationRef}>
+            <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`relative p-2 rounded-lg transition-all group ${showNotifications ? 'bg-indigo-50 text-[#0f4475]' : 'text-[#64748b] hover:text-[#1e293b] hover:bg-gray-100'}`}
+            >
+                <Bell size={20} />
+                {notifications.length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 rounded-full border-2 border-white text-[10px] text-white font-bold flex items-center justify-center animate-pulse">
+                        {notifications.length}
+                    </span>
+                )}
+            </button>
+
+            <AnimatePresence>
+                {showNotifications && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                        className="absolute right-0 top-full mt-2 w-80 bg-white/95 backdrop-blur-xl border border-[#e2e8f0] rounded-2xl shadow-2xl overflow-hidden z-50"
+                    >
+                        <div className="p-4 border-b border-[#e2e8f0] flex items-center justify-between bg-gray-50/50">
+                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Notifications</h3>
+                            {notifications.length > 0 && (
+                                <button 
+                                    onClick={markAllAsRead}
+                                    className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 uppercase tracking-tighter"
+                                >
+                                    Clear All
+                                </button>
+                            )}
+                        </div>
+                        
+                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                            {notifications.length > 0 ? (
+                                notifications.map((notif) => (
+                                    <button
+                                        key={notif.id}
+                                        onClick={() => handleNotificationClick(notif)}
+                                        className="w-full p-4 border-b border-gray-50 hover:bg-gray-50/80 transition-colors flex gap-3 text-left group"
+                                    >
+                                        <div className="mt-1 shrink-0 p-2 bg-white rounded-xl shadow-sm border border-gray-100 group-hover:border-indigo-100 transition-colors">
+                                            {getNotificationIcon(notif.type)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-xs font-black text-slate-800 mb-0.5 truncate">{notif.title}</div>
+                                            <div className="text-[11px] text-slate-500 font-medium leading-relaxed line-clamp-2">{notif.message}</div>
+                                            <div className="mt-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                                {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </div>
+                                    </button>
+                                ))
+                            ) : (
+                                <div className="p-12 text-center">
+                                    <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Bell size={24} className="text-slate-200" />
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">All caught up!</p>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+          </div>
           
           <Link to="/settings" className="p-2 text-[#64748b] hover:text-[#0f4475] hover:bg-indigo-50 rounded-lg transition-all">
             <Settings size={20} />

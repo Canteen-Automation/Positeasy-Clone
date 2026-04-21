@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.rit.canteen.sales.service.SystemNotificationService;
 
 import java.util.List;
 
@@ -21,6 +22,9 @@ public class ProductController {
 
     @Autowired
     private StockUpdateController stockUpdateController;
+
+    @Autowired
+    private SystemNotificationService notificationService;
 
     @GetMapping
     public org.springframework.data.domain.Page<Product> getAllProducts(
@@ -53,6 +57,16 @@ public class ProductController {
     public Product createProduct(@Valid @RequestBody Product product) {
         Product savedProduct = productRepository.save(product);
         updateStallAssociations(savedProduct, product.getStalls());
+        
+        if (savedProduct.isDraft()) {
+            notificationService.createNotification(
+                "Draft Product Created",
+                "A new product draft '" + savedProduct.getName() + "' has been created and requires review before publishing.",
+                "PRODUCT",
+                "/inventory/products"
+            );
+        }
+        
         return productRepository.findById(savedProduct.getId()).orElse(savedProduct);
     }
 
@@ -249,6 +263,13 @@ public class ProductController {
                         Product updated = productRepository.save(product);
                         updateStallAssociations(updated, productDetails.getStalls());
                         
+                        notificationService.createNotification(
+                            "Product Published",
+                            "Product '" + productDetails.getName() + "' is now live in the inventory with ID: " + finalProductId,
+                            "PRODUCT",
+                            "/inventory/products"
+                        );
+
                         return ResponseEntity.ok(productRepository.findById(updated.getId()).orElse(updated));
                     }
                 })

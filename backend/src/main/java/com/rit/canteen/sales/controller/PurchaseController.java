@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.rit.canteen.sales.service.SystemNotificationService;
+
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +24,9 @@ public class PurchaseController {
     @Autowired
     private PurchaseService purchaseService;
 
+    @Autowired
+    private SystemNotificationService notificationService;
+
     @GetMapping("/orders")
     public List<PurchaseOrder> getAllOrders() {
         return purchaseService.getAllOrders();
@@ -30,7 +35,17 @@ public class PurchaseController {
     @PostMapping("/orders")
     public PurchaseOrder createOrder(@RequestBody PurchaseOrder order) {
         logger.info("Received request to create/update order: {}", order.getPurchaseId());
-        return purchaseService.createOrder(order);
+        PurchaseOrder saved = purchaseService.createOrder(order);
+        
+        // Notify Admins
+        notificationService.createNotification(
+            "Procurement Update",
+            "A new purchase order (" + saved.getPurchaseId() + ") has been created/updated for vendor: " + (saved.getVendor() != null ? saved.getVendor().getName() : "Unknown"),
+            "PURCHASE",
+            "/purchases/orders"
+        );
+        
+        return saved;
     }
 
     @GetMapping("/orders/{id}/history")

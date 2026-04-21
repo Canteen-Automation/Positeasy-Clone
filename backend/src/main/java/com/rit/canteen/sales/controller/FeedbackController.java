@@ -13,6 +13,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import com.rit.canteen.sales.service.SystemNotificationService;
 
 import java.util.*;
 
@@ -28,6 +29,9 @@ public class FeedbackController {
 
     @Autowired
     private ItemRatingRepository itemRatingRepository;
+
+    @Autowired
+    private SystemNotificationService notificationService;
 
     @GetMapping
     public Page<Feedback> getAllFeedback(
@@ -187,6 +191,14 @@ public class FeedbackController {
         // Mark order as rated
         order.setHasFeedback(true);
         orderRepository.save(order);
+
+        // Notify Admins
+        notificationService.createNotification(
+            "New Feedback Received",
+            "A new feedback has been submitted by " + (feedback.getUserName() != null ? feedback.getUserName() : "a customer") + " for Order #" + order.getDisplayOrderId(),
+            "FEEDBACK",
+            "/feedback"
+        );
 
         return ResponseEntity.ok(savedFeedback);
     }
