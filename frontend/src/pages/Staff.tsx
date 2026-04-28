@@ -110,10 +110,11 @@ const Staff = () => {
     }
   };
 
-  const filteredStaff = staffList.filter(s => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    s.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStaff = staff.filter(s => {
+    const query = (searchQuery || '').toLowerCase();
+    return (s.name || '').toLowerCase().includes(query) ||
+           (s.email || '').toLowerCase().includes(query);
+  });
 
   return (
     <div className="p-8 space-y-8 bg-[#f8fafc] min-h-screen font-inter">

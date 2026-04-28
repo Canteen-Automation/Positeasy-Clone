@@ -75,8 +75,9 @@ const Bills: React.FC = () => {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.purchaseId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.referenceId?.toLowerCase().includes(searchTerm.toLowerCase());
+    const search = (searchTerm || '').toLowerCase();
+    const matchesSearch = (order.purchaseId || '').toLowerCase().includes(search) ||
+                         (order.referenceId || '').toLowerCase().includes(search);
     const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });

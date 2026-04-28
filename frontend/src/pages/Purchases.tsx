@@ -298,7 +298,7 @@ const Purchases: React.FC = () => {
                         <Loader2 className="animate-spin inline-block mr-2" /> Loading records...
                     </td>
                 </tr>
-              ) : orders.filter(o => o.purchaseId.toLowerCase().includes(searchTerm.toLowerCase())).map((order) => (
+              ) : orders.filter(o => (o.purchaseId || '').toLowerCase().includes((searchTerm || '').toLowerCase())).map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50/50 transition-all font-medium">
                   <td className="px-6 py-4 text-sm font-bold text-[#231651]">{order.purchaseId}</td>
                   <td className="px-6 py-4 text-sm text-[#64748b]">{new Date(order.date).toLocaleDateString()}</td>

@@ -44,13 +44,13 @@ const Login = () => {
         const user = await response.json();
 
         // Strict Role Validation
-        if (user.role.toLowerCase() !== role) {
-          alert(`Access Denied: You are trying to login as ${role.toUpperCase()}, but your credentials belong to a ${user.role.toUpperCase()} account.`);
+        if ((user.role || '').toLowerCase() !== (role || '').toLowerCase()) {
+          alert(`Access Denied: You are trying to login as ${(role || '').toUpperCase()}, but your credentials belong to a ${(user.role || '').toUpperCase()} account.`);
           return;
         }
 
         sessionStorage.setItem('isLoggedIn', 'true');
-        sessionStorage.setItem('userRole', user.role.toLowerCase());
+        sessionStorage.setItem('userRole', (user.role || '').toLowerCase());
         sessionStorage.setItem('userPermissions', JSON.stringify(user.permissions || []));
 
         // Persist user profile + JWT token for authenticated API calls
