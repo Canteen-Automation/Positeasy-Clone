@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import { useState, useEffect } from 'react';
 import { 
   Ticket, 
@@ -44,7 +45,7 @@ const ManageCoupons = () => {
   const fetchCoupons = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/coupons');
+      const response = await apiFetch('/api/coupons');
       if (response.ok) {
         const data = await response.json();
         setCoupons(data);
@@ -63,7 +64,7 @@ const ManageCoupons = () => {
   const handleCreateCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/coupons', {
+      const response = await apiFetch('/api/coupons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -85,7 +86,7 @@ const ManageCoupons = () => {
 
   const handleToggleStatus = async (id: number) => {
     try {
-      const response = await fetch(`/api/coupons/${id}/toggle`, { method: 'PATCH' });
+      const response = await apiFetch(`/api/coupons/${id}/toggle`, { method: 'PATCH' });
       if (response.ok) fetchCoupons();
     } catch (error) {
       console.error('Error toggling status:', error);
@@ -95,7 +96,7 @@ const ManageCoupons = () => {
   const handleDelete = async (id: number) => {
     if (!window.confirm('Are you sure you want to delete this coupon?')) return;
     try {
-      const response = await fetch(`/api/coupons/${id}`, { method: 'DELETE' });
+      const response = await apiFetch(`/api/coupons/${id}`, { method: 'DELETE' });
       if (response.ok) fetchCoupons();
     } catch (error) {
       console.error('Error deleting coupon:', error);

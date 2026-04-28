@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { Search, User, Phone, Tag, ChevronRight, UserCheck, UserMinus, MoreVertical, LayoutGrid, List, Edit2, Trash2, Shield, X, Eye, EyeOff, Loader2, AlertCircle, CheckCircle, CircleDollarSign } from 'lucide-react';
 import Pagination from '../components/Pagination';
@@ -63,7 +64,7 @@ const Customers: React.FC = () => {
         params.append('search', debouncedSearchTerm);
       }
 
-      const response = await fetch(`http://${host}:8080/api/auth/users?${params.toString()}`);
+      const response = await apiFetch(`http://${host}:8080/api/auth/users?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         if (data && data.content) {
@@ -106,7 +107,7 @@ const Customers: React.FC = () => {
     
     try {
       const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/auth/users/${user.id}`, {
+      const response = await apiFetch(`http://${host}:8080/api/auth/users/${user.id}`, {
         method: 'DELETE',
       });
       if (response.ok) {
@@ -125,7 +126,7 @@ const Customers: React.FC = () => {
   const handleSuspendToggle = async (user: UserDto) => {
     try {
       const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/auth/users/${user.id}/suspend`, {
+      const response = await apiFetch(`http://${host}:8080/api/auth/users/${user.id}/suspend`, {
         method: 'PATCH',
       });
       if (response.ok) {
@@ -165,7 +166,7 @@ const Customers: React.FC = () => {
     setIsSaving(true);
     try {
       const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/auth/users/${editingUser.id}`, {
+      const response = await apiFetch(`http://${host}:8080/api/auth/users/${editingUser.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editForm),

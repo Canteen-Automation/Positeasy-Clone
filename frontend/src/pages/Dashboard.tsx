@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -105,7 +106,7 @@ const Dashboard = () => {
         }
 
         console.log('[DASHBOARD-TRACE] Fetching stats from:', url);
-        const response = await fetch(url);
+        const response = await apiFetch(url);
         if (response.ok) {
           const result = await response.json();
           setData(result);

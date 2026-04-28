@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -53,7 +54,7 @@ const VendorDashboard = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/dashboard/procurement');
+        const response = await apiFetch('/api/dashboard/procurement');
         if (response.ok) {
           const result = await response.json();
           setData(result);

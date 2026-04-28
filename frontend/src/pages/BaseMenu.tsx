@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, X, Search, Filter, MoreVertical, RefreshCw, Edit2, Power, PowerOff, ShoppingCart, Package, ExternalLink } from 'lucide-react';
 import Pagination from '../components/Pagination';
@@ -78,7 +79,7 @@ const BaseMenu = () => {
         params.append('search', debouncedSearchTerm);
       }
 
-      const response = await fetch(`http://${host}:8080/api/base-items?${params.toString()}`);
+      const response = await apiFetch(`http://${host}:8080/api/base-items?${params.toString()}`);
       const data = await response.json();
       if (data && data.content) {
         setItems(data.content);
@@ -99,7 +100,7 @@ const BaseMenu = () => {
     setShowProductsModal(true);
     setProductsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8080/api/products/category/${encodeURIComponent(baseItem.name)}`);
+      const response = await apiFetch(`http://localhost:8080/api/products/category/${encodeURIComponent(baseItem.name)}`);
       const data = await response.json();
       setAssociatedProducts(data);
     } catch (error) {
@@ -117,7 +118,7 @@ const BaseMenu = () => {
     const method = editingItem ? 'PUT' : 'POST';
 
     try {
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newItem),
@@ -142,7 +143,7 @@ const BaseMenu = () => {
 
   const handleToggleActive = async (item: BaseItem) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/base-items/${item.id}`, {
+      const response = await apiFetch(`http://localhost:8080/api/base-items/${item.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...item, active: !item.active }),

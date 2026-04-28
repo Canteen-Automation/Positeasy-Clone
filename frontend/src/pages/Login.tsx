@@ -52,14 +52,14 @@ const Login = () => {
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('userRole', user.role.toLowerCase());
         sessionStorage.setItem('userPermissions', JSON.stringify(user.permissions || []));
-        
-        // Persist user profile for personalized greetings and settings
-        localStorage.setItem('systemUser', JSON.stringify(user));
-        
+
+        // Persist user profile + JWT token for authenticated API calls
+        localStorage.setItem('systemUser', JSON.stringify(user)); // user object now includes `token`
+
         navigate('/store-dashboard');
       } else {
-        const error = await response.text();
-        alert(error || 'Invalid credentials');
+        const error = await response.json().catch(() => ({ error: 'Invalid credentials' }));
+        alert(error.error || 'Invalid credentials');
       }
     } catch (err) {
       console.error('Login error:', err);

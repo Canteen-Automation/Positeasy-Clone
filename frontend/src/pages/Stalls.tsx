@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -94,7 +95,7 @@ const Stalls: React.FC = () => {
     try {
       setLoading(true);
       const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/stalls`);
+      const response = await apiFetch(`http://${host}:8080/api/stalls`);
       if (response.ok) {
         const data = await response.json();
         setStalls(data);
@@ -126,7 +127,7 @@ const Stalls: React.FC = () => {
         ? `http://${host}:8080/api/stalls/${editingStall.id}`
         : `http://${host}:8080/api/stalls`;
       
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: editingStall ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -173,7 +174,7 @@ const Stalls: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this stall?')) return;
     try {
       const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/stalls/${id}`, {
+      const response = await apiFetch(`http://${host}:8080/api/stalls/${id}`, {
         method: 'DELETE'
       });
       if (response.ok) {
@@ -216,7 +217,7 @@ const Stalls: React.FC = () => {
     setIsSaving(true);
     try {
       const host = window.location.hostname;
-      const response = await fetch(`http://${host}:8080/api/stalls/${selectedStall.id}/items`, {
+      const response = await apiFetch(`http://${host}:8080/api/stalls/${selectedStall.id}/items`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

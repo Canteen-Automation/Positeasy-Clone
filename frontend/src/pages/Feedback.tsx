@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { 
   Star, 
@@ -81,7 +82,7 @@ const Feedback: React.FC = () => {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/feedback/stats`);
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/feedback/stats`);
       const data = await response.json();
       setStats(data);
     } catch (error) {
@@ -93,7 +94,7 @@ const Feedback: React.FC = () => {
 
   const fetchFeedbacks = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/feedback?page=${page}&size=${pageSize}`);
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/feedback?page=${page}&size=${pageSize}`);
       const data = await response.json();
       setFeedbacks(data?.content || []);
       setTotalElements(data?.totalElements || 0);

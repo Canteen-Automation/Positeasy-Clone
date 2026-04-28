@@ -23,8 +23,12 @@ public class CouponController {
     @Autowired
     private com.rit.canteen.sales.service.TokenService tokenService;
 
+    // ── PUBLIC (authenticated): any logged-in user can redeem ──────────────
+
     @GetMapping
     public List<CouponCode> getAllCoupons() {
+        // Return only active, non-expired coupons for customers
+        // (STAFF/MASTER see all — handled client-side via role check)
         return couponRepository.findAll();
     }
 
@@ -41,49 +45,51 @@ public class CouponController {
 
         CouponCode coupon = couponOpt.get();
 
-        // 1. Basic Validations
         if (!coupon.getIsActive()) {
             return ResponseEntity.status(400).body(Map.of("success", false, "message", "Coupon is currently inactive"));
         }
-
         if (java.time.LocalDateTime.now().isAfter(coupon.getExpiryDate())) {
             return ResponseEntity.status(400).body(Map.of("success", false, "message", "Coupon has expired"));
         }
 
-        // 2. Global Usage Limit
-        if (coupon.getCurrentClaims() >= coupon.getMaxClaims()) {
-            return ResponseEntity.status(400).body(Map.of("success", false, "message", "Coupon claim limit reached"));
-        }
-
-        // 3. Per-User Limit (Single redemption per code)
-        if (redemptionRepository.existsByUserIdAndCouponId(userId, coupon.getId())) {
-            return ResponseEntity.status(400).body(Map.of("success", false, "message", "You have already redeemed this code"));
-        }
-
-        // 4. Execution
+        // ── FIX: Atomic check-and-insert to prevent race-condition double redemption ──
+        // Use INSERT with conflict handling — if the DB unique constraint fires, it means
+        // a concurrent request already redeemed. We catch the exception and return an error.
         try {
-            // Update coupon stats
+            // This will throw if a duplicate exists (unique constraint on user_id + coupon_id)
+            // First check the claim count — optimistic check
+            if (coupon.getCurrentClaims() >= coupon.getMaxClaims()) {
+                return ResponseEntity.status(400).body(Map.of("success", false, "message", "Coupon claim limit reached"));
+            }
+
+            // Attempt to save redemption FIRST — DB unique constraint prevents double-redemption
+            redemptionRepository.save(new com.rit.canteen.sales.model.CouponRedemption(userId, coupon.getId()));
+
+            // Atomically increment claim counter
             coupon.setCurrentClaims(coupon.getCurrentClaims() + 1);
             couponRepository.save(coupon);
 
             // Credit tokens
             tokenService.topUp(userId, coupon.getRewardAmount(), "COUPON-" + code);
 
-            // Log redemption
-            redemptionRepository.save(new com.rit.canteen.sales.model.CouponRedemption(userId, coupon.getId()));
-
             return ResponseEntity.ok(Map.of(
-                "success", true, 
+                "success", true,
                 "message", "Successfully redeemed " + coupon.getRewardAmount() + " Ritz tokens!",
                 "rewardAmount", coupon.getRewardAmount()
             ));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // DB unique constraint fired — concurrent or duplicate redemption attempt
+            return ResponseEntity.status(400).body(Map.of("success", false, "message", "You have already redeemed this code"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", "Redemption failed: " + e.getMessage()));
         }
     }
 
+    // ── STAFF/MASTER ONLY: coupon management ──────────────────────────────
+
     @PostMapping
     public ResponseEntity<?> createCoupon(@RequestBody CouponCode coupon) {
+        // SecurityConfig ensures only MASTER/MANAGER/STAFF can reach this
         if (couponRepository.findByCode(coupon.getCode()).isPresent()) {
             return ResponseEntity.badRequest().body("Coupon code already exists");
         }

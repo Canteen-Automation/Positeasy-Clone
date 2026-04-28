@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { 
   TrendingUp, 
@@ -71,7 +72,7 @@ const PurchaseAnalytics = () => {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/purchases/orders');
+      const response = await apiFetch('/api/purchases/orders');
       if (response.ok) {
         const data = await response.json();
         processAnalytics(data);

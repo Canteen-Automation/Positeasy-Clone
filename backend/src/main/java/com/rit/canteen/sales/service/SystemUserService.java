@@ -40,7 +40,7 @@ public class SystemUserService {
             master.setPermissions(List.of("dashboard", "sale", "customers", "purchases", "inventory", "expense", "reports", "stores", "table", "wallet", "promotions", "feedback"));
             master.setViewOnly(false);
             repository.save(master);
-            System.out.println(">>> SEEDED DEFAULT MASTER USER (Failsafe Source): " + masterUsername + " / " + masterPassword);
+            System.out.println(">>> SEEDED DEFAULT MASTER USER from failsafe source.");
         } else {
             System.out.println(">>> MASTER USER(S) FOUND IN DATABASE. Skipping default seeding.");
         }

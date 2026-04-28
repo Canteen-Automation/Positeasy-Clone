@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { 
   Eye, 
@@ -49,7 +50,7 @@ const IntentList: React.FC<IntentListProps> = ({ title }) => {
 
   const fetchVendors = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/purchases/vendors`);
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/purchases/vendors`);
       if (response.ok) {
         const result = await response.json();
         setVendors(result);
@@ -62,7 +63,7 @@ const IntentList: React.FC<IntentListProps> = ({ title }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/purchases/orders`);
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/purchases/orders`);
       const result = await response.json();
       setData(result);
     } catch (error) {
@@ -104,7 +105,7 @@ const IntentList: React.FC<IntentListProps> = ({ title }) => {
         date: new Date(newOrder.date).toISOString()
       };
 
-      const response = await fetch(`http://${window.location.hostname}:8080/api/purchases/orders`, {
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/purchases/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

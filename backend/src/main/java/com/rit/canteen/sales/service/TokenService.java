@@ -67,29 +67,32 @@ public class TokenService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        int tokenCount = amount.intValue(); // Assuming 1 Ritz = 1 Serialized Unit
+        // ── FIX: Validate BEFORE touching the database ──
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("Amount must be positive");
+        }
+        if (amount.compareTo(new BigDecimal("5000")) > 0) {
+            throw new RuntimeException("Single transaction limit exceeded (Max: 5,000 Ritz Tokens)");
+        }
+
+        int tokenCount = amount.intValue();
         System.out.println("MINTING: Serializing " + tokenCount + " Ritz tokens for user " + userId);
-        
+
         // High-Performance Batch Insertion using JDBC
         String sql = "INSERT INTO token_units (token_hash, owner_id, status, created_at) VALUES (?, ?, 'ACTIVE', ?)";
         List<Object[]> batchArgs = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
-        
+
         for (int i = 0; i < tokenCount; i++) {
             String hash = generateSecureHash();
             batchArgs.add(new Object[]{hash, userId, now});
         }
-        
+
         jdbcTemplate.batchUpdate(sql, batchArgs);
 
         // Update cached balance
         BigDecimal currentBalance = user.getRitzTokenBalance() != null ? user.getRitzTokenBalance() : BigDecimal.ZERO;
         BigDecimal newBalance = currentBalance.add(amount);
-        
-        if (amount.compareTo(new BigDecimal("5000")) > 0) {
-            throw new RuntimeException("Single transaction limit exceeded (Max: 5,000 Ritz Tokens)");
-        }
-
         user.setRitzTokenBalance(newBalance);
         User savedUser = userRepository.save(user);
 
@@ -104,6 +107,7 @@ public class TokenService {
 
         return savedUser;
     }
+
 
     @Transactional
     public void spend(Long userId, BigDecimal amount, String orderRef) {

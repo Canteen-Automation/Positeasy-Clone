@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { Search, Building2, Phone, Mail, MoreVertical, List, LayoutGrid, Edit2, Trash2, X, Loader2, AlertCircle, CheckCircle, Plus } from 'lucide-react';
 import Pagination from '../components/Pagination';
@@ -43,7 +44,7 @@ const Vendors: React.FC = () => {
   const fetchVendors = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/purchases/vendors');
+      const response = await apiFetch('/api/purchases/vendors');
       if (response.ok) {
         const data = await response.json();
         setVendors(data);
@@ -85,7 +86,7 @@ const Vendors: React.FC = () => {
     if (!window.confirm(`Are you sure you want to delete ${vendor.name}?`)) return;
     
     try {
-      const response = await fetch(`/api/purchases/vendors/${vendor.id}`, {
+      const response = await apiFetch(`/api/purchases/vendors/${vendor.id}`, {
         method: 'DELETE',
       });
       if (response.ok) {
@@ -111,7 +112,7 @@ const Vendors: React.FC = () => {
     
     setIsSaving(true);
     try {
-      const response = await fetch('/api/purchases/vendors', {
+      const response = await apiFetch('/api/purchases/vendors', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editingVendor ? { ...form, id: editingVendor.id } : form),

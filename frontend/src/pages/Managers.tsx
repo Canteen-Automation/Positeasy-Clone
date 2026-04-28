@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -66,7 +67,7 @@ const Managers = () => {
   const fetchManagers = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/system/managers');
+      const res = await apiFetch('/api/system/managers');
       if (res.ok) {
         const data = await res.json();
         // Backend uses 'permissions' field, map it to 'sections' for the component if needed
@@ -99,7 +100,7 @@ const Managers = () => {
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/system/managers', {
+      const response = await apiFetch('/api/system/managers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -127,7 +128,7 @@ const Managers = () => {
   const dismissManager = async (id: string) => {
     if (window.confirm('Are you sure you want to dismiss this manager?')) {
       try {
-        const response = await fetch(`/api/system/managers/${id}`, {
+        const response = await apiFetch(`/api/system/managers/${id}`, {
           method: 'DELETE'
         });
         if (response.ok) {

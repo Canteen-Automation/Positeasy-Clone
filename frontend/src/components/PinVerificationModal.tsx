@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
@@ -30,7 +31,7 @@ const PinVerificationModal: React.FC<PinVerificationModalProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`/api/terminals/${terminalId}/verify-pin`, {
+      const response = await apiFetch(`/api/terminals/${terminalId}/verify-pin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: pinToVerify }),

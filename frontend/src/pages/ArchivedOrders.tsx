@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, 
@@ -77,7 +78,7 @@ const ArchivedOrders: React.FC = () => {
       params.append('page', currentPage.toString());
       params.append('size', pageSize.toString());
 
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/all?${params.toString()}`);
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/orders/all?${params.toString()}`);
       const data = await response.json();
       
       if (data && data.content && Array.isArray(data.content)) {

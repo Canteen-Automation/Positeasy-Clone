@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronRight, Filter, Loader2, Download, Printer, X } from 'lucide-react';
 import { format } from 'date-fns';
@@ -31,7 +32,7 @@ const Bills: React.FC = () => {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/purchases/orders');
+      const response = await apiFetch('/api/purchases/orders');
       if (response.ok) {
         const data = await response.json();
         setOrders(data);
@@ -50,7 +51,7 @@ const Bills: React.FC = () => {
       setIsSaving(true);
       const updatedPaidTotal = Number(selectedOrder.paidTotal) + Number(paymentAmount);
       
-      const response = await fetch('/api/purchases/orders', {
+      const response = await apiFetch('/api/purchases/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

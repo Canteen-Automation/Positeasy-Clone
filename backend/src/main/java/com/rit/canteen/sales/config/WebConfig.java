@@ -1,24 +1,13 @@
 package com.rit.canteen.sales.config;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * WebConfig intentionally left minimal.
+ * CORS is now fully managed by SecurityConfig.corsConfigurationSource()
+ * to avoid duplicate/conflicting CORS headers.
+ */
 @Configuration
 public class WebConfig {
-
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOriginPatterns("http://*", "https://*", "file://*")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-                        .allowedHeaders("*")
-                        .allowCredentials(true);
-            }
-        };
-    }
+    // CORS handled by SecurityConfig — do not add CorsRegistry here
 }

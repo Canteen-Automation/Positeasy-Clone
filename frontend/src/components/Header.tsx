@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import { useState, useEffect, useRef } from 'react';
 import { 
   Bell, 
@@ -65,7 +66,7 @@ const Header = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/notifications`);
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/notifications`);
       if (response.ok) {
         const data = await response.json();
         setNotifications(data);
@@ -115,7 +116,7 @@ const Header = () => {
 
   const handleNotificationClick = async (notif: any) => {
       try {
-        await fetch(`http://${window.location.hostname}:8080/api/notifications/mark-read/${notif.id}`, { method: 'POST' });
+        await apiFetch(`http://${window.location.hostname}:8080/api/notifications/mark-read/${notif.id}`, { method: 'POST' });
         if (notif.link) navigate(notif.link);
         setShowNotifications(false);
         fetchNotifications();
@@ -126,7 +127,7 @@ const Header = () => {
 
   const markAllAsRead = async () => {
       try {
-        await fetch(`http://${window.location.hostname}:8080/api/notifications/mark-all-read`, { method: 'POST' });
+        await apiFetch(`http://${window.location.hostname}:8080/api/notifications/mark-all-read`, { method: 'POST' });
         fetchNotifications();
         setShowNotifications(false);
       } catch (error) {

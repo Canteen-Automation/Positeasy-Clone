@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { 
   Download, 
@@ -66,7 +67,7 @@ const Reports: React.FC = () => {
     try {
       const fromStr = dateRange.from.toISOString();
       const toStr = dateRange.to.toISOString();
-      const response = await fetch(`http://${window.location.hostname}:8080/api/reports/monthly?from=${fromStr}&to=${toStr}`);
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/reports/monthly?from=${fromStr}&to=${toStr}`);
       const result = await response.json();
       setData(result);
     } catch (error) {

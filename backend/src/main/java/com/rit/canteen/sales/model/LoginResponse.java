@@ -6,6 +6,7 @@ public class LoginResponse {
     private String message;
     private boolean userExists;
     private UserDto user;
+    private String token; // JWT for customer session
 
     public LoginResponse() {}
 
@@ -37,6 +38,9 @@ public class LoginResponse {
 
     public UserDto getUser() { return user; }
     public void setUser(UserDto user) { this.user = user; }
+
+    public String getToken() { return token; }
+    public void setToken(String token) { this.token = token; }
 
     public static class UserDto {
         private Long id;

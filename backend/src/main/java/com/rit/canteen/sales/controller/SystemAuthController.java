@@ -1,11 +1,18 @@
 package com.rit.canteen.sales.controller;
 
+import com.rit.canteen.sales.config.JwtUtil;
+import com.rit.canteen.sales.config.LoginRateLimiter;
 import com.rit.canteen.sales.model.SystemUser;
 import com.rit.canteen.sales.service.SystemUserService;
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -17,76 +24,150 @@ public class SystemAuthController {
     @Autowired
     private SystemUserService userService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private LoginRateLimiter rateLimiter;
+
+    // ── PUBLIC ──────────────────────────────────────────────────────────────
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials,
+                                   HttpServletRequest request) {
+        // Rate limit by IP
+        String ip = getClientIp(request);
+        if (!rateLimiter.tryConsume(ip)) {
+            return ResponseEntity.status(429).body(Map.of(
+                "error", "Too many login attempts. Please wait 5 minutes."
+            ));
+        }
+
         String email = credentials.get("email");
         String password = credentials.get("password");
-        
-        Optional<SystemUser> user = userService.authenticate(email, password);
-        
-        if (user.isPresent()) {
-            return ResponseEntity.ok(user.get());
+
+        Optional<SystemUser> userOpt = userService.authenticate(email, password);
+
+        if (userOpt.isPresent()) {
+            SystemUser user = userOpt.get();
+            String token = jwtUtil.generateToken(user.getId(), user.getEmail(),
+                                                  user.getRole(), user.getPermissions());
+            // Return safe DTO — no password hash
+            Map<String, Object> response = new HashMap<>();
+            response.put("token", token);
+            response.put("id", user.getId());
+            response.put("name", user.getName());
+            response.put("email", user.getEmail());
+            response.put("role", user.getRole());
+            response.put("permissions", user.getPermissions());
+            response.put("viewOnly", user.isViewOnly());
+            return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.status(401).body("Invalid credentials");
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
         }
     }
 
+    // ── PROTECTED (requires MASTER or MANAGER JWT) ───────────────────────────
+
     @GetMapping("/managers")
     public ResponseEntity<List<SystemUser>> getManagers() {
-        return ResponseEntity.ok(userService.getAllManagers());
+        return ResponseEntity.ok(sanitize(userService.getAllManagers()));
     }
 
     @PostMapping("/managers")
-    public ResponseEntity<SystemUser> addManager(@RequestBody SystemUser manager) {
-        return ResponseEntity.ok(userService.createManager(manager));
+    public ResponseEntity<?> addManager(@RequestBody SystemUser manager) {
+        requireRole("MASTER", "MANAGER");
+        return ResponseEntity.ok(sanitize(userService.createManager(manager)));
     }
 
     @DeleteMapping("/managers/{id}")
     public ResponseEntity<Void> deleteManager(@PathVariable Long id) {
+        requireRole("MASTER");
         userService.deleteManager(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/staff")
     public ResponseEntity<List<SystemUser>> getStaff() {
-        return ResponseEntity.ok(userService.getAllStaff());
+        return ResponseEntity.ok(sanitize(userService.getAllStaff()));
     }
 
     @PostMapping("/staff")
-    public ResponseEntity<SystemUser> addStaff(@RequestBody SystemUser staff) {
-        return ResponseEntity.ok(userService.createStaff(staff));
+    public ResponseEntity<?> addStaff(@RequestBody SystemUser staff) {
+        requireRole("MASTER", "MANAGER");
+        return ResponseEntity.ok(sanitize(userService.createStaff(staff)));
     }
 
     @DeleteMapping("/staff/{id}")
     public ResponseEntity<Void> deleteStaff(@PathVariable Long id) {
-        userService.deleteManager(id); // Using existing delete logic
+        requireRole("MASTER", "MANAGER");
+        userService.deleteManager(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/admins")
     public ResponseEntity<List<SystemUser>> getAdmins() {
-        return ResponseEntity.ok(userService.getMasters());
+        requireRole("MASTER");
+        return ResponseEntity.ok(sanitize(userService.getMasters()));
     }
 
     @PostMapping("/admins")
-    public ResponseEntity<SystemUser> addAdmin(@RequestBody SystemUser admin) {
-        return ResponseEntity.ok(userService.createMaster(admin));
+    public ResponseEntity<?> addAdmin(@RequestBody SystemUser admin) {
+        // Only a MASTER can create another MASTER
+        requireRole("MASTER");
+        return ResponseEntity.ok(sanitize(userService.createMaster(admin)));
     }
 
     @PostMapping("/update-master")
     public ResponseEntity<?> updateMaster(@RequestBody Map<String, Object> data) {
+        requireRole("MASTER");
         try {
             Object idObj = data.get("id");
             Long id = (idObj != null) ? Long.valueOf(idObj.toString()) : 0L;
-            
             String email = (String) data.get("email");
             String password = (String) data.get("password");
             String name = (String) data.get("name");
-            
+
             userService.updateMasterAccount(id, email, password, name);
             return ResponseEntity.ok(Map.of("success", true, "message", "Credentials updated successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Map.of("success", false, "message", e.getMessage()));
         }
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+
+    /** Strips password hash from response objects */
+    private SystemUser sanitize(SystemUser u) {
+        u.setPassword("[PROTECTED]");
+        return u;
+    }
+
+    private List<SystemUser> sanitize(List<SystemUser> users) {
+        users.forEach(this::sanitize);
+        return users;
+    }
+
+    /** Asserts the calling JWT has one of the required roles, throws 403 otherwise */
+    private void requireRole(String... roles) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new org.springframework.security.access.AccessDeniedException("Not authenticated");
+        }
+        if (auth.getDetails() instanceof Claims claims) {
+            String role = (String) claims.get("role");
+            for (String r : roles) {
+                if (r.equals(role)) return;
+            }
+        }
+        throw new org.springframework.security.access.AccessDeniedException(
+            "Insufficient role. Required: " + String.join(" or ", roles));
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader != null && !xfHeader.isEmpty()) {
+            return xfHeader.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

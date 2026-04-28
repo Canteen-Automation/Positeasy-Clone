@@ -1,37 +1,81 @@
 package com.rit.canteen.sales.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
 import java.util.List;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Autowired
+    private JwtAuthFilter jwtAuthFilter;
+
+    // Frontend origins — update this list for production
+    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:5174,http://localhost:3000}")
+    private String allowedOriginsStr;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .cors(Customizer.withDefaults())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/notifications/**").permitAll()
-                .requestMatchers("/api/**").permitAll()
-                .anyRequest().permitAll()
-            );
+
+                // ── PUBLIC: Auth endpoints (login / register for both user types) ──
+                .requestMatchers(HttpMethod.POST, "/api/system/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/check").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/auth/logout").permitAll()
+
+                // ── PUBLIC: Real-time stock updates (SSE — read-only, ordering app listens) ──
+                .requestMatchers("/api/stock/stream").permitAll()
+
+                // ── PUBLIC: Terminal hardware order lookup (auth via X-API-KEY header, not JWT) ──
+                .requestMatchers(HttpMethod.GET, "/api/terminals/orders/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/terminals/*/verify-pin").permitAll()
+
+                // ── PUBLIC: Notifications read (admin frontend polls this before login guard kicks in) ──
+                .requestMatchers(HttpMethod.GET, "/api/notifications/**").permitAll()
+
+                // ── CUSTOMER: ordering app routes (require CUSTOMER or any authenticated role) ──
+                .requestMatchers(HttpMethod.GET, "/api/stalls/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/products/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/orders").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/orders/user/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/wallet/balance/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/wallet/transactions/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/coupons/redeem").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/feedback/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/feedback/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/auth/user/**").authenticated()
+
+                // ── STAFF/MANAGER/MASTER: All other management APIs ──
+                .requestMatchers("/api/**").hasAnyRole("MASTER", "MANAGER", "STAFF")
+
+                // Everything else — deny
+                .anyRequest().denyAll()
+            )
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -43,11 +87,22 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Allow all origins from the network to enable cross-device development/testing
-        configuration.setAllowedOriginPatterns(List.of("*"));
+
+        // Explicit allowed origins — no wildcard in production
+        List<String> origins = Arrays.asList(allowedOriginsStr.split(","));
+        configuration.setAllowedOrigins(origins);
+        configuration.setAllowedOriginPatterns(List.of(
+            "http://localhost:*",
+            "http://192.168.*:*",
+            "http://10.*:*"
+        ));
+
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(false);
+        configuration.setMaxAge(3600L);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

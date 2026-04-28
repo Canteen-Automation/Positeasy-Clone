@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -32,7 +33,7 @@ const Terminals = () => {
   const fetchTerminals = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/terminals');
+      const response = await apiFetch('/api/terminals');
       if (response.ok) {
         const data = await response.json();
         setTerminals(data);
@@ -52,7 +53,7 @@ const Terminals = () => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to remove this terminal?')) {
       try {
-        const response = await fetch(`/api/terminals/${id}`, { method: 'DELETE' });
+        const response = await apiFetch(`/api/terminals/${id}`, { method: 'DELETE' });
         if (response.ok) fetchTerminals();
       } catch (error) {
         console.error('Failed to delete terminal:', error);

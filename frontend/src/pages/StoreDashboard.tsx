@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import { useState, useEffect } from 'react';
 import { 
   ChevronRight,
@@ -99,7 +100,7 @@ const StoreDashboard = () => {
         params.append('from', range.from);
         params.append('to', range.to);
         
-        const response = await fetch(`/api/dashboard/stats?${params.toString()}`);
+        const response = await apiFetch(`/api/dashboard/stats?${params.toString()}`);
         if (response.ok) {
           const data = await response.json();
           console.log('Dashboard data received successfully:', data);

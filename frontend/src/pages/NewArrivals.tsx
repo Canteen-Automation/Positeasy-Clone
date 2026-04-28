@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, Search, RefreshCw, Edit2, Package, Image as ImageIcon, 
@@ -75,7 +76,7 @@ const NewArrivals: React.FC = () => {
   const fetchDrafts = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/products/drafts');
+      const response = await apiFetch('/api/products/drafts');
       if (response.ok) {
         const data = await response.json();
         setDrafts(data);
@@ -116,7 +117,7 @@ const NewArrivals: React.FC = () => {
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/products/${formData.id}/publish`, {
+      const response = await apiFetch(`/api/products/${formData.id}/publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -137,7 +138,7 @@ const NewArrivals: React.FC = () => {
   const handleDelete = async (id: number) => {
     if (!window.confirm('Delete this draft product?')) return;
     try {
-      await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      await apiFetch(`/api/products/${id}`, { method: 'DELETE' });
       fetchDrafts();
     } catch (error) {
       console.error('Error deleting draft:', error);

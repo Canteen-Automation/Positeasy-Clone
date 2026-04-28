@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { 
   CircleDollarSign, 
@@ -52,7 +53,7 @@ const RitzCirculation: React.FC = () => {
     try {
       setIsLoading(true);
       const host = window.location.hostname;
-      const res = await fetch(`http://${host}:8080/api/wallet/circulation?page=${page}&size=${size}`);
+      const res = await apiFetch(`http://${host}:8080/api/wallet/circulation?page=${page}&size=${size}`);
       const data: PageResponse = await res.json();
       
       setTokens(data.content || []);

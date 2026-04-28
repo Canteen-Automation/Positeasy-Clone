@@ -1,3 +1,22 @@
+# Positeasy Clone Frontend (Counter/Admin)
+
+## 🔐 Security Hardening & API Migration (Branch: krishna)
+
+This branch contains critical security updates and infrastructure changes to support JWT-based authentication across the Positeasy ecosystem.
+
+### Key Changes:
+- **Authenticated API Wrapper**: Migrated from standard `fetch` to a centralized `src/api.ts` wrapper. This wrapper automatically handles:
+  - Injection of the `Authorization: Bearer <token>` header.
+  - Consistent error handling for API requests.
+- **Security Hardening**: Updated all major screens (Login, POS, Orders, etc.) to use the new authenticated API layer.
+- **Backend Integration**: Configured to work seamlessly with the new JWT-protected backend endpoints.
+
+### Developer Instructions:
+1. **Always use the API wrapper**: Import `api` from `@/api` (or `src/api.ts`) instead of using `fetch` directly.
+2. **Migration Script**: `migrate_fetch.ps1` is included for reference.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

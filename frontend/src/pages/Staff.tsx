@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -50,7 +51,7 @@ const Staff = () => {
   const fetchStaff = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/system/staff');
+      const res = await apiFetch('/api/system/staff');
       if (res.ok) {
         const data = await res.json();
         setStaffList(data);
@@ -69,7 +70,7 @@ const Staff = () => {
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/system/staff', {
+      const response = await apiFetch('/api/system/staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -97,7 +98,7 @@ const Staff = () => {
   const deleteStaff = async (id: string) => {
     if (window.confirm('Are you sure you want to remove this staff member?')) {
       try {
-        const response = await fetch(`/api/system/staff/${id}`, {
+        const response = await apiFetch(`/api/system/staff/${id}`, {
           method: 'DELETE'
         });
         if (response.ok) {

@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, X, Search, Filter, MoreVertical, RefreshCw, Edit2, Power, PowerOff, Tag, Package, Image as ImageIcon, Barcode, DollarSign, ChevronDown, Clock, Check, Trash2, Database } from 'lucide-react';
 import Pagination from '../components/Pagination';
@@ -161,7 +162,7 @@ const Products = () => {
         params.append('search', debouncedSearchTerm);
       }
 
-      const response = await fetch(`http://${host}:8080/api/products?${params.toString()}`);
+      const response = await apiFetch(`http://${host}:8080/api/products?${params.toString()}`);
       const data = await response.json();
       if (data && data.content) {
         setProducts(data.content);
@@ -179,7 +180,7 @@ const Products = () => {
 
   const fetchBaseItems = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/base-items?size=100');
+      const response = await apiFetch('http://localhost:8080/api/base-items?size=100');
       const data = await response.json();
       setBaseItems(data.content || data);
     } catch (error) {
@@ -189,7 +190,7 @@ const Products = () => {
 
   const fetchAllStalls = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/stalls');
+      const response = await apiFetch('http://localhost:8080/api/stalls');
       const data = await response.json();
       setAllStalls(data);
     } catch (error) {
@@ -205,7 +206,7 @@ const Products = () => {
     const method = editingProduct ? 'PUT' : 'POST';
 
     try {
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -233,7 +234,7 @@ const Products = () => {
 
   const handleToggleActive = async (product: Product) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${product.id}`, {
+      const response = await apiFetch(`http://localhost:8080/api/products/${product.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...product, active: !product.active }),
@@ -249,7 +250,7 @@ const Products = () => {
 
   const handleToggleStock = async (product: Product) => {
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${product.id}/toggle-stock`, {
+      const response = await apiFetch(`http://localhost:8080/api/products/${product.id}/toggle-stock`, {
         method: 'PATCH',
       });
       if (response.ok) {
@@ -264,7 +265,7 @@ const Products = () => {
   const handleDelete = async (product: Product) => {
     if (!window.confirm(`Are you sure you want to delete ${product.name}?`)) return;
     try {
-      const response = await fetch(`http://localhost:8080/api/products/${product.id}`, {
+      const response = await apiFetch(`http://localhost:8080/api/products/${product.id}`, {
         method: 'DELETE',
       });
       if (response.ok) {

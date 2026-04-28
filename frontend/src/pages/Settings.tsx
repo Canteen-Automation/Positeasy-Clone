@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { 
   User, 
@@ -47,7 +48,7 @@ const Settings = () => {
 
   const fetchAdmins = async () => {
     try {
-      const response = await fetch('/api/system/admins');
+      const response = await apiFetch('/api/system/admins');
       const data = await response.json();
       setAdmins(data);
     } catch (err) {
@@ -69,7 +70,7 @@ const Settings = () => {
 
     setStatus('loading');
     try {
-      const response = await fetch('/api/system/update-master', {
+      const response = await apiFetch('/api/system/update-master', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -102,7 +103,7 @@ const Settings = () => {
     e.preventDefault();
     setStatus('loading');
     try {
-      const response = await fetch('/api/system/admins', {
+      const response = await apiFetch('/api/system/admins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newAdmin)

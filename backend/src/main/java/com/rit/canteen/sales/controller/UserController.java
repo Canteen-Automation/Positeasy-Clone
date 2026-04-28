@@ -1,15 +1,23 @@
 package com.rit.canteen.sales.controller;
 
+import com.rit.canteen.sales.config.JwtUtil;
+import com.rit.canteen.sales.config.LoginRateLimiter;
 import com.rit.canteen.sales.model.*;
 import com.rit.canteen.sales.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import io.jsonwebtoken.Claims;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -18,94 +26,95 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    /**
-     * Check if a user exists by mobile number.
-     * POST /api/auth/check
-     */
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private LoginRateLimiter rateLimiter;
+
+    // ── PUBLIC ────────────────────────────────────────────────────────────────
+
     @PostMapping("/check")
     public ResponseEntity<LoginResponse> checkUserExists(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = userService.checkUserExists(request.getMobileNumber());
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Register a new user with mobile number, name and PIN.
-     * POST /api/auth/register
-     */
     @PostMapping("/register")
-    public ResponseEntity<LoginResponse> registerUser(@Valid @RequestBody PinVerificationRequest request) {
-        LoginResponse response = userService.registerUser(request.getMobileNumber(), request.getName(), request.getPin());
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
+    public ResponseEntity<LoginResponse> registerUser(@Valid @RequestBody PinVerificationRequest request,
+                                                       HttpServletRequest httpRequest) {
+        String ip = getClientIp(httpRequest);
+        if (!rateLimiter.tryConsume(ip)) {
+            return ResponseEntity.status(429).build();
         }
+        LoginResponse response = userService.registerUser(
+            request.getMobileNumber(), request.getName(), request.getPin());
+        if (response.isSuccess()) {
+            // Attach JWT on successful registration
+            Long userId = response.getUser() != null ? response.getUser().getId() : null;
+            if (userId != null) {
+                String token = jwtUtil.generateUserToken(userId, request.getMobileNumber());
+                response.setToken(token);
+            }
+            return ResponseEntity.ok(response);
+        }
+        return ResponseEntity.badRequest().body(response);
     }
 
-    /**
-     * Verify PIN and login an existing user.
-     * POST /api/auth/login
-     */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody PinVerificationRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody PinVerificationRequest request,
+                                                HttpServletRequest httpRequest) {
+        String ip = getClientIp(httpRequest);
+        if (!rateLimiter.tryConsume(ip)) {
+            LoginResponse rateResp = new LoginResponse(false, "Too many login attempts. Please wait 5 minutes.");
+            return ResponseEntity.status(429).body(rateResp);
+        }
         LoginResponse response = userService.verifyPinAndLogin(request.getMobileNumber(), request.getPin());
         if (response.isSuccess()) {
+            Long userId = response.getUser() != null ? response.getUser().getId() : null;
+            if (userId != null) {
+                String token = jwtUtil.generateUserToken(userId, request.getMobileNumber());
+                response.setToken(token);
+            }
             return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
         }
+        return ResponseEntity.badRequest().body(response);
     }
 
-    /**
-     * Logout a user.
-     * POST /api/auth/logout
-     */
     @PostMapping("/logout")
     public ResponseEntity<LoginResponse> logout(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = userService.logout(request.getMobileNumber());
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return response.isSuccess() ? ResponseEntity.ok(response) : ResponseEntity.badRequest().body(response);
     }
 
-    /**
-     * Change user PIN.
-     * POST /api/auth/change-pin
-     */
+    // ── AUTHENTICATED (customer token required) ────────────────────────────────
+
     @PostMapping("/change-pin")
     public ResponseEntity<LoginResponse> changePin(@Valid @RequestBody ChangePinRequest request) {
-        LoginResponse response = userService.changePin(request.getMobileNumber(), request.getCurrentPin(), request.getNewPin());
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
+        // Extra ownership check: the JWT's mobileNumber must match the request
+        String tokenMobile = getAuthenticatedMobile();
+        if (tokenMobile != null && !tokenMobile.equals(request.getMobileNumber())) {
+            return ResponseEntity.status(403).body(
+                new LoginResponse(false, "You can only change your own PIN."));
         }
+        LoginResponse response = userService.changePin(
+            request.getMobileNumber(), request.getCurrentPin(), request.getNewPin());
+        return response.isSuccess() ? ResponseEntity.ok(response) : ResponseEntity.badRequest().body(response);
     }
 
-    /**
-     * Get user details by mobile number.
-     * GET /api/auth/user/{mobileNumber}
-     */
     @GetMapping("/user/{mobileNumber}")
     public ResponseEntity<LoginResponse.UserDto> getUser(@PathVariable String mobileNumber) {
-        LoginResponse.UserDto userDto = userService.getUserByMobile(mobileNumber);
-        if (userDto != null) {
-            return ResponseEntity.ok(userDto);
-        } else {
-            return ResponseEntity.notFound().build();
+        // Customers can only fetch their own profile; staff can fetch any
+        String tokenMobile = getAuthenticatedMobile();
+        if (tokenMobile != null && !tokenMobile.equals(mobileNumber) && !isStaff()) {
+            return ResponseEntity.status(403).build();
         }
+        LoginResponse.UserDto userDto = userService.getUserByMobile(mobileNumber);
+        return userDto != null ? ResponseEntity.ok(userDto) : ResponseEntity.notFound().build();
     }
 
-    /**
-     * Get all registered users for administration dashboard.
-     * GET /api/auth/users
-     */
-    /**
-     * Get all registered users for administration dashboard.
-     * GET /api/auth/users
-     */
+    // ── STAFF/MASTER ONLY ────────────────────────────────────────────────────────
+
     @GetMapping("/users")
     public ResponseEntity<Page<LoginResponse.UserDto>> getAllUsers(
             @RequestParam(required = false) String search,
@@ -115,41 +124,53 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
-    /**
-     * Update user details as an administrator.
-     * PUT /api/auth/users/{id}
-     */
     @PutMapping("/users/{id}")
-    public ResponseEntity<LoginResponse.UserDto> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateRequest request) {
-        LoginResponse.UserDto updated = userService.updateUser(id, request.getName(), request.getMobileNumber(), request.getPin());
-        if (updated != null) {
-            return ResponseEntity.ok(updated);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<LoginResponse.UserDto> updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UserUpdateRequest request) {
+        LoginResponse.UserDto updated = userService.updateUser(id, request.getName(),
+                request.getMobileNumber(), request.getPin());
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
 
-    /**
-     * Delete a user from the system.
-     * DELETE /api/auth/users/{id}
-     */
     @DeleteMapping("/users/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 
-    /**
-     * Toggle user suspension status.
-     * PATCH /api/auth/users/{id}/suspend
-     */
     @PatchMapping("/users/{id}/suspend")
     public ResponseEntity<LoginResponse.UserDto> toggleSuspension(@PathVariable Long id) {
         LoginResponse.UserDto updated = userService.toggleSuspension(id);
-        if (updated != null) {
-            return ResponseEntity.ok(updated);
-        } else {
-            return ResponseEntity.notFound().build();
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    private String getAuthenticatedMobile() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getDetails() instanceof Claims claims) {
+            // Customer tokens have the mobile as subject
+            String type = (String) claims.get("type");
+            if ("customer".equals(type)) {
+                return claims.getSubject();
+            }
         }
+        return null; // Staff or system token — not a customer
+    }
+
+    private boolean isStaff() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null) return false;
+        return auth.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().startsWith("ROLE_MASTER")
+                       || a.getAuthority().startsWith("ROLE_MANAGER")
+                       || a.getAuthority().startsWith("ROLE_STAFF"));
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader != null && !xfHeader.isEmpty()) return xfHeader.split(",")[0].trim();
+        return request.getRemoteAddr();
     }
 }

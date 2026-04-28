@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -68,7 +69,7 @@ const IntentDashboard: React.FC<IntentDashboardProps> = ({ title }) => {
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/purchases/intent/summary`);
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/purchases/intent/summary`);
       const data = await response.json();
       setStats(data);
     } catch (error) {

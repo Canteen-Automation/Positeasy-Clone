@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { Search, ShoppingCart, Eye, Plus, X, Loader2, CheckCircle, Trash2, Edit2 } from 'lucide-react';
 
@@ -65,7 +66,7 @@ const Purchases: React.FC = () => {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/purchases/orders');
+      const response = await apiFetch('/api/purchases/orders');
       if (response.ok) {
         const data = await response.json();
         setOrders(data);
@@ -79,7 +80,7 @@ const Purchases: React.FC = () => {
 
   const fetchVendors = async () => {
     try {
-      const response = await fetch('/api/purchases/vendors');
+      const response = await apiFetch('/api/purchases/vendors');
       if (response.ok) {
         const data = await response.json();
         setVendors(data);
@@ -91,7 +92,7 @@ const Purchases: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/products?size=1000');
+      const response = await apiFetch('/api/products?size=1000');
       if (response.ok) {
         const data = await response.json();
         setAvailableProducts(data.content || data);
@@ -150,7 +151,7 @@ const Purchases: React.FC = () => {
         date: new Date(newOrder.date).toISOString()
       };
 
-      const response = await fetch('/api/purchases/orders', {
+      const response = await apiFetch('/api/purchases/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -172,7 +173,7 @@ const Purchases: React.FC = () => {
   const deleteOrder = async (id: number) => {
     if (!window.confirm('Delete this purchase order?')) return;
     try {
-        await fetch(`/api/purchases/orders/${id}`, { method: 'DELETE' });
+        await apiFetch(`/api/purchases/orders/${id}`, { method: 'DELETE' });
         fetchOrders();
     } catch (error) {
         console.error('Error deleting order:', error);
@@ -197,7 +198,7 @@ const Purchases: React.FC = () => {
       const order = orders.find(o => o.id === orderId);
       if (!order) return;
 
-      const response = await fetch(`/api/purchases/orders`, {
+      const response = await apiFetch(`/api/purchases/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...order, status: newStatus })
@@ -229,7 +230,7 @@ const Purchases: React.FC = () => {
   const fetchOrderHistory = async (order: PurchaseOrder) => {
     try {
       setActiveHistoryOrder(order);
-      const response = await fetch(`/api/purchases/orders/${order.id}/history`);
+      const response = await apiFetch(`/api/purchases/orders/${order.id}/history`);
       if (response.ok) {
         const data = await response.json();
         setOrderHistory(data);

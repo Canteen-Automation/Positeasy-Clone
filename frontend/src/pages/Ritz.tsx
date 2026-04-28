@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
@@ -56,11 +57,11 @@ const RitzPage: React.FC = () => {
       setIsLoading(true);
       const host = window.location.hostname;
       
-      const statsRes = await fetch(`http://${host}:8080/api/wallet/stats`);
+      const statsRes = await apiFetch(`http://${host}:8080/api/wallet/stats`);
       const statsData = await statsRes.json();
       setStats(statsData);
 
-      const transRes = await fetch(`http://${host}:8080/api/wallet/transactions/all`);
+      const transRes = await apiFetch(`http://${host}:8080/api/wallet/transactions/all`);
       const transData = await transRes.json();
       setTransactions(Array.isArray(transData) ? transData : []);
     } catch (error) {

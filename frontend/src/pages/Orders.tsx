@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, 
@@ -103,7 +104,7 @@ const Orders: React.FC = () => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/products`);
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/products`);
       if (response.ok) {
         const data = await response.json();
         setAllProducts(data);
@@ -127,7 +128,7 @@ const Orders: React.FC = () => {
       params.append('page', currentPage.toString());
       params.append('size', pageSize.toString());
 
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/all?${params.toString()}`);
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/orders/all?${params.toString()}`);
       const data = await response.json();
       
       if (data && data.content && Array.isArray(data.content)) {
@@ -156,7 +157,7 @@ const Orders: React.FC = () => {
 
   const handleApproveOrder = async (orderId: number) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/${orderId}/status`, {
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'COMPLETED' })
@@ -174,7 +175,7 @@ const Orders: React.FC = () => {
 
   const handleMarkUndelivered = async (orderId: number) => {
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/${orderId}/status`, {
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'PAID' })
@@ -230,7 +231,7 @@ const Orders: React.FC = () => {
     if (!selectedOrder) return;
     setIsUpdatingOrder(true);
     try {
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/${selectedOrder.id}`, {
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/orders/${selectedOrder.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -297,7 +298,7 @@ const Orders: React.FC = () => {
     setIsRegenerating(true);
     try {
       const newOrderNumber = `ORD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/${selectedOrder.id}`, {
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/orders/${selectedOrder.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

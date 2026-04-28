@@ -1,3 +1,4 @@
+﻿import { apiFetch } from '../api';
 import { useState, useEffect } from 'react';
 import { 
   Users, 
@@ -33,7 +34,7 @@ const ManageWallets = () => {
   const fetchUsers = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/wallet/users');
+      const response = await apiFetch('/api/wallet/users');
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
@@ -57,7 +58,7 @@ const ManageWallets = () => {
     setStatus(null);
 
     try {
-      const response = await fetch('/api/wallet/topup', {
+      const response = await apiFetch('/api/wallet/topup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
