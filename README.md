@@ -4,6 +4,22 @@
 
 This branch represents a major security milestone for the Canteen Automation system, transitioning from open/unprotected endpoints to a robust **JWT-based Authentication** architecture.
 
+### 🔐 Critical: Security Configuration
+
+To run this application securely, you **MUST** configure the following environment variables. Do **NOT** commit real secrets to the repository.
+
+#### Required Environment Variables
+| Variable | Description | Example/Hint |
+| :--- | :--- | :--- |
+| `JWT_SECRET` | Secret key for signing tokens | `openssl rand -base64 32` |
+| `DB_PASSWORD` | Database user password | Your PostgreSQL password |
+| `MASTER_USER` | Initial admin email | `admin@example.com` |
+| `MASTER_PASSWORD` | Initial admin password | `SecurePassword123` |
+
+#### How to set them:
+- **Local Development**: Create a `.env` file (if using a loader) or set them in your IDE (IntelliJ/Eclipse) Run Configurations.
+- **Production**: Set them as System Environment Variables on your server or CI/CD platform (e.g., GitHub Secrets, Railway, Docker).
+
 ### 🏗️ Ecosystem Architecture
 - **Backend (Java/Spring Boot)**: Now fully protected by JWT guards. Includes `JwtAuthFilter`, `JwtUtil`, and enhanced `SecurityConfig`.
 - **Frontend (Counter/Admin)**: Migrated to use an authenticated API wrapper (`src/api.ts`).

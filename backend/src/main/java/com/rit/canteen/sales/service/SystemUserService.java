@@ -20,10 +20,10 @@ public class SystemUserService {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
-    @Value("${app.master.username:admin}")
+    @Value("${app.master.username}")
     private String masterUsername;
 
-    @Value("${app.master.password:admin}")
+    @Value("${app.master.password}")
     private String masterPassword;
 
     @PostConstruct
