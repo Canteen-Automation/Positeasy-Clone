@@ -1,7 +1,7 @@
-﻿import { apiFetch } from '../api';
+import { apiFetch } from '../api';
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  X, Search, RefreshCw, Edit2, Package, Image as ImageIcon, 
+  X, RefreshCw, Edit2, Package, Image as ImageIcon, 
   Clock, Check, Trash2, Rocket, ArrowRight, AlertCircle
 } from 'lucide-react';
 
@@ -62,7 +62,6 @@ const NewArrivals: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showSessionModal, setShowSessionModal] = useState(false);
-  const [editingDraft, setEditingDraft] = useState<Product | null>(null);
   const [formData, setFormData] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -91,8 +90,8 @@ const NewArrivals: React.FC = () => {
   const fetchMetadata = async () => {
     try {
       const [stallsRes, itemsRes] = await Promise.all([
-        fetch('/api/stalls'),
-        fetch('/api/base-items?size=100')
+        apiFetch('/api/stalls'),
+        apiFetch('/api/base-items?size=100')
       ]);
       setAllStalls(await stallsRes.json());
       const itemsData = await itemsRes.json();
@@ -103,7 +102,6 @@ const NewArrivals: React.FC = () => {
   };
 
   const handleEdit = (product: Product) => {
-    setEditingDraft(product);
     setFormData({
       ...product,
       sessions: product.sessions && product.sessions.length > 0 ? product.sessions : getDefaultSessions()
@@ -124,7 +122,6 @@ const NewArrivals: React.FC = () => {
       });
       if (response.ok) {
         setShowModal(false);
-        setEditingDraft(null);
         setFormData(null);
         fetchDrafts();
       }

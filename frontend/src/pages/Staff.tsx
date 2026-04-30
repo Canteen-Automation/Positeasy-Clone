@@ -1,27 +1,14 @@
-﻿import { apiFetch } from '../api';
+import { apiFetch } from '../api';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   UserPlus, 
   Search, 
   Trash2, 
-  Shield, 
   Mail, 
   Lock, 
   Check, 
   X,
-  LayoutGrid,
-  Receipt,
-  Users,
-  ShoppingBag,
-  ShoppingCart,
-  Wallet,
-  BarChart3,
-  Table2,
-  CreditCard,
-  Megaphone,
-  MessageSquare,
-  Store,
   Contact
 } from 'lucide-react';
 
@@ -110,7 +97,7 @@ const Staff = () => {
     }
   };
 
-  const filteredStaff = staff.filter(s => {
+  const filteredStaff = staffList.filter(s => {
     const query = (searchQuery || '').toLowerCase();
     return (s.name || '').toLowerCase().includes(query) ||
            (s.email || '').toLowerCase().includes(query);

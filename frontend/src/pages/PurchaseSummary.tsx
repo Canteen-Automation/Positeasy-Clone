@@ -1,3 +1,4 @@
+import { apiFetch } from '../api';
 import { useState, useEffect } from 'react';
 import { 
   Filter, 
@@ -28,8 +29,8 @@ const PurchaseSummary = () => {
         setIsLoading(true);
         // Fetch summary and bills in parallel
         const [summaryRes, billsRes] = await Promise.all([
-          fetch('/api/purchases/summary'),
-          fetch('/api/purchases/orders')
+          apiFetch('/api/purchases/summary'),
+          apiFetch('/api/purchases/orders')
         ]);
         
         if (summaryRes.ok && billsRes.ok) {

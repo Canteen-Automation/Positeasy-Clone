@@ -28,7 +28,7 @@ public class SecurityConfig {
     private JwtAuthFilter jwtAuthFilter;
 
     // Frontend origins — update this list for production
-    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:5174,http://localhost:3000}")
+    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:5174,http://localhost:5175,http://localhost:3000}")
     private String allowedOriginsStr;
 
     @Bean
@@ -56,9 +56,12 @@ public class SecurityConfig {
                 // ── PUBLIC: Notifications read (admin frontend polls this before login guard kicks in) ──
                 .requestMatchers(HttpMethod.GET, "/api/notifications/**").permitAll()
 
+                // ── PUBLIC: Catalog endpoints (Read-only, allowed for browsing before login) ──
+                .requestMatchers(HttpMethod.GET, "/api/stalls/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/base-items/**").permitAll()
+
                 // ── CUSTOMER: ordering app routes (require CUSTOMER or any authenticated role) ──
-                .requestMatchers(HttpMethod.GET, "/api/stalls/**").authenticated()
-                .requestMatchers(HttpMethod.GET, "/api/products/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/api/orders").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/orders/user/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/wallet/balance/**").authenticated()
@@ -69,7 +72,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/auth/user/**").authenticated()
 
                 // ── STAFF/MANAGER/MASTER: All other management APIs ──
-                .requestMatchers("/api/**").hasAnyRole("MASTER", "MANAGER", "STAFF")
+                .requestMatchers("/api/**").hasAnyRole("MASTER", "MANAGER", "STAFF", "OPERATOR")
 
                 // Everything else — deny
                 .anyRequest().denyAll()

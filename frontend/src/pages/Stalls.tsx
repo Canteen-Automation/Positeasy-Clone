@@ -1,4 +1,4 @@
-﻿import { apiFetch } from '../api';
+import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -195,8 +195,8 @@ const Stalls: React.FC = () => {
     try {
       const host = window.location.hostname;
       const [prodRes, baseRes] = await Promise.all([
-        fetch(`http://${host}:8080/api/products?size=1000`),
-        fetch(`http://${host}:8080/api/base-items?size=100`)
+        apiFetch(`http://${host}:8080/api/products?size=1000`),
+        apiFetch(`http://${host}:8080/api/base-items?size=100`)
       ]);
       
       if (prodRes.ok) {

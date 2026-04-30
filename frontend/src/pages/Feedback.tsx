@@ -1,4 +1,4 @@
-﻿import { apiFetch } from '../api';
+import { apiFetch } from '../api';
 import React, { useState, useEffect } from 'react';
 import { 
   Star, 
@@ -64,12 +64,6 @@ const Feedback: React.FC = () => {
   const [stats, setStats] = useState<FeedbackStats | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // Feedbacks list states
-  const [feedbacks, setFeedbacks] = useState<any[]>([]);
-  const [page, setPage] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
-  const pageSize = 10;
-
   // Modal states
   const [selectedItem, setSelectedItem] = useState<RatedItem | null>(null);
   const [itemDetails, setItemDetails] = useState<ItemDetail[]>([]);
@@ -77,7 +71,7 @@ const Feedback: React.FC = () => {
   const [detailsLoading, setItemDetailsLoading] = useState(false);
   const [detailsPage, setDetailsPage] = useState(0);
   const [detailsTotal, setDetailsTotal] = useState(0);
-  const detailsPageSize = 5;
+  const [detailsPageSize, setDetailsPageSize] = useState(5);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -92,24 +86,13 @@ const Feedback: React.FC = () => {
     }
   };
 
-  const fetchFeedbacks = async () => {
-    try {
-      const response = await apiFetch(`http://${window.location.hostname}:8080/api/feedback?page=${page}&size=${pageSize}`);
-      const data = await response.json();
-      setFeedbacks(data?.content || []);
-      setTotalElements(data?.totalElements || 0);
-    } catch (error) {
-      console.error('Error fetching feedbacks:', error);
-      setFeedbacks([]);
-    }
-  };
 
   const fetchItemData = async (itemName: string, pageNum: number) => {
     setItemDetailsLoading(true);
     try {
       const [detailsRes, statsRes] = await Promise.all([
-        fetch(`http://${window.location.hostname}:8080/api/feedback/item-details?productName=${encodeURIComponent(itemName)}&page=${pageNum}&size=${detailsPageSize}`),
-        fetch(`http://${window.location.hostname}:8080/api/feedback/item-stats?productName=${encodeURIComponent(itemName)}`)
+        apiFetch(`http://${window.location.hostname}:8080/api/feedback/item-details?productName=${encodeURIComponent(itemName)}&page=${pageNum}&size=${detailsPageSize}`),
+        apiFetch(`http://${window.location.hostname}:8080/api/feedback/item-stats?productName=${encodeURIComponent(itemName)}`)
       ]);
       
       const detailsData = await detailsRes.json();
@@ -130,9 +113,7 @@ const Feedback: React.FC = () => {
     fetchStats();
   }, []);
 
-  useEffect(() => {
-    fetchFeedbacks();
-  }, [page]);
+
 
   useEffect(() => {
     if (selectedItem) {
@@ -462,6 +443,7 @@ const Feedback: React.FC = () => {
                      pageSize={detailsPageSize}
                      totalElements={detailsTotal}
                      onPageChange={setDetailsPage}
+                     onPageSizeChange={setDetailsPageSize}
                    />
                 </div>
               )}
