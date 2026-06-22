@@ -7,6 +7,7 @@ import {
   MapPin, 
   ShieldCheck, 
   Trash2, 
+  Pencil,
   Search,
   ExternalLink,
   Info,
@@ -20,6 +21,7 @@ import {
 import AddTerminalModal from '../components/AddTerminalModal.tsx';
 import PinVerificationModal from '../components/PinVerificationModal.tsx';
 import LinkDeviceModal from '../components/LinkDeviceModal.tsx';
+import EditTerminalModal from '../components/EditTerminalModal.tsx';
 
 interface Terminal {
   id: number;
@@ -38,6 +40,7 @@ const Terminals = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTerminal, setSelectedTerminal] = useState<Terminal | null>(null);
 
   const fetchTerminals = async () => {
@@ -59,26 +62,36 @@ const Terminals = () => {
     fetchTerminals();
   }, []);
 
-  const handleDelete = async (id: number, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDelete = async (id: number) => {
     if (window.confirm('Are you sure you want to remove this terminal?')) {
       try {
         const response = await apiFetch(`/api/terminals/${id}`, { method: 'DELETE' });
-        if (response.ok) fetchTerminals();
+        if (response.ok) {
+          fetchTerminals();
+        } else {
+          const data = await response.json().catch(() => ({}));
+          alert(data.message || `Failed to delete terminal (HTTP ${response.status})`);
+        }
       } catch (error) {
         console.error('Failed to delete terminal:', error);
+        alert('Network error: Could not delete terminal');
       }
     }
   };
 
-  const handleUnpair = async (id: number, e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleUnpair = async (id: number) => {
     if (window.confirm('Unpair this device? It will need to be re-paired on next boot.')) {
       try {
         const response = await apiFetch(`/api/terminals/${id}/unpair`, { method: 'POST' });
-        if (response.ok) fetchTerminals();
+        if (response.ok) {
+          fetchTerminals();
+        } else {
+          const data = await response.json().catch(() => ({}));
+          alert(data.message || `Failed to unpair device (HTTP ${response.status})`);
+        }
       } catch (error) {
         console.error('Failed to unpair device:', error);
+        alert('Network error: Could not unpair device');
       }
     }
   };
@@ -173,14 +186,10 @@ const Terminals = () => {
               layout
               key={terminal.id}
               whileHover={{ y: -5 }}
-              onClick={() => {
-                setSelectedTerminal(terminal);
-                setIsPinModalOpen(true);
-              }}
               className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-xl hover:shadow-[#001828]/5 transition-all cursor-pointer group relative overflow-hidden"
             >
               {/* Card Background Pattern */}
-              <div className="absolute -right-8 -top-8 text-[#001828]/5 rotate-12 transition-transform group-hover:rotate-0 duration-500">
+              <div className="absolute -right-8 -top-8 text-[#001828]/5 rotate-12 transition-transform group-hover:rotate-0 duration-500 pointer-events-none">
                 <Monitor size={140} />
               </div>
 
@@ -193,10 +202,12 @@ const Terminals = () => {
                   }`}>
                     <Monitor size={28} />
                   </div>
-                  <div className="flex items-center gap-1">
+                  {/* Action buttons — completely separate from card click */}
+                  <div className="flex items-center gap-1 relative z-20">
                     {terminal.paired && (
                       <button
-                        onClick={(e) => handleUnpair(terminal.id, e)}
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleUnpair(terminal.id); }}
                         title="Unpair device"
                         className="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-all"
                       >
@@ -204,7 +215,17 @@ const Terminals = () => {
                       </button>
                     )}
                     <button
-                      onClick={(e) => handleDelete(terminal.id, e)}
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedTerminal(terminal); setIsEditModalOpen(true); }}
+                      title="Edit terminal"
+                      className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(terminal.id); }}
+                      title="Delete terminal"
                       className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                     >
                       <Trash2 size={18} />
@@ -212,56 +233,68 @@ const Terminals = () => {
                   </div>
                 </div>
 
-                <div>
-                  <h4 className="text-xl font-bold text-gray-900 group-hover:text-[#001828] transition-colors">{terminal.name}</h4>
-                  <div className="flex items-center gap-1.5 text-gray-500 mt-1 font-medium text-sm">
-                    <MapPin size={14} />
-                    <span>{terminal.location}</span>
+                {/* Clickable area for viewing API Key (opens PIN modal) */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setSelectedTerminal(terminal);
+                    setIsPinModalOpen(true);
+                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { setSelectedTerminal(terminal); setIsPinModalOpen(true); }}}
+                >
+                  <div>
+                    <h4 className="text-xl font-bold text-gray-900 group-hover:text-[#001828] transition-colors">{terminal.name}</h4>
+                    <div className="flex items-center gap-1.5 text-gray-500 mt-1 font-medium text-sm">
+                      <MapPin size={14} />
+                      <span>{terminal.location}</span>
+                    </div>
                   </div>
-                </div>
 
-                {/* Device ID for paired terminals */}
-                {terminal.paired && terminal.deviceId && (
-                  <div className="flex items-center gap-2 text-xs text-gray-400 font-mono bg-gray-50 px-3 py-1.5 rounded-lg w-fit">
-                    <Smartphone size={12} />
-                    <span>{terminal.deviceId}</span>
-                  </div>
-                )}
+                  {/* Device ID for paired terminals */}
+                  {terminal.paired && terminal.deviceId && (
+                    <div className="flex items-center gap-2 text-xs text-gray-400 font-mono bg-gray-50 px-3 py-1.5 rounded-lg w-fit mt-4">
+                      <Smartphone size={12} />
+                      <span>{terminal.deviceId}</span>
+                    </div>
+                  )}
 
-                <div className="pt-4 flex items-center justify-between border-t border-gray-50">
-                  <div className="flex items-center gap-2">
+                  <div className="pt-4 flex items-center justify-between border-t border-gray-50 mt-4">
+                    <div className="flex items-center gap-2">
+                      {terminal.paired ? (
+                        <>
+                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                          <span className="text-[12px] font-bold text-green-600 uppercase tracking-wider">Paired</span>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-2 h-2 rounded-full bg-gray-300" />
+                          <span className="text-[12px] font-bold text-gray-400 uppercase tracking-wider">Unpaired</span>
+                        </>
+                      )}
+                    </div>
+                    
                     {terminal.paired ? (
-                      <>
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                        <span className="text-[12px] font-bold text-green-600 uppercase tracking-wider">Paired</span>
-                      </>
+                      <div className="flex items-center gap-2 text-[#001828] font-bold text-sm">
+                        <Key size={16} />
+                        <span>View API Key</span>
+                        <ExternalLink size={14} />
+                      </div>
                     ) : (
-                      <>
-                        <div className="w-2 h-2 rounded-full bg-gray-300" />
-                        <span className="text-[12px] font-bold text-gray-400 uppercase tracking-wider">Unpaired</span>
-                      </>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTerminal(terminal);
+                          setIsLinkModalOpen(true);
+                        }}
+                        className="flex items-center gap-2 text-indigo-600 font-bold text-sm hover:text-indigo-700 transition-colors bg-indigo-50 px-3 py-1.5 rounded-xl hover:bg-indigo-100"
+                      >
+                        <LinkIcon size={14} />
+                        <span>Link Device</span>
+                      </button>
                     )}
                   </div>
-                  
-                  {terminal.paired ? (
-                    <div className="flex items-center gap-2 text-[#001828] font-bold text-sm">
-                      <Key size={16} />
-                      <span>View API Key</span>
-                      <ExternalLink size={14} />
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedTerminal(terminal);
-                        setIsLinkModalOpen(true);
-                      }}
-                      className="flex items-center gap-2 text-indigo-600 font-bold text-sm hover:text-indigo-700 transition-colors bg-indigo-50 px-3 py-1.5 rounded-xl hover:bg-indigo-100"
-                    >
-                      <LinkIcon size={14} />
-                      <span>Link Device</span>
-                    </button>
-                  )}
                 </div>
               </div>
             </motion.div>
@@ -309,6 +342,18 @@ const Terminals = () => {
         onSuccess={fetchTerminals}
         terminalId={selectedTerminal?.id || null}
         terminalName={selectedTerminal?.name || ''}
+      />
+
+      <EditTerminalModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedTerminal(null);
+        }}
+        onSuccess={fetchTerminals}
+        terminalId={selectedTerminal?.id || null}
+        initialName={selectedTerminal?.name || ''}
+        initialLocation={selectedTerminal?.location || ''}
       />
 
       <style dangerouslySetInnerHTML={{ __html: `

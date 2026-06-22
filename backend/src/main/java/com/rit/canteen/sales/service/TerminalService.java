@@ -43,4 +43,16 @@ public class TerminalService {
             terminalRepository.deleteById(id);
         }
     }
+
+    public Terminal updateTerminal(Long id, Terminal details) {
+        if (id == null) return null;
+        return terminalRepository.findById(id).map(existing -> {
+            existing.setName(details.getName());
+            existing.setLocation(details.getLocation());
+            if (details.getPin() != null && !details.getPin().trim().isEmpty()) {
+                existing.setPin(details.getPin().trim());
+            }
+            return terminalRepository.save(existing);
+        }).orElse(null);
+    }
 }

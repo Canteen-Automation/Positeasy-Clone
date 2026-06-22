@@ -78,6 +78,16 @@ public class TerminalController {
         return ResponseEntity.noContent().build();
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTerminal(@PathVariable Long id, @jakarta.validation.Valid @RequestBody Terminal terminalDetails) {
+        Terminal updated = terminalService.updateTerminal(id, terminalDetails);
+        if (updated != null) {
+            return ResponseEntity.ok(updated);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     // ──────────────────────────────────────────────────────────────
     //  Order Lookup (ESP32 uses X-API-KEY)
     // ──────────────────────────────────────────────────────────────
