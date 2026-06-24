@@ -284,13 +284,28 @@ public class OrderController {
 
                 existingOrder.setTotalAmount(newAmount);
                 existingOrder.setPaymentMethod(updatedOrder.getPaymentMethod());
-                existingOrder.getItems().clear();
+                if (updatedOrder.getStatus() != null) {
+                    existingOrder.setStatus(updatedOrder.getStatus().toUpperCase());
+                }
+
+                // Safely copy items into new instances (without IDs) to trigger correct orphan removal
+                List<OrderItem> newItems = new ArrayList<>();
                 if (updatedOrder.getItems() != null) {
-                    for (OrderItem newItem : updatedOrder.getItems()) {
+                    for (OrderItem item : updatedOrder.getItems()) {
+                        OrderItem newItem = new OrderItem();
+                        newItem.setProductId(item.getProductId());
+                        newItem.setProductName(item.getProductName());
+                        newItem.setPrice(item.getPrice());
+                        newItem.setQuantity(item.getQuantity());
+                        newItem.setStallId(item.getStallId());
+                        newItem.setStallName(item.getStallName());
                         newItem.setOrder(existingOrder);
-                        existingOrder.getItems().add(newItem);
+                        newItems.add(newItem);
                     }
                 }
+                existingOrder.getItems().clear();
+                existingOrder.getItems().addAll(newItems);
+
                 Order saved = orderRepository.save(existingOrder);
                 return ResponseEntity.ok(saved);
             }).orElse(ResponseEntity.notFound().build());

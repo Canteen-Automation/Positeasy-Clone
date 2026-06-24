@@ -1,4 +1,4 @@
-﻿import { apiFetch } from '../api';
+import { apiFetch } from '../api';
 import { useState, useEffect } from 'react';
 import {
    ChevronRight,
@@ -27,6 +27,7 @@ import { motion } from 'framer-motion';
 const StoreDashboard = () => {
    const [activeTab, setActiveTab] = useState('Sales');
    const [timeRange, setTimeRange] = useState('Today');
+   const [customDates, setCustomDates] = useState({ from: '', to: '' });
    const [stats, setStats] = useState({
       totalSales: 0,
       activeOrders: 0,
@@ -85,6 +86,15 @@ const StoreDashboard = () => {
             start.setDate(now.getDate() - 30);
             start.setHours(0, 0, 0, 0);
             break;
+         case 'Custom':
+            if (customDates.from && customDates.to) {
+               const from = new Date(customDates.from);
+               from.setHours(0, 0, 0, 0);
+               const to = new Date(customDates.to);
+               to.setHours(23, 59, 59, 999);
+               return { from: toLocalISOString(from), to: toLocalISOString(to) };
+            }
+            return null;
          default:
             start.setHours(0, 0, 0, 0);
       }
@@ -95,12 +105,16 @@ const StoreDashboard = () => {
       const fetchStats = async () => {
          try {
             setIsLoading(true);
-            const range = getRangeDates(timeRange);
-            const params = new URLSearchParams();
-            params.append('from', range.from);
-            params.append('to', range.to);
+             const range = getRangeDates(timeRange);
+             if (!range) {
+                setIsLoading(false);
+                return;
+             }
+             const params = new URLSearchParams();
+             params.append('from', range.from);
+             params.append('to', range.to);
 
-            const response = await apiFetch(`/api/dashboard/stats?${params.toString()}`);
+             const response = await apiFetch(`/api/dashboard/stats?${params.toString()}`);
             if (response.ok) {
                const data = await response.json();
                console.log('Dashboard data received successfully:', data);
@@ -138,7 +152,7 @@ const StoreDashboard = () => {
          }
       };
       fetchStats();
-   }, [timeRange]);
+   }, [timeRange, customDates]);
 
    const pieData = [
       { name: 'Full Payment', value: Number(stats.totalSales) || 0, color: '#8b5cf6' },
@@ -263,22 +277,41 @@ const StoreDashboard = () => {
 
             {/* Right Stats Column */}
             <div className="col-span-12 lg:col-span-3 space-y-6">
-               {/* Filters */}
-               <div className="flex items-center justify-between overflow-x-auto gap-2 pb-2 scrollbar-none">
-                  {['Yesterday', 'Today', 'Week', '30 Days', 'Custom'].map(range => (
-                     <button
-                        key={range}
-                        title={`Filter metrics by ${range.toLowerCase()}`}
-                        onClick={() => setTimeRange(range)}
-                        className={`whitespace-nowrap px-2 py-2 text-[10px] font-black uppercase tracking-tighter transition-all relative ${timeRange === range ? 'text-[#003317]' : 'text-slate-400 hover:text-slate-600'}`}
-                     >
-                        {range}
-                        {timeRange === range && (
-                           <motion.div layoutId="rangeLineStore" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#003317]" />
-                        )}
-                     </button>
-                  ))}
-               </div>
+                {/* Filters */}
+                <div className="flex flex-col gap-3">
+                   <div className="flex items-center justify-between overflow-x-auto gap-2 pb-2 scrollbar-none">
+                      {['Yesterday', 'Today', 'Week', '30 Days', 'Custom'].map(range => (
+                         <button
+                            key={range}
+                            title={`Filter metrics by ${range.toLowerCase()}`}
+                            onClick={() => setTimeRange(range)}
+                            className={`whitespace-nowrap px-2 py-2 text-[10px] font-black uppercase tracking-tighter transition-all relative ${timeRange === range ? 'text-[#003317]' : 'text-slate-400 hover:text-slate-600'}`}
+                         >
+                            {range}
+                            {timeRange === range && (
+                               <motion.div layoutId="rangeLineStore" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#003317]" />
+                            )}
+                         </button>
+                      ))}
+                   </div>
+                   {timeRange === 'Custom' && (
+                      <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                         <input
+                            type="date"
+                            value={customDates.from}
+                            onChange={(e) => setCustomDates({ ...customDates, from: e.target.value })}
+                            className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-600 outline-none focus:border-[#003317]"
+                         />
+                         <span className="text-slate-300 text-[10px] font-bold">to</span>
+                         <input
+                            type="date"
+                            value={customDates.to}
+                            onChange={(e) => setCustomDates({ ...customDates, to: e.target.value })}
+                            className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-600 outline-none focus:border-[#003317]"
+                         />
+                      </div>
+                   )}
+                </div>
 
                {/* Total Orders Card */}
                <div title="View detailed store volume and throughput" className="bg-white p-6 rounded-[24px] border border-slate-100 shadow-sm relative h-[180px] flex flex-col justify-between group cursor-pointer hover:border-[#003317]/30 transition-all">

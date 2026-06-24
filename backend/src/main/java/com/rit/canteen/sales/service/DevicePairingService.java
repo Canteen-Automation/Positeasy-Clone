@@ -66,18 +66,27 @@ public class DevicePairingService {
     public Map<String, Object> registerOtp(String otp, String deviceId) {
         PairingRequest existing = pendingPairings.get(otp);
 
-        // If this OTP was already linked by admin, return the apiKey
-        if (existing != null && existing.completed && existing.deviceId.equals(deviceId)) {
-            // Clean up after delivering the key
-            pendingPairings.remove(otp);
-            return Map.of(
-                "status", "PAIRED",
-                "apiKey", existing.apiKey,
-                "terminalId", existing.terminalId
-            );
+        if (existing != null) {
+            // If this OTP was already linked by admin, return the apiKey
+            if (existing.completed) {
+                // Clean up after delivering the key
+                pendingPairings.remove(otp);
+                return Map.of(
+                    "status", "PAIRED",
+                    "apiKey", existing.apiKey,
+                    "terminalId", existing.terminalId
+                );
+            }
+            
+            // If the existing request has a placeholder device ID but this call has a real one, update it
+            if (existing.deviceId.equals("ESP32-Device") && !deviceId.equals("ESP32-Device")) {
+                pendingPairings.put(otp, new PairingRequest(otp, deviceId));
+            }
+            
+            return Map.of("status", "WAITING");
         }
 
-        // Register or refresh the OTP
+        // Register new OTP
         pendingPairings.put(otp, new PairingRequest(otp, deviceId));
 
         return Map.of("status", "WAITING");

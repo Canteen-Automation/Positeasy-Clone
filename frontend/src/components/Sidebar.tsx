@@ -80,10 +80,7 @@ const menuItems: MenuItem[] = [
           { title: 'Orders Dashboard', path: '/purchases/intent/orders-dashboard' },
           { title: 'Receives Dashboard', path: '/purchases/intent/receives-dashboard' },
           { title: 'Orders', path: '/purchases/intent/orders' },
-          { title: 'Receives', path: '/purchases/intent/receives' },
-          { title: 'Receives Summary', path: '/purchases/intent/receives-summary' },
-          { title: 'Request', path: '/purchases/intent/request' },
-          { title: 'Stores', path: '/purchases/intent/stores' }
+          { title: 'Receives', path: '/purchases/intent/receives' }
         ]
       }
     ]

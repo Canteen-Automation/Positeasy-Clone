@@ -41,7 +41,6 @@ const MyOrdersScreen: React.FC = () => {
   const [showStockAlert, setShowStockAlert] = useState(false);
   const [unavailableItems, setUnavailableItems] = useState<string[]>([]);
   const [pendingItems, setPendingItems] = useState<FoodItem[]>([]);
-  const [isRegenerating, setIsRegenerating] = useState(false);
 
   const isOrderExpired = (order: Order) => {
     if (order.isArchived) return true;
@@ -131,44 +130,6 @@ const MyOrdersScreen: React.FC = () => {
     clearCart();
     items.forEach(item => addToCart(item));
     navigate('/cart');
-  };
-
-  const handleRegenerateQR = async () => {
-    if (!selectedOrder) return;
-    setIsRegenerating(true);
-    try {
-      const token = localStorage.getItem('token');
-      const newOrderNumber = `ORD-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/${selectedOrder.id}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          ...selectedOrder,
-          orderNumber: newOrderNumber
-        })
-      });
-
-      if (response.ok) {
-        await fetchOrders();
-        // Since selectedOrder is used in the modal, we need to update it as well
-        const updated = orders.find(o => o.id === selectedOrder.id);
-        if (updated) setSelectedOrder({ ...updated, orderNumber: newOrderNumber });
-        else fetchOrders().then(() => {
-          // Fallback refresh to catch the update
-          setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, orderNumber: newOrderNumber } : o));
-          setSelectedOrder(prev => prev ? { ...prev, orderNumber: newOrderNumber } : null);
-        });
-      } else {
-        alert('Failed to regenerate sync code');
-      }
-    } catch (error) {
-      console.error('Error regenerating QR:', error);
-    } finally {
-      setIsRegenerating(false);
-    }
   };
 
   const handleProceedPartial = () => {
@@ -324,23 +285,14 @@ const MyOrdersScreen: React.FC = () => {
                   )}
                 </div>
                 <p className="modal-qr-hint">
-                  {isOrderExpired(selectedOrder) 
+                  {isOrderExpired(selectedOrder)
                     ? 'QR Expired'
-                    : selectedOrder.status.toUpperCase() === 'COMPLETED' 
-                      ? 'This order has been fulfilled' 
+                    : selectedOrder.status.toUpperCase() === 'COMPLETED'
+                      ? 'This order has been fulfilled'
                       : 'Show this QR code at the counter'}
                 </p>
-                <button 
-                  className={`regenerate-sync-btn ${isRegenerating ? 'loading' : ''}`}
-                  onClick={handleRegenerateQR}
-                  disabled={isRegenerating || isOrderExpired(selectedOrder) || selectedOrder.status.toUpperCase() === 'COMPLETED'}
-                >
-                  <RefreshCcw size={14} className={isRegenerating ? 'animate-spin' : ''} />
-                  {isRegenerating ? 'Generating...' : 'Regenerate Sync ID'}
-                </button>
-              </div>
-              
-              <div className="modal-info-list">
+                </div>
+                <div className="modal-info-list">
                 <div className="info-item">
                   <span className="label">Date</span>
                   <span className="value">{new Date(selectedOrder.createdAt).toLocaleString()}</span>

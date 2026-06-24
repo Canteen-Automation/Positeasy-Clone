@@ -80,9 +80,7 @@ function App() {
           <Route path="purchases/intent/receives-dashboard" element={<IntentDashboard title="RECEIVABLE DASHBOARD" />} />
           <Route path="purchases/intent/orders" element={<IntentList title="ORDERS" />} />
           <Route path="purchases/intent/receives" element={<IntentList title="RECEIVES" />} />
-          <Route path="purchases/intent/receives-summary" element={<PlaceholderPage title="Receives Summary" />} />
-          <Route path="purchases/intent/request" element={<PlaceholderPage title="Intent Request" />} />
-          <Route path="purchases/intent/stores" element={<PlaceholderPage title="Intent Stores" />} />
+
           
           {/* Inventory */}
           <Route path="inventory/new-arrivals" element={<NewArrivals />} />

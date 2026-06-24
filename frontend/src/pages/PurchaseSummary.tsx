@@ -19,18 +19,86 @@ import { motion } from 'framer-motion';
 
 const PurchaseSummary = () => {
    const [activeRange, setActiveRange] = useState('Today');
+   const [customDates, setCustomDates] = useState({ from: '', to: '' });
    const [data, setData] = useState<any>(null);
    const [bills, setBills] = useState<any[]>([]);
    const [isLoading, setIsLoading] = useState(true);
+
+   const toLocalISOString = (date: Date) => {
+      const tzo = -date.getTimezoneOffset(),
+         pad = (num: number) => {
+            const norm = Math.floor(Math.abs(num));
+            return (norm < 10 ? '0' : '') + norm;
+         };
+      return date.getFullYear() +
+         '-' + pad(date.getMonth() + 1) +
+         '-' + pad(date.getDate()) +
+         'T' + pad(date.getHours()) +
+         ':' + pad(date.getMinutes()) +
+         ':' + pad(date.getSeconds()) +
+         '.' + pad(date.getMilliseconds());
+   };
+
+   const getRangeDates = (range: string) => {
+      const now = new Date();
+      const start = new Date();
+      const end = new Date();
+
+      // Set end to end of today
+      end.setHours(23, 59, 59, 999);
+
+      switch (range) {
+         case 'Today':
+            start.setHours(0, 0, 0, 0);
+            break;
+         case 'Yesterday':
+            start.setDate(now.getDate() - 1);
+            start.setHours(0, 0, 0, 0);
+            end.setDate(now.getDate() - 1);
+            end.setHours(23, 59, 59, 999);
+            break;
+         case 'Week':
+            start.setDate(now.getDate() - 7);
+            start.setHours(0, 0, 0, 0);
+            break;
+         case '30 Days':
+            start.setDate(now.getDate() - 30);
+            start.setHours(0, 0, 0, 0);
+            break;
+         case 'Custom':
+            if (customDates.from && customDates.to) {
+               const from = new Date(customDates.from);
+               from.setHours(0, 0, 0, 0);
+               const to = new Date(customDates.to);
+               to.setHours(23, 59, 59, 999);
+               return { from: toLocalISOString(from), to: toLocalISOString(to) };
+            }
+            return null;
+         default:
+            start.setHours(0, 0, 0, 0);
+      }
+      return { from: toLocalISOString(start), to: toLocalISOString(end) };
+   };
 
    useEffect(() => {
       const fetchData = async () => {
          try {
             setIsLoading(true);
-            // Fetch summary and bills in parallel
+            const range = getRangeDates(activeRange);
+            if (!range) {
+               setIsLoading(false);
+               return;
+            }
+
+            const params = new URLSearchParams();
+            params.append('from', range.from);
+            params.append('to', range.to);
+            const queryStr = `?${params.toString()}`;
+
+            // Fetch summary and bills in parallel with range params
             const [summaryRes, billsRes] = await Promise.all([
-               apiFetch('/api/purchases/summary'),
-               apiFetch('/api/purchases/orders')
+               apiFetch(`/api/purchases/summary${queryStr}`),
+               apiFetch(`/api/purchases/orders${queryStr}`)
             ]);
 
             if (summaryRes.ok && billsRes.ok) {
@@ -46,7 +114,7 @@ const PurchaseSummary = () => {
          }
       };
       fetchData();
-   }, []);
+   }, [activeRange, customDates]);
 
    if (isLoading || !data) {
       return (
@@ -84,18 +152,37 @@ const PurchaseSummary = () => {
                <h1 className="text-2xl font-black text-slate-800">Summary</h1>
             </div>
 
-            <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
-               {['Yesterday', 'Today', 'Week', '30 Days'].map(range => (
-                  <button
-                     key={range}
-                     onClick={() => setActiveRange(range)}
-                     className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl ${activeRange === range ? 'text-white bg-[#003317] shadow-md shadow-[#003317]/20' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                     {range}
-                  </button>
-               ))}
-            </div>
-         </div>
+            <div className="flex flex-col items-end gap-2">
+               <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+                  {['Yesterday', 'Today', 'Week', '30 Days', 'Custom'].map(range => (
+                     <button
+                        key={range}
+                        onClick={() => setActiveRange(range)}
+                        className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-xl ${activeRange === range ? 'text-white bg-[#003317] shadow-md shadow-[#003317]/20' : 'text-slate-400 hover:text-slate-600'}`}
+                      >
+                         {range}
+                      </button>
+                   ))}
+                </div>
+                {activeRange === 'Custom' && (
+                   <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
+                      <input
+                         type="date"
+                         value={customDates.from}
+                         onChange={(e) => setCustomDates({ ...customDates, from: e.target.value })}
+                         className="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-600 outline-none focus:border-[#003317]"
+                      />
+                      <span className="text-slate-300 text-[10px] font-bold">to</span>
+                      <input
+                         type="date"
+                         value={customDates.to}
+                         onChange={(e) => setCustomDates({ ...customDates, to: e.target.value })}
+                         className="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-bold text-slate-600 outline-none focus:border-[#003317]"
+                      />
+                   </div>
+                )}
+             </div>
+          </div>
 
          <div className="grid grid-cols-12 gap-8">
             <div className="col-span-12 lg:col-span-5 space-y-6">

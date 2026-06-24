@@ -40,6 +40,10 @@ public class PurchaseService {
         return purchaseOrderRepository.findAll();
     }
 
+    public List<PurchaseOrder> getAllOrdersInRange(java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        return purchaseOrderRepository.findByDateInRange(start, end);
+    }
+
     public List<Vendor> getAllVendors() {
         return vendorRepository.findAll();
     }
@@ -120,6 +124,30 @@ public class PurchaseService {
         summary.put("unpaidCount", unpaidCount);
         
         List<Object[]> trendData = purchaseOrderRepository.getPurchaseTrend();
+        List<Map<String, Object>> trend = new ArrayList<>();
+        for (Object[] row : trendData) {
+            Map<String, Object> point = new HashMap<>();
+            point.put("date", row[0].toString());
+            point.put("amount", row[1]);
+            trend.add(point);
+        }
+        summary.put("trend", trend);
+        
+        return summary;
+    }
+
+    public Map<String, Object> getPurchaseSummaryInRange(java.time.LocalDateTime start, java.time.LocalDateTime end) {
+        Map<String, Object> summary = new HashMap<>();
+        BigDecimal total = purchaseOrderRepository.getTotalPurchaseAmountInRange(start, end);
+        BigDecimal balance = purchaseOrderRepository.getTotalBalanceAmountInRange(start, end);
+        long unpaidCount = purchaseOrderRepository.countUnpaidBillsInRange(start, end);
+        
+        summary.put("totalAmount", total != null ? total : BigDecimal.ZERO);
+        summary.put("balanceAmount", balance != null ? balance : BigDecimal.ZERO);
+        summary.put("paidAmount", (total != null ? total : BigDecimal.ZERO).subtract(balance != null ? balance : BigDecimal.ZERO));
+        summary.put("unpaidCount", unpaidCount);
+        
+        List<Object[]> trendData = purchaseOrderRepository.getPurchaseTrendInRange(start, end);
         List<Map<String, Object>> trend = new ArrayList<>();
         for (Object[] row : trendData) {
             Map<String, Object> point = new HashMap<>();

@@ -28,7 +28,12 @@ public class PurchaseController {
     private SystemNotificationService notificationService;
 
     @GetMapping("/orders")
-    public List<PurchaseOrder> getAllOrders() {
+    public List<PurchaseOrder> getAllOrders(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime to) {
+        if (from != null && to != null) {
+            return purchaseService.getAllOrdersInRange(from, to);
+        }
         return purchaseService.getAllOrders();
     }
 
@@ -83,7 +88,12 @@ public class PurchaseController {
     }
 
     @GetMapping("/summary")
-    public Map<String, Object> getSummary() {
+    public Map<String, Object> getSummary(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime from,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime to) {
+        if (from != null && to != null) {
+            return purchaseService.getPurchaseSummaryInRange(from, to);
+        }
         return purchaseService.getPurchaseSummary();
     }
 
