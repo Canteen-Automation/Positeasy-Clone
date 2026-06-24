@@ -221,7 +221,6 @@ const Login = () => {
       >
         <div className="flex flex-col">
           <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Merchant Partner</span>
-          <span className="text-xs font-bold text-[#001828] mt-0.5">Rajalakshmi Institute of Technology</span>
         </div>
         <img src={ritLogo} alt="RIT Logo" className="h-12 w-auto object-contain filter drop-shadow-sm" />
       </motion.div>

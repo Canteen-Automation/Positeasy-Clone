@@ -93,9 +93,43 @@ a {
 }
 
 .loading-spinner {
-  padding: 20px;
-  color: var(--primary);
-  font-weight: 600;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 12px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  animation: none !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 20px !important;
+  color: var(--primary) !important;
+  font-weight: 600 !important;
+}
+
+.loading-spinner::before {
+  content: '' !important;
+  display: block !important;
+  width: 48px !important;
+  height: 48px !important;
+  background-image: url('./assets/tillo_spinner.gif') !important;
+  background-size: contain !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+.loading-spinner-small {
+  width: 18px !important;
+  height: 18px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  animation: none !important;
+  background-image: url('./assets/tillo_spinner.gif') !important;
+  background-size: contain !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  display: inline-block !important;
 }
 
 /* Global QR Overlay Styles */
@@ -110,13 +144,18 @@ a {
 }
 
 .qr-completed canvas,
-.qr-expired canvas {
+.qr-expired canvas,
+.qr-cancelled canvas {
   filter: blur(8px) !important;
   opacity: 0.6 !important;
 }
 
 .qr-expired canvas {
   filter: blur(12px) grayscale(100%) !important;
+}
+
+.qr-cancelled canvas {
+  filter: blur(10px) !important;
 }
 
 .qr-overlay {
@@ -150,6 +189,10 @@ a {
   background: #374151 !important;
 }
 
+.overlay-text.cancelled {
+  background: #dc2626 !important;
+}
+
 .overlay-text.mini {
   padding: 4px 8px;
   font-size: 0.75rem;
@@ -157,7 +200,8 @@ a {
 }
 
 .latest-qr-wrapper.qr-completed canvas,
-.latest-qr-wrapper.qr-expired canvas {
+.latest-qr-wrapper.qr-expired canvas,
+.latest-qr-wrapper.qr-cancelled canvas {
   filter: blur(4px) !important;
 }
 

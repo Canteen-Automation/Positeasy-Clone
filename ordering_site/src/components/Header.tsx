@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, User, ShoppingBag, LogOut } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import ritLogo from '../assets/RIT_Logo.png';
+import tilloLogo from '../assets/Tillo.png';
 import './Header.css';
 
 interface HeaderProps {
@@ -33,8 +33,8 @@ const Header: React.FC<HeaderProps> = ({ title, onBack, showCart = true }) => {
         ) : (
           <div className="header-logo-container">
             <img 
-              src={ritLogo} 
-              alt="RIT Logo" 
+              src={tilloLogo} 
+              alt="Tillo Logo" 
               className="header-logo" 
               onClick={() => navigate('/')} 
             />

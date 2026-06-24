@@ -41,6 +41,8 @@ const MyOrdersScreen: React.FC = () => {
   const [showStockAlert, setShowStockAlert] = useState(false);
   const [unavailableItems, setUnavailableItems] = useState<string[]>([]);
   const [pendingItems, setPendingItems] = useState<FoodItem[]>([]);
+  
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const isOrderExpired = (order: Order) => {
     if (order.isArchived) return true;
@@ -126,6 +128,35 @@ const MyOrdersScreen: React.FC = () => {
     }
   };
 
+  const handleCancelOrder = async (orderId: number) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return;
+    
+    setIsCancelling(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://${window.location.hostname}:8080/api/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      const data = await response.json();
+      if (data.success) {
+        fetchOrders();
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder({ ...selectedOrder, status: 'CANCELLED' });
+        }
+      } else {
+        alert(data.message || 'Failed to cancel order');
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      alert('Error cancelling order');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const performRepeat = (items: FoodItem[]) => {
     clearCart();
     items.forEach(item => addToCart(item));
@@ -170,12 +201,17 @@ const MyOrdersScreen: React.FC = () => {
                     <div className="order-status-badge">{latestOrder.status}</div>
                   </div>
                   
-                  <div className={`latest-qr-wrapper ${latestOrder.status.toUpperCase() === 'COMPLETED' ? 'qr-completed' : ''} ${isOrderExpired(latestOrder) ? 'qr-expired' : ''}`}>
+                  <div className={`latest-qr-wrapper ${latestOrder.status.toUpperCase() === 'COMPLETED' ? 'qr-completed' : ''} ${latestOrder.status.toUpperCase() === 'CANCELLED' ? 'qr-cancelled' : ''} ${isOrderExpired(latestOrder) ? 'qr-expired' : ''}`}>
                     <div className="qr-container">
                       <QRCodeCanvas value={latestOrder.orderNumber} size={120} className="mini-qr" />
                       {latestOrder.status.toUpperCase() === 'COMPLETED' && (
                         <div className="qr-overlay mini">
                           <span className="overlay-text mini">COMPLETED</span>
+                        </div>
+                      )}
+                      {latestOrder.status.toUpperCase() === 'CANCELLED' && (
+                        <div className="qr-overlay mini">
+                          <span className="overlay-text mini cancelled">CANCELLED</span>
                         </div>
                       )}
                       {isOrderExpired(latestOrder) && (
@@ -185,7 +221,7 @@ const MyOrdersScreen: React.FC = () => {
                       )}
                     </div>
                     <div className="qr-hint-text">
-                      {isOrderExpired(latestOrder) ? 'QR Expired' : (latestOrder.status.toUpperCase() === 'COMPLETED' ? 'Order Fulfilled' : 'Tap to enlarge QR')}
+                      {isOrderExpired(latestOrder) ? 'QR Expired' : (latestOrder.status.toUpperCase() === 'COMPLETED' ? 'Order Fulfilled' : latestOrder.status.toUpperCase() === 'CANCELLED' ? 'Order Cancelled' : 'Tap to enlarge QR')}
                     </div>
                   </div>
                   
@@ -200,15 +236,31 @@ const MyOrdersScreen: React.FC = () => {
                     <span className="amount-text">R{latestOrder.totalAmount.toFixed(2)}</span>
                   </div>
 
-                  <button 
-                    className="repeat-order-btn mini" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRepeatOrder(latestOrder);
-                    }}
-                  >
-                    <RefreshCcw size={16} /> Repeat Order
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      className="repeat-order-btn mini" 
+                      style={{ flex: 1 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRepeatOrder(latestOrder);
+                      }}
+                    >
+                      <RefreshCcw size={16} /> Repeat
+                    </button>
+                    {latestOrder.status.toUpperCase() !== 'COMPLETED' && latestOrder.status.toUpperCase() !== 'CANCELLED' && !isOrderExpired(latestOrder) && (
+                      <button 
+                        className="repeat-order-btn mini" 
+                        style={{ flex: 1, backgroundColor: '#fee2e2', color: '#dc2626' }}
+                        disabled={isCancelling}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCancelOrder(latestOrder.id);
+                        }}
+                      >
+                        <X size={16} /> Cancel
+                      </button>
+                    )}
+                  </div>
                 </div>
               </section>
             )}
@@ -270,12 +322,17 @@ const MyOrdersScreen: React.FC = () => {
                 <p className="modal-order-id">Order #{selectedOrder.displayOrderId}</p>
               </div>
               
-              <div className={`modal-qr-section ${selectedOrder.status.toUpperCase() === 'COMPLETED' ? 'qr-completed' : ''} ${isOrderExpired(selectedOrder) ? 'qr-expired' : ''}`}>
+              <div className={`modal-qr-section ${selectedOrder.status.toUpperCase() === 'COMPLETED' ? 'qr-completed' : ''} ${selectedOrder.status.toUpperCase() === 'CANCELLED' ? 'qr-cancelled' : ''} ${isOrderExpired(selectedOrder) ? 'qr-expired' : ''}`}>
                 <div className="qr-container">
                   <QRCodeCanvas value={selectedOrder.orderNumber} size={200} includeMargin={true} />
                   {selectedOrder.status.toUpperCase() === 'COMPLETED' && (
                     <div className="qr-overlay">
                       <span className="overlay-text">COMPLETED</span>
+                    </div>
+                  )}
+                  {selectedOrder.status.toUpperCase() === 'CANCELLED' && (
+                    <div className="qr-overlay">
+                      <span className="overlay-text cancelled">CANCELLED</span>
                     </div>
                   )}
                   {isOrderExpired(selectedOrder) && (
@@ -289,7 +346,9 @@ const MyOrdersScreen: React.FC = () => {
                     ? 'QR Expired'
                     : selectedOrder.status.toUpperCase() === 'COMPLETED'
                       ? 'This order has been fulfilled'
-                      : 'Show this QR code at the counter'}
+                      : selectedOrder.status.toUpperCase() === 'CANCELLED'
+                        ? 'This order has been cancelled'
+                        : 'Show this QR code at the counter'}
                 </p>
                 </div>
                 <div className="modal-info-list">
@@ -323,9 +382,21 @@ const MyOrdersScreen: React.FC = () => {
                 </div>
               </div>
 
-              <button className="repeat-order-btn" onClick={() => handleRepeatOrder(selectedOrder)}>
-                <RefreshCcw size={18} /> Repeat this order
-              </button>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                <button className="repeat-order-btn" style={{ flex: 1, marginTop: 0 }} onClick={() => handleRepeatOrder(selectedOrder)}>
+                  <RefreshCcw size={18} /> Repeat
+                </button>
+                {selectedOrder.status.toUpperCase() !== 'COMPLETED' && selectedOrder.status.toUpperCase() !== 'CANCELLED' && !isOrderExpired(selectedOrder) && (
+                  <button 
+                    className="repeat-order-btn" 
+                    style={{ flex: 1, marginTop: 0, backgroundColor: '#fee2e2', color: '#dc2626' }}
+                    disabled={isCancelling}
+                    onClick={() => handleCancelOrder(selectedOrder.id)}
+                  >
+                    <X size={18} /> Cancel
+                  </button>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}

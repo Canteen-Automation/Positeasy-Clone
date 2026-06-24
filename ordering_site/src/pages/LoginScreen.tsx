@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, User as UserIcon, Lock, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import tilloLogo from '../assets/Tillo.png';
 import ritLogo from '../assets/RIT_Logo.png';
 import './LoginScreen.css';
 
@@ -91,7 +92,7 @@ const LoginScreen: React.FC = () => {
       <div className="login-content">
         <div className="login-card animate-slideUp">
           <div className="login-header-logo flex flex-col items-center justify-center">
-            <img src={ritLogo} alt="RIT Logo" className="rit-logo" />
+            <img src={tilloLogo} alt="Tillo Logo" className="tillo-logo" />
             <span className="login-tagline">Till yo tummy is full...</span>
           </div>
 
@@ -212,6 +213,13 @@ const LoginScreen: React.FC = () => {
               </button>
             </form>
           )}
+        </div>
+
+        <div className="login-merchant-card animate-slideUp">
+          <div className="merchant-info">
+            <span className="merchant-label">Merchant Partner</span>
+          </div>
+          <img src={ritLogo} alt="RIT Logo" className="merchant-rit-logo" />
         </div>
 
         <div className="login-footer-info">

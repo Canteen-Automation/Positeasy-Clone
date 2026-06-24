@@ -190,6 +190,23 @@ const Orders: React.FC = () => {
     }
   };
 
+  const handleCancelOrder = async (orderId: number) => {
+    if (!window.confirm('Are you sure you want to cancel this order? Tokens will be refunded.')) return;
+    try {
+      const response = await apiFetch(`http://${window.location.hostname}:8080/api/orders/${orderId}/cancel`, {
+        method: 'POST'
+      });
+      if (response.ok) {
+        setShowActionMenu(false);
+        fetchOrders();
+      } else {
+        alert('Failed to cancel order');
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+    }
+  };
+
   const handleEditOrder = () => {
     if (!selectedOrder) return;
     setEditingItems([...selectedOrder.items]);
@@ -604,6 +621,14 @@ const Orders: React.FC = () => {
                               >
                                 <RotateCcw size={14} className="text-amber-500" /> Mark Undelivered
                               </button>
+                              {selectedOrder.status.toUpperCase() !== 'CANCELLED' && selectedOrder.status.toUpperCase() !== 'COMPLETED' && (
+                                <button 
+                                  onClick={() => handleCancelOrder(selectedOrder.id)}
+                                  className="w-full text-left px-4 py-3 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-3 transition-colors cursor-pointer"
+                                >
+                                  <XIcon size={14} className="text-rose-600" /> Cancel Order
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>

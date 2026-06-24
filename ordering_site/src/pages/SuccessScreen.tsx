@@ -23,7 +23,7 @@ const SuccessScreen: React.FC = () => {
         <h1 className="success-title">Order Placed!</h1>
         <p className="success-order-id">Order ID #{displayOrderId}</p>
         
-        <div className={`qr-container ${status === 'COMPLETED' ? 'qr-completed' : ''} ${archived ? 'qr-expired' : ''}`}>
+        <div className={`qr-container ${status === 'COMPLETED' ? 'qr-completed' : ''} ${status === 'CANCELLED' ? 'qr-cancelled' : ''} ${archived ? 'qr-expired' : ''}`}>
           <div className="qr-wrapper-inner">
             <QRCodeCanvas 
               value={orderNumber} 
@@ -37,6 +37,11 @@ const SuccessScreen: React.FC = () => {
                 <span className="overlay-text">COMPLETED</span>
               </div>
             )}
+            {status === 'CANCELLED' && (
+              <div className="qr-overlay">
+                <span className="overlay-text cancelled">CANCELLED</span>
+              </div>
+            )}
             {archived && (
               <div className="qr-overlay">
                 <span className="overlay-text expired">EXPIRED</span>
@@ -48,7 +53,9 @@ const SuccessScreen: React.FC = () => {
               ? 'This order has expired' 
               : status === 'COMPLETED'
                 ? 'Order has been fulfilled'
-                : 'Scan this QR at the counter to collect your food'}
+                : status === 'CANCELLED'
+                  ? 'Order has been cancelled'
+                  : 'Scan this QR at the counter to collect your food'}
           </p>
         </div>
         

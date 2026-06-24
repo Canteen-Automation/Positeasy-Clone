@@ -173,3 +173,18 @@
     font-size: 10pt !important;
   }
 }
+
+/* Tillo Spinner Replacement for Admin Dashboard */
+.animate-spin {
+  animation: none !important;
+  border-color: transparent !important;
+  border-top-color: transparent !important;
+  background-image: url('./assets/tillo_spinner.gif') !important;
+  background-size: contain !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+.animate-spin * {
+  display: none !important;
+}

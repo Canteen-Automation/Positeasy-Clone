@@ -82,7 +82,7 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ order, userName, userId, 
       >
         <div className="feedback-header">
           <h2>Rate Your Meal</h2>
-          <p>How was your experience with Order #{order.orderNumber.split('-')[1]}?</p>
+          <p>How was your experience?</p>
         </div>
 
         <form onSubmit={handleSubmit} className="feedback-body">

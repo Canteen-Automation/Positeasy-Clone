@@ -6,3 +6,18 @@
   --color-background: #f4fbf7;
   --font-inter: "Inter", sans-serif;
 }
+
+/* Tillo Spinner Replacement for Counter Dashboard */
+.animate-spin {
+  animation: none !important;
+  border-color: transparent !important;
+  border-top-color: transparent !important;
+  background-image: url('./assets/tillo_spinner.gif') !important;
+  background-size: contain !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+.animate-spin * {
+  display: none !important;
+}

@@ -224,6 +224,35 @@ public class OrderController {
         return ResponseEntity.ok(orderRepository.findByUserIdOrderByCreatedAtDesc(userId));
     }
 
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelOrder(@PathVariable Long id) {
+        try {
+            return orderRepository.findById(id).map(order -> {
+                // ── SECURITY: Verify ownership of order ──
+                Long tokenUserId = getTokenUserId();
+                if (tokenUserId != null && !tokenUserId.equals(order.getUserId()) && !isStaff()) {
+                    return ResponseEntity.status(403).body(Map.of("error", "Access denied"));
+                }
+                
+                String oldStatus = order.getStatus();
+                if ("COMPLETED".equalsIgnoreCase(oldStatus) || "DELIVERED".equalsIgnoreCase(oldStatus) || "CANCELLED".equalsIgnoreCase(oldStatus)) {
+                    return ResponseEntity.status(400).body(Map.of("error", "Cannot cancel an order that is already " + oldStatus));
+                }
+
+                if ("RITZ_TOKEN".equals(order.getPaymentMethod())) {
+                    tokenService.refund(order.getUserId(), "ORD-" + order.getDisplayOrderId(),
+                                        order.getTotalAmount(), "Order Cancelled");
+                }
+                
+                order.setStatus("CANCELLED");
+                orderRepository.save(order);
+                return ResponseEntity.ok(Map.of("success", true, "message", "Order cancelled successfully"));
+            }).orElse(ResponseEntity.notFound().build());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
+    }
+
     // ── STAFF/MASTER: order management ────────────────────────────────────
 
     @PatchMapping("/{id}/status")

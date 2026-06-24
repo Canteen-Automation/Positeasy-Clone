@@ -81,6 +81,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/auth/change-pin").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/auth/users/*").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/api/orders/*").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/orders/*/cancel").authenticated()
                 .requestMatchers("/api/counter/**").hasAnyRole("MASTER", "MANAGER", "STAFF")
 
                 // ── STAFF/MANAGER/MASTER: All other management APIs ──
