@@ -194,8 +194,11 @@ const Sidebar = () => {
   return (
     <div className="w-64 bg-white h-screen border-r border-[#e2e8f0] flex flex-col fixed left-0 top-0 z-50 shadow-sm overflow-hidden font-inter">
       {/* Branding Section */}
-      <div className="px-5 pt-8 pb-4 flex justify-center items-center w-full">
+      <div className="px-5 pt-8 pb-4 flex flex-col justify-center items-center w-full">
         <img src={collegeLogo} alt="Branding" className="h-14 w-auto object-contain brightness-[1.05]" />
+        <span className="text-[10px] font-semibold text-slate-400 mt-1 italic tracking-wide font-sans">
+          Till yo tummy is full...
+        </span>
       </div>
       {/* Premium Search Integration (Modern Dashboards usually have this) */}
       <div className="px-3 mb-4">

@@ -90,8 +90,9 @@ const LoginScreen: React.FC = () => {
 
       <div className="login-content">
         <div className="login-card animate-slideUp">
-          <div className="login-header-logo">
+          <div className="login-header-logo flex flex-col items-center justify-center">
             <img src={ritLogo} alt="RIT Logo" className="rit-logo" />
+            <span className="login-tagline">Till yo tummy is full...</span>
           </div>
 
           <div className="login-header">

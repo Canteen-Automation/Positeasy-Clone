@@ -38,8 +38,11 @@ const Layout = () => {
       <aside className="w-64 bg-[#001828] text-white flex flex-col shadow-2xl z-50">
         <div className="p-8">
           <div className="flex flex-col items-center justify-center text-center gap-4">
-            <div className="bg-white rounded-2xl p-4 flex items-center justify-center border border-white/20 shadow-xl overflow-hidden w-full max-w-[180px]">
+            <div className="bg-white rounded-2xl p-4 flex flex-col items-center justify-center border border-white/20 shadow-xl overflow-hidden w-full max-w-[180px]">
               <img src={CollegeLogo} alt="Logo" className="h-12 w-auto object-contain" />
+              <span className="text-[9px] font-semibold text-slate-500 mt-1.5 italic tracking-tight font-sans">
+                Till yo tummy is full...
+              </span>
             </div>
             <div>
               <span className="text-xl font-black tracking-tighter text-white">TILLO COUNTER</span>

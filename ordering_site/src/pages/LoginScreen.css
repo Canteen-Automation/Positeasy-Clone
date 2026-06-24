@@ -62,6 +62,15 @@
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
 }
 
+.login-tagline {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 8px;
+  font-style: italic;
+  letter-spacing: 0.3px;
+}
+
 .login-header {
   position: relative;
   text-align: center;

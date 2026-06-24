@@ -31,12 +31,15 @@ const Header: React.FC<HeaderProps> = ({ title, onBack, showCart = true }) => {
         {title && title !== "Tillo Canteen" ? (
           <h1 className="header-title">{title}</h1>
         ) : (
-          <img 
-            src={ritLogo} 
-            alt="RIT Logo" 
-            className="header-logo" 
-            onClick={() => navigate('/')} 
-          />
+          <div className="header-logo-container">
+            <img 
+              src={ritLogo} 
+              alt="RIT Logo" 
+              className="header-logo" 
+              onClick={() => navigate('/')} 
+            />
+            <span className="header-tagline">Till yo tummy is full...</span>
+          </div>
         )}
       </div>
 

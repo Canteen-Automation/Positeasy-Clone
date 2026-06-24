@@ -65,9 +65,12 @@ const Login = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
+          className="mb-10 flex flex-col items-center justify-center"
         >
           <img src={CollegeLogo} alt="College Logo" className="h-16 md:h-20 object-contain" />
+          <span className="text-[10px] font-semibold text-slate-400 mt-2 italic tracking-wide font-sans">
+            Till yo tummy is full...
+          </span>
         </motion.div>
 
         {/* Login Container */}
