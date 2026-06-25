@@ -1,6 +1,6 @@
-# Positeasy Clone - Canteen Automation Ecosystem
+# Tillo POS Software
 
-Welcome to the **Positeasy Clone**, a comprehensive Canteen Automation Ecosystem. This project is designed to handle point-of-sale (POS), inventory management, user ordering, and administrative tasks for canteen operations.
+Welcome to the **Tillo POS Software**, a comprehensive Canteen Automation Ecosystem. This project is designed to handle point-of-sale (POS), inventory management, user ordering, and administrative tasks for canteen operations.
 
 ## 🏗️ Ecosystem Architecture
 
