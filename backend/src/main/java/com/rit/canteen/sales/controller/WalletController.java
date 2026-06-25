@@ -80,8 +80,8 @@ public class WalletController {
             BigDecimal amount = new BigDecimal(request.get("amount").toString());
 
             // ── FIX: validate amount BEFORE touching the database ──
-            if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Amount must be positive"));
+            if (amount.compareTo(new BigDecimal("50")) < 0) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Minimum top up amount is 50 tokens"));
             }
             if (amount.compareTo(MAX_TOPUP) > 0) {
                 return ResponseEntity.badRequest().body(
