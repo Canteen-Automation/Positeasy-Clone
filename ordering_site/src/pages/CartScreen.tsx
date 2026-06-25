@@ -7,7 +7,7 @@ import './CartScreen.css';
 
 const CartScreen: React.FC = () => {
   const navigate = useNavigate();
-  const { cart, updateQuantity, removeFromCart, totalPrice, totalItems } = useCart();
+  const { cart, updateQuantity, removeFromCart, toggleParcel, totalPrice, totalItems } = useCart();
 
   if (cart.length === 0) {
     return (
@@ -45,8 +45,23 @@ const CartScreen: React.FC = () => {
                   </button>
                 </div>
                 
+                {item.parcellable && (
+                  <div className="cart-item-parcel-toggle" style={{ margin: '4px 0', display: 'flex', alignItems: 'center' }}>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-500 font-semibold">
+                      <input 
+                        type="checkbox" 
+                        checked={!!item.isParcel} 
+                        onChange={() => toggleParcel(item.id)} 
+                        className="w-3.5 h-3.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                        style={{ marginRight: '6px' }}
+                      />
+                      <span>Pack as Parcel</span>
+                    </label>
+                  </div>
+                )}
+                
                 <div className="cart-item-footer">
-                  <span className="cart-item-price">🅡{(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="cart-item-price">🅡{((item.price + (item.isParcel ? 5 : 0)) * item.quantity).toFixed(2)}</span>
                   
                   <div className="cart-quantity-controls">
                     <button onClick={() => updateQuantity(item.id, -1)}>

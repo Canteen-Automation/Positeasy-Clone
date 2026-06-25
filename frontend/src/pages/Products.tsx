@@ -1,4 +1,4 @@
-﻿import { apiFetch } from '../api';
+import { apiFetch } from '../api';
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, X, Search, Filter, MoreVertical, RefreshCw, Edit2, Power, PowerOff, Tag, Package, Image as ImageIcon, Barcode, DollarSign, ChevronDown, Clock, Check, Trash2, Database } from 'lucide-react';
 import Pagination from '../components/Pagination';
@@ -36,6 +36,7 @@ interface Product {
   active: boolean;
   stock: number;
   stalls?: { id: number; name: string }[];
+  parcellable?: boolean;
 }
 
 interface Stall {
@@ -69,14 +70,15 @@ const emptyProduct: Product = {
   parcelCharges: 0,
   barcode: '',
   attributesOptional: false,
-  veg: false,
+  veg: true,
   hasAllergy: false,
   parcelNotAllowed: false,
   sessionOptional: false,
   sessions: getDefaultSessions(),
   imageData: '',
   active: true,
-  stock: 0
+  stock: 0,
+  parcellable: false
 };
 
 const Products = () => {
@@ -529,16 +531,29 @@ const Products = () => {
               <div className="mt-8 space-y-6">
                 <div className="flex flex-wrap gap-8 p-6 bg-gray-50 rounded-2xl border border-[#e2e8f0]">
                   <div className="flex flex-col gap-4 min-w-[200px]">
-                    <div className="flex items-center justify-between gap-4">
-                      <div><p className="text-sm font-bold text-[#1e293b]">Additional Attributes</p></div>
-                      <button type="button" onClick={() => setFormData({ ...formData, attributesOptional: !formData.attributesOptional })} className={`w-11 h-6 rounded-full relative transition-all ${formData.attributesOptional ? 'bg-[#001828]' : 'bg-gray-300'}`}><div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${formData.attributesOptional ? 'translate-x-5' : ''}`} /></button>
+                    <div><p className="text-sm font-bold text-[#1e293b]">Additional Attributes</p></div>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer p-3 bg-white rounded-2xl border border-[#e2e8f0] shadow-sm hover:bg-gray-50 transition-all select-none">
+                        <input type="checkbox" checked={!formData.veg} onChange={(e) => setFormData({ ...formData, veg: !e.target.checked })} className="w-4 h-4 rounded text-[#001828]" />
+                        <span className="text-xs font-semibold">Non-Veg</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer p-3 bg-white rounded-2xl border border-[#e2e8f0] shadow-sm hover:bg-gray-50 transition-all select-none">
+                        <input type="checkbox" checked={formData.hasAllergy} onChange={(e) => setFormData({ ...formData, hasAllergy: e.target.checked })} className="w-4 h-4 rounded text-[#001828]" />
+                        <span className="text-xs font-semibold">Allergy</span>
+                      </label>
                     </div>
-                    {formData.attributesOptional && (
-                      <div className="flex gap-4 animate-in fade-in slide-in-from-left-2">
-                        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={formData.veg} onChange={(e) => setFormData({ ...formData, veg: e.target.checked })} className="w-4 h-4 rounded text-[#001828]" /><span className="text-xs font-semibold">Veg</span></label>
-                        <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={formData.hasAllergy} onChange={(e) => setFormData({ ...formData, hasAllergy: e.target.checked })} className="w-4 h-4 rounded text-[#001828]" /><span className="text-xs font-semibold">Allergy</span></label>
-                      </div>
-                    )}
+                  </div>
+
+                  <div className="flex flex-col justify-center min-w-[150px]">
+                    <label className="flex items-center gap-3 cursor-pointer p-4 bg-white rounded-2xl border border-[#e2e8f0] shadow-sm hover:bg-gray-50 transition-all select-none">
+                      <input 
+                        type="checkbox" 
+                        checked={formData.parcellable} 
+                        onChange={(e) => setFormData({ ...formData, parcellable: e.target.checked })} 
+                        className="w-4 h-4 rounded text-[#001828] border-gray-300 focus:ring-[#001828]" 
+                      />
+                      <span className="text-sm font-bold text-[#1e293b]">Parcellable</span>
+                    </label>
                   </div>
 
                   <div className="flex flex-col gap-4 min-w-[200px]">

@@ -1,22 +1,31 @@
 import React from 'react';
 import type { FoodItem } from '../types';
 import { useParams } from 'react-router-dom';
-import { AlertCircle, Star, ChevronRight } from 'lucide-react';
+import { AlertCircle, Star } from 'lucide-react';
 import Header from '../components/Header';
 import { useCart } from '../contexts/CartContext';
 import { useFood } from '../contexts/FoodContext';
 import CartTab from '../components/CartTab';
+import { VegNonVegIcon } from '../components/ItemCard';
 import './ItemDetailScreen.css';
 
 const ItemDetailScreen: React.FC = () => {
   const { itemId } = useParams<{ itemId: string }>();
-  const { addToCart, updateQuantity, getItemQuantity } = useCart();
+  const { cart, addToCart, updateQuantity, getItemQuantity, toggleParcel } = useCart();
   const { foodItems, isLoading: isGlobalLoading } = useFood();
   const [fetchedItem, setFetchedItem] = React.useState<FoodItem | null>(null);
   const [isFetching, setIsFetching] = React.useState(false);
+  const [isParcel, setIsParcel] = React.useState(false);
   
   const contextItem = foodItems.find((i) => i.id === itemId);
   const item = contextItem || fetchedItem;
+
+  const cartItem = cart.find((i) => i.id === itemId);
+  React.useEffect(() => {
+    if (cartItem) {
+      setIsParcel(!!cartItem.isParcel);
+    }
+  }, [cartItem]);
 
   React.useEffect(() => {
     if (!contextItem && itemId) {
@@ -33,6 +42,23 @@ const ItemDetailScreen: React.FC = () => {
             
             const stallInfo = data.stalls && data.stalls.length > 0 ? data.stalls[0] : null;
             
+            // Fetch product rating stats as well
+            let finalRating = 5.0;
+            let finalRatingCount = 0;
+            try {
+              const token = localStorage.getItem('token');
+              const statsRes = await fetch(`http://${window.location.hostname}:8080/api/feedback/item-stats?productName=${encodeURIComponent(data.name)}`, {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+              });
+              if (statsRes.ok) {
+                const statsData = await statsRes.json();
+                finalRating = statsData.averageRating || 5.0;
+                finalRatingCount = statsData.totalReviews || 0;
+              }
+            } catch (statsErr) {
+              console.error('Error fetching individual product feedback stats:', statsErr);
+            }
+
             const mappedItem: FoodItem = {
               id: data.id.toString(),
               name: data.name,
@@ -44,7 +70,10 @@ const ItemDetailScreen: React.FC = () => {
               isPopular: data.active,
               stock: data.stock,
               stallId: stallInfo?.id?.toString(),
-              stallName: stallInfo?.name
+              stallName: stallInfo?.name,
+              rating: finalRating,
+              ratingCount: finalRatingCount,
+              parcellable: data.parcellable
             };
             setFetchedItem(mappedItem);
           }
@@ -87,7 +116,8 @@ const ItemDetailScreen: React.FC = () => {
   const isLimitReached = item.stock !== undefined && quantity >= item.stock && item.stock > 0;
 
   // Visual helper values matching mockup metadata
-  const rating = 4.5;
+  const rating = item.rating !== undefined ? item.rating : 5.0;
+  const ratingCount = item.ratingCount !== undefined ? item.ratingCount : 0;
 
   return (
     <div className={`container item-detail-page ${item.stock === 0 ? 'out-of-stock' : ''}`}>
@@ -109,8 +139,11 @@ const ItemDetailScreen: React.FC = () => {
         <div className="item-details-content">
           <div className="item-title-section">
             <div className="title-left">
-              <h1 className="item-name-large">{item.name}</h1>
-              <p className="item-subtitle">{item.stallName || '54 Summit Street.'}</p>
+              <div className="detail-title-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                <VegNonVegIcon isVeg={item.isVeg} />
+                <h1 className="item-name-large" style={{ margin: 0 }}>{item.name}</h1>
+              </div>
+              <p className="item-subtitle" style={{ marginTop: '4px' }}>{item.stallName || 'Unknown Stall'}</p>
             </div>
             
             <div className="title-right" onClick={(e) => e.stopPropagation()}>
@@ -122,7 +155,7 @@ const ItemDetailScreen: React.FC = () => {
                 >−</button>
                 <span className="qty-val">{quantity}</span>
                 <button 
-                  onClick={() => addToCart(item)} 
+                  onClick={() => addToCart(item, isParcel)} 
                   disabled={isLimitReached || item.stock === 0}
                   className="qty-btn"
                 >+</button>
@@ -130,21 +163,47 @@ const ItemDetailScreen: React.FC = () => {
             </div>
           </div>
 
-          <div className="detail-badges-row">
-            <div className="badge-item star">
-              <Star size={14} fill="currentColor" />
-              <span>{rating}</span>
+          {ratingCount > 0 ? (
+            <div className="detail-badges-row">
+              <div className="badge-item star">
+                <Star size={14} fill="currentColor" />
+                <span>{rating.toFixed(1)} ({ratingCount} {ratingCount === 1 ? 'review' : 'reviews'})</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="detail-badges-row">
+              <div className="badge-item star empty-rating">
+                <Star size={14} className="text-slate-300" />
+                <span>No reviews yet</span>
+              </div>
+            </div>
+          )}
 
           <div className="item-description-section">
             <p className="item-long-description">
               {item.longDescription || item.description || 'Quality food prepared with fresh ingredients, crafted with care for a premium taste experience.'}
             </p>
-            <button className="customize-trigger">
-              Customize <ChevronRight size={14} />
-            </button>
           </div>
+
+          {item.parcellable && (
+            <div className="item-parcel-option mb-5">
+              <label className="flex items-center gap-3 cursor-pointer p-4 bg-emerald-50/50 rounded-2xl border border-emerald-100/50 hover:bg-emerald-50 transition-all select-none">
+                <input 
+                  type="checkbox" 
+                  checked={isParcel} 
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setIsParcel(checked);
+                    if (quantity > 0) {
+                      toggleParcel(item.id);
+                    }
+                  }} 
+                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                />
+                <span className="text-sm font-bold text-slate-800">Parcel (+🅡5.00)</span>
+              </label>
+            </div>
+          )}
 
           <div className="item-extra-info">
             <div className="info-row">
@@ -175,7 +234,7 @@ const ItemDetailScreen: React.FC = () => {
       <footer className="item-footer">
         <div className="footer-price-info">
           <span className="total-label">Total amount</span>
-          <span className="total-value">🅡{(item.price * Math.max(1, quantity)).toFixed(2)}</span>
+          <span className="total-value">🅡{((item.price + (isParcel ? 5 : 0)) * Math.max(1, quantity)).toFixed(2)}</span>
         </div>
         
         <div className="footer-action">
@@ -183,7 +242,7 @@ const ItemDetailScreen: React.FC = () => {
             className="primary-action-button"
             onClick={() => {
               if (quantity === 0) {
-                addToCart(item);
+                addToCart(item, isParcel);
               } else {
                 // Already in cart, go to cart screen or show visual confirmation
                 window.history.back();

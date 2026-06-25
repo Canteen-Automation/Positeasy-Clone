@@ -3,9 +3,10 @@ import type { FoodItem, CartItem } from '../types';
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (item: FoodItem) => void;
+  addToCart: (item: FoodItem, isParcel?: boolean) => void;
   removeFromCart: (itemId: string) => void;
   updateQuantity: (itemId: string, delta: number) => void;
+  toggleParcel: (itemId: string) => void;
   clearCart: () => void;
   getItemQuantity: (itemId: string) => number;
   totalItems: number;
@@ -29,7 +30,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearStockError = () => setStockError(null);
 
-  const addToCart = (item: FoodItem) => {
+  const addToCart = (item: FoodItem, isParcel?: boolean) => {
     setCart((prevCart) => {
       const existingIndex = prevCart.findIndex((i) => i.id === item.id);
       
@@ -45,11 +46,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         newCart[existingIndex] = {
           ...newCart[existingIndex],
           quantity: newCart[existingIndex].quantity + 1,
+          isParcel: isParcel !== undefined ? isParcel : newCart[existingIndex].isParcel
         };
         return newCart;
       }
-      return [...prevCart, { ...item, quantity: 1 }];
+      return [...prevCart, { ...item, quantity: 1, isParcel: !!isParcel }];
     });
+  };
+
+  const toggleParcel = (itemId: string) => {
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.id === itemId ? { ...item, isParcel: !item.isParcel } : item
+      )
+    );
   };
 
   const removeFromCart = (itemId: string) => {
@@ -92,7 +102,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const totalPrice = cart.reduce((sum, item) => sum + (item.price + (item.isParcel ? 5 : 0)) * item.quantity, 0);
 
   return (
     <CartContext.Provider
@@ -101,6 +111,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addToCart,
         removeFromCart,
         updateQuantity,
+        toggleParcel,
         clearCart,
         getItemQuantity,
         totalItems,

@@ -49,10 +49,12 @@ public class Product {
     private boolean attributesOptional;
 
     // Additional Attributes
-    private boolean isVeg;
+    private boolean isVeg = true;
     private boolean hasAllergy;
 
     private boolean parcelNotAllowed;
+
+    private boolean parcellable;
 
     private boolean sessionOptional;
 
@@ -132,6 +134,9 @@ public class Product {
 
     public boolean isParcelNotAllowed() { return parcelNotAllowed; }
     public void setParcelNotAllowed(boolean parcelNotAllowed) { this.parcelNotAllowed = parcelNotAllowed; }
+
+    public boolean isParcellable() { return parcellable; }
+    public void setParcellable(boolean parcellable) { this.parcellable = parcellable; }
 
     public boolean isSessionOptional() { return sessionOptional; }
     public void setSessionOptional(boolean sessionOptional) { this.sessionOptional = sessionOptional; }

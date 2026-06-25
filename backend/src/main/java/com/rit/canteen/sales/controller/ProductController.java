@@ -99,6 +99,7 @@ public class ProductController {
                     product.setVeg(productDetails.isVeg());
                     product.setHasAllergy(productDetails.isHasAllergy());
                     product.setParcelNotAllowed(productDetails.isParcelNotAllowed());
+                    product.setParcellable(productDetails.isParcellable());
                     product.setSessionOptional(productDetails.isSessionOptional());
                     
                     product.getSessions().clear();
@@ -238,6 +239,7 @@ public class ProductController {
                         live.setImageData(productDetails.getImageData());
                         live.setDraft(false);
                         live.setActive(true);
+                        live.setParcellable(productDetails.isParcellable());
                         
                         Product savedLive = productRepository.save(live);
                         productRepository.delete(product); // Delete the draft
@@ -257,6 +259,7 @@ public class ProductController {
                         product.setBarcode(productDetails.getBarcode());
                         product.setImageData(productDetails.getImageData());
                         product.setStock(productDetails.getStock());
+                        product.setParcellable(productDetails.isParcellable());
                         
                         product.getSessions().clear();
                         if (productDetails.getSessions() != null) {

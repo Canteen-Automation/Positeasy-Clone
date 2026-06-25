@@ -155,6 +155,15 @@ public class OrderController {
                 // Use offer price if present, otherwise base price
                 BigDecimal unitPrice = (product.getOfferPrice() != null && product.getOfferPrice().compareTo(BigDecimal.ZERO) > 0)
                     ? product.getOfferPrice() : product.getPrice();
+                
+                // Add parcel fee if selected and parcellable
+                if (item.getProductName() != null && item.getProductName().endsWith(" (Parcel)") && product.isParcellable()) {
+                    unitPrice = unitPrice.add(BigDecimal.valueOf(5));
+                }
+                
+                // Update item's saved price so it reflects the unitPrice + parcel fee
+                item.setPrice(unitPrice);
+                
                 serverTotal = serverTotal.add(unitPrice.multiply(BigDecimal.valueOf(item.getQuantity())));
             }
         }

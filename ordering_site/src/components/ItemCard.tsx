@@ -11,6 +11,14 @@ interface ItemCardProps {
   variant?: 'carousel' | 'list';
 }
 
+export const VegNonVegIcon: React.FC<{ isVeg: boolean }> = ({ isVeg }) => {
+  return (
+    <div className={`veg-nonveg-indicator ${isVeg ? 'veg' : 'non-veg'}`} title={isVeg ? 'Vegetarian' : 'Non-Vegetarian'}>
+      <div className="dot"></div>
+    </div>
+  );
+};
+
 const ItemCard: React.FC<ItemCardProps> = ({ item, isLast, variant = 'list' }) => {
   const navigate = useNavigate();
   const { addToCart, updateQuantity, getItemQuantity } = useCart();
@@ -18,7 +26,8 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, isLast, variant = 'list' }) =
   const isLimitReached = item.stock !== undefined && quantity >= item.stock && item.stock > 0;
 
   // Visual helper values matching mockup metadata
-  const rating = 4.5;
+  const rating = item.rating !== undefined ? item.rating : 5.0;
+  const ratingCount = item.ratingCount !== undefined ? item.ratingCount : 0;
 
   if (variant === 'carousel') {
     return (
@@ -26,10 +35,12 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, isLast, variant = 'list' }) =
         className={`item-card-carousel ${item.stock === 0 ? 'out-of-stock' : ''}`}
         onClick={() => navigate(`/item/${item.id}`)}
       >
-        <div className="carousel-rating-badge">
-          <Star size={10} fill="currentColor" className="star-icon-filled" />
-          <span>{rating}</span>
-        </div>
+        {ratingCount > 0 && (
+          <div className="carousel-rating-badge">
+            <Star size={10} fill="currentColor" className="star-icon-filled" />
+            <span>{rating.toFixed(1)}</span>
+          </div>
+        )}
 
         <div className="carousel-image-container">
           {item.image ? (
@@ -40,8 +51,11 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, isLast, variant = 'list' }) =
         </div>
 
         <div className="carousel-info">
-          <h3 className="carousel-item-name">{item.name}</h3>
-          <p className="carousel-vendor">{item.stallName || 'Cookie Heaven'}</p>
+          <div className="carousel-title-row" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px', minWidth: 0 }}>
+            <VegNonVegIcon isVeg={item.isVeg} />
+            <h3 className="carousel-item-name" style={{ margin: 0, flex: 1, minWidth: 0 }}>{item.name}</h3>
+          </div>
+          <p className="carousel-vendor">{item.stallName || 'Unknown Stall'}</p>
 
           <div className="carousel-footer" onClick={(e) => e.stopPropagation()}>
             <span className="carousel-price">🅡{item.price.toFixed(2)}</span>
@@ -89,15 +103,19 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, isLast, variant = 'list' }) =
 
       <div className="list-info">
         <div className="list-title-row">
-          <h3 className="list-item-name">{item.name}</h3>
-          <div className="list-rating-badge">
-            <Star size={10} fill="currentColor" className="star-icon-filled" />
-            <span>{rating}</span>
+          <div className="list-title-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+            <VegNonVegIcon isVeg={item.isVeg} />
+            <h3 className="list-item-name" style={{ lineHeight: 1.2 }}>{item.name}</h3>
           </div>
+          {ratingCount > 0 && (
+            <div className="list-rating-badge">
+              <Star size={10} fill="currentColor" className="star-icon-filled" />
+              <span>{rating.toFixed(1)} ({ratingCount})</span>
+            </div>
+          )}
         </div>
 
-        <p className="list-vendor">{item.stallName || 'Cookie Heaven'}</p>
-        <p className="list-address">📍 54 Summit Street</p>
+        <p className="list-vendor">{item.stallName || 'Unknown Stall'}</p>
 
         <div className="list-footer" onClick={(e) => e.stopPropagation()}>
           <span className="list-price">🅡{item.price.toFixed(2)}</span>

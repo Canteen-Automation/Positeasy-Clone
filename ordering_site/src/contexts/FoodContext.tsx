@@ -28,11 +28,20 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!silent) setIsLoading(true);
     setError(null);
     try {
+      const token = localStorage.getItem('token');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const [baseItemsRes, productsRes, stallsRes, statsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/base-items?size=100`, { cache: 'no-store' }),
         fetch(`${API_BASE_URL}/products?size=100`, { cache: 'no-store' }),
         fetch(`${API_BASE_URL}/stalls/active`, { cache: 'no-store' }),
-        fetch(`${API_BASE_URL}/feedback/stats`, { cache: 'no-store' }).catch(() => null)
+        fetch(`${API_BASE_URL}/feedback/stats`, { 
+          cache: 'no-store',
+          headers
+        }).catch(() => null)
       ]);
 
       if (!baseItemsRes.ok || !productsRes.ok || !stallsRes.ok) {
@@ -46,8 +55,9 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const baseItemsData = baseItemsDataRaw.content || baseItemsDataRaw;
       const productsData = productsDataRaw.content || productsDataRaw;
 
-      // Extract top rated items names by customer feedback count
+      // Extract top rated items names by customer feedback count and rating maps
       let topRatedNames: string[] = [];
+      const itemRatingsMap: Record<string, { average: number; count: number }> = {};
       if (statsRes && statsRes.ok) {
         try {
           const statsData = await statsRes.json();
@@ -59,6 +69,15 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .filter((x: any) => x.count > 0)
             .slice(0, 3)
             .map((x: any) => x.name.toLowerCase());
+
+          ratedItems.forEach((x: any) => {
+            if (x.name) {
+              itemRatingsMap[x.name.toLowerCase()] = {
+                average: x.average,
+                count: x.count
+              };
+            }
+          });
         } catch (e) {
           console.error('Error parsing feedback stats:', e);
         }
@@ -121,6 +140,7 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Dynamic bestseller isPopular flag based on feedback stats
         const isBestseller = topRatedNames.includes(item.name.toLowerCase());
+        const ratingInfo = itemRatingsMap[item.name.toLowerCase()];
 
         return {
           id: itemId,
@@ -133,7 +153,10 @@ export const FoodProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isPopular: isBestseller, 
           stock: item.stock,
           stallId: (stallFromBackend?.id || stallFromMap?.id || stallFromCategory?.id),
-          stallName: (stallFromBackend?.name || stallFromMap?.name || stallFromCategory?.name)
+          stallName: (stallFromBackend?.name || stallFromMap?.name || stallFromCategory?.name),
+          rating: ratingInfo ? ratingInfo.average : 5.0,
+          ratingCount: ratingInfo ? ratingInfo.count : 0,
+          parcellable: item.parcellable
         };
       });
 

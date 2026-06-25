@@ -232,3 +232,38 @@ main::-webkit-scrollbar {
 .latest-qr-wrapper.qr-expired canvas {
   filter: blur(6px) grayscale(100%) !important;
 }
+
+/* Veg / Non-Veg Indicator Styling */
+.veg-nonveg-indicator {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: transparent;
+}
+
+.veg-nonveg-indicator.veg {
+  border-color: #10b981; /* emerald-500 */
+}
+
+.veg-nonveg-indicator.non-veg {
+  border-color: #ef4444; /* red-500 */
+}
+
+.veg-nonveg-indicator .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.veg-nonveg-indicator.veg .dot {
+  background-color: #10b981;
+}
+
+.veg-nonveg-indicator.non-veg .dot {
+  background-color: #ef4444;
+}

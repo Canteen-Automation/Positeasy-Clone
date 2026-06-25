@@ -66,8 +66,8 @@ const CheckoutScreen: React.FC = () => {
       orderType: 'MY_ORDER',
       items: cart.map(item => ({
         productId: Number(item.id),
-        productName: item.name,
-        price: item.price,
+        productName: item.isParcel ? `${item.name} (Parcel)` : item.name,
+        price: item.price + (item.isParcel ? 5 : 0),
         quantity: item.quantity,
         stallId: item.stallId ? Number(item.stallId) : null,
         stallName: item.stallName || null

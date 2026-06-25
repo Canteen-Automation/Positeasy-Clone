@@ -11,6 +11,9 @@ export interface FoodItem {
   stock?: number;
   stallId?: string;
   stallName?: string;
+  rating?: number;
+  ratingCount?: number;
+  parcellable?: boolean;
 }
 
 export interface Category {
@@ -26,6 +29,7 @@ export interface CartItem extends FoodItem {
   quantity: number;
   stallId?: string;
   stallName?: string;
+  isParcel?: boolean;
 }
 
 export interface User {

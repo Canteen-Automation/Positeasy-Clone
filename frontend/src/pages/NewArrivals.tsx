@@ -38,6 +38,7 @@ interface Product {
   active: boolean;
   stock: number;
   stalls?: { id: number; name: string }[];
+  parcellable?: boolean;
 }
 
 interface Stall {
